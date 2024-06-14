@@ -2,7 +2,7 @@ from telegram import *
 from telegram.ext import *
 
 import os, sentry_sdk
-from bot import launch, commands
+from bot import commands, project
 from hooks import db
 from constants import bot
 
@@ -45,23 +45,23 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("test", test))
 
     ## COMANDS ##
-    application.add_handler(CommandHandler("deploy", commands.deploy))
+    application.add_handler(CommandHandler("launch", commands.launch))
     application.add_handler(CommandHandler("reset", commands.reset))
     application.add_handler(CommandHandler("start", commands.start))
     application.add_handler(CommandHandler("status", commands.status))
     start_handler = ConversationHandler(
-        entry_points=[CommandHandler('launch', launch.command)],
+        entry_points=[CommandHandler('project', project.command)],
         states={
-            launch.STAGE_CHAIN: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_chain)],
-            launch.STAGE_TICKER: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_ticker)],
-            launch.STAGE_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_name)],
-            launch.STAGE_SUPPLY: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_supply)],
-            launch.STAGE_PORTAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_portal)],
-            launch.STAGE_WEBSITE: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_website)],
-            launch.STAGE_OWNER: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_owner)],
-            launch.STAGE_CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_confirm)],
+            project.STAGE_CHAIN: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_chain)],
+            project.STAGE_TICKER: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_ticker)],
+            project.STAGE_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_name)],
+            project.STAGE_SUPPLY: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_supply)],
+            project.STAGE_PORTAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_portal)],
+            project.STAGE_WEBSITE: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_website)],
+            project.STAGE_OWNER: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_owner)],
+            project.STAGE_CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_confirm)],
         },
-        fallbacks=[CommandHandler('cancel', launch.cancel)],
+        fallbacks=[CommandHandler('cancel', project.cancel)],
     )
     application.add_handler(start_handler)
     

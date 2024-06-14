@@ -10,10 +10,6 @@ from hooks import db
 STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_PORTAL, STAGE_WEBSITE, STAGE_OWNER, STAGE_CONFIRM = range(8)
 
 
-live_chains = {key: value for key, value in chains.chains.items() if value.live}
-live_chain_list = "\n".join([key.upper() for key in live_chains.keys()])
-
-
 async def command(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
@@ -30,7 +26,7 @@ async def command(update: Update, context: CallbackContext) -> int:
         else:
             await update.message.reply_text(
                 f"Lets get you launched by answering a few questions about your project...\n\n"
-                f"First, select your chain\n\nCurrent Supported Chains:\n{live_chain_list}\n\n"
+                f"First, select your chain\n\nCurrent Supported Chains:\n{chains.live_list}\n\n"
                 f"Or use /cancel to stop the launch.")
             return STAGE_CHAIN
         
@@ -38,8 +34,8 @@ async def command(update: Update, context: CallbackContext) -> int:
 
 async def stage_chain(update: Update, context: CallbackContext) -> int:
     context.user_data['chain'] = update.message.text.upper()
-    if context.user_data['chain'].lower() not in live_chains:
-        await update.message.reply_text(f"Error: Chain Not Found\n\nSupported Chains:\n{live_chain_list}")
+    if context.user_data['chain'].lower() not in chains.live:
+        await update.message.reply_text(f"Error: Chain Not Found\n\nSupported Chains:\n{chains.live_list}")
         return STAGE_CHAIN
     else:
         await update.message.reply_text(
@@ -161,7 +157,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
 
 
     elif user_response == "no":
-        await update.message.reply_text("Deployment cancelled. You can start over with /launch.")
+        await update.message.reply_text("Project cancelled. You can start over with /project.")
         return ConversationHandler.END
     else:
         await update.message.reply_text("Please reply with 'yes' or 'no'.")

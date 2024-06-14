@@ -20,8 +20,8 @@ async def start(update: Update, context: CallbackContext) -> int:
             f"Welcome {api.escape_markdown(user_name)} to {api.escape_markdown(bot.BOT_NAME)}\n\n"
             f"Launch an Xchange pair in minutes, with {bot.LOAN_AMOUNT} ETH liquidity for {bot.LOAN_FEE} ETH\n\n"
             "Loan will be repaid after 7 days via pair liquidity unless its paid back sooner!\n\n"
-            f"{bot.LOAN_DEPOSIT} ETH liquididation deposit will be returned upon loan completion\n\n"
-            "use /launch to launch your project now!",
+            f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned upon loan completion\n\n"
+            "use /project to start your project now!",
         parse_mode="Markdown"
         )
 
@@ -32,10 +32,10 @@ async def reset(update: Update, context: CallbackContext) -> int:
         delete_text = db.delete_entry_by_user_id(user_id)
         if delete_text:
             await update.message.reply_text(
-                f"Launch reset, use /launch to start"
+                f"Project reset, use /project to start"
             )
         else:
-            await update.message.reply_text("No launches waiting, please use /launch to start")
+            await update.message.reply_text("No projects waiting, please use /project to start")
 
 async def status(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
@@ -45,7 +45,7 @@ async def status(update: Update, context: CallbackContext) -> int:
         if status_text:
             balance = chainscan.get_native_balance(status_text["address"], status_text["chain"].lower())
             if balance >= bot.LOAN_FEE:
-                launch_message = "Ready to deploy, use /deploy to continue!"
+                launch_message = "Ready to launch, use /launch to continue!"
             else:
                 launch_message = f"Fund `{status_text["address"]}` with {bot.LOAN_FEE} ETH or use /reset to clear this launch\n\n"
             await update.message.reply_text(
@@ -61,10 +61,10 @@ async def status(update: Update, context: CallbackContext) -> int:
                 parse_mode="Markdown"
             )
         else:
-            await update.message.reply_text("No launches waiting, please use /launch to start")
+            await update.message.reply_text("No projects waiting, please use /project to start")
 
 
-async def deploy(update: Update, context: CallbackContext) -> int:
+async def launch(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -96,4 +96,4 @@ async def deploy(update: Update, context: CallbackContext) -> int:
                     parse_mode="Markdown"
                 )
         else:
-            await update.message.reply_text("No deployments waiting, please use /launch to start")
+            await update.message.reply_text("No projects waiting, please use /project to start")

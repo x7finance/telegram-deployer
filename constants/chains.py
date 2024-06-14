@@ -130,3 +130,7 @@ def full_names():
 def short_names():
     chain_list = list(chains.keys())
     return "\n".join(chain_list)
+
+
+live = {key: value for key, value in chains.items() if value.live}
+live_list = "\n".join([key.upper() for key in live.keys()])
