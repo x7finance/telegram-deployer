@@ -157,13 +157,13 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                       user_data.get('owner')
                       )
         await update.message.reply_text(f'Please send {bot.LOAN_FEE} ETH to the following address:\n\n`{account.address}`.\n\n'
-                                        'Please note: This wallet will expire after 24 hours, to check the status of your launch use /status',
+                                        f'Please note: This wallet will expire after {bot.DELETE_HOURS} hours, to check the status of your launch use /status',
                 parse_mode="Markdown")
         return ConversationHandler.END
 
 
     elif user_response == "no":
-        await update.message.reply_text("Deployment canceled. You can start over with /launch.")
+        await update.message.reply_text("Deployment cancelled. You can start over with /launch.")
         return ConversationHandler.END
     else:
         await update.message.reply_text("Please reply with 'yes' or 'no'.")
