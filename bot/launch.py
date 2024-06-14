@@ -7,8 +7,6 @@ from datetime import datetime
 from constants import chains, bot
 from hooks import db
 
-import setup
-
 STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_PORTAL, STAGE_WEBSITE, STAGE_OWNER, STAGE_CONFIRM = range(8)
 
 
