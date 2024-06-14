@@ -3,6 +3,9 @@ from telegram.ext import *
 
 import os, sentry_sdk
 from bot import launch, commands
+from hooks import db
+from constants import bot
+
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 
@@ -42,7 +45,10 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("test", test))
 
     ## COMANDS ##
+    application.add_handler(CommandHandler("deploy", commands.deploy))
+    application.add_handler(CommandHandler("reset", commands.reset))
     application.add_handler(CommandHandler("start", commands.start))
+    application.add_handler(CommandHandler("status", commands.status))
     start_handler = ConversationHandler(
         entry_points=[CommandHandler('launch', launch.command)],
         states={
@@ -52,12 +58,13 @@ if __name__ == "__main__":
             launch.STAGE_SUPPLY: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_supply)],
             launch.STAGE_PORTAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_portal)],
             launch.STAGE_WEBSITE: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_website)],
-            launch.STAGE_WALLET: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_wallet)],
-            launch.STAGE_LOAN: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_loan)],
+            launch.STAGE_OWNER: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_owner)],
+            launch.STAGE_CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_confirm)],
         },
         fallbacks=[CommandHandler('cancel', launch.cancel)],
     )
     application.add_handler(start_handler)
     
     ## START ##
+    db.delete_incomplete_entries(bot.DELETE_HOURS)
     application.run_polling(allowed_updates=Update.ALL_TYPES)

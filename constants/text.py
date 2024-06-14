@@ -1,1 +1,0 @@
-BOT_NAME = "Xchange Launcher"
