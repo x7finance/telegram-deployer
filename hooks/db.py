@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
 import mysql.connector
+
+from datetime import datetime, timedelta
 import os
 
 
@@ -75,7 +76,8 @@ def add_entry(
         return "Entry added successfully"
     except mysql.connector.Error as e:
         return f"Error: {e}"
-    
+
+ 
 def search_entry_by_user_id(user_id):
     try:
         connection = create_connection()
@@ -114,7 +116,55 @@ def search_entry_by_user_id(user_id):
             return False
     except mysql.connector.Error as e:
         return f"Error: {e}"
-    
+
+
+def search_entry_by_address(address):
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        search_query = """
+        SELECT
+            complete,
+            timedate,
+            user_name, 
+            user_id, 
+            secret_key,
+            chain, 
+            ticker, 
+            name, 
+            supply,
+            portal,
+            website,
+            owner
+        FROM wallets
+        WHERE address = %s
+        """
+        cursor.execute(search_query, (address,))
+        result = cursor.fetchone()
+
+        close_connection(connection, cursor)
+
+        if result:
+            return {
+                "complete": result["complete"],
+                "timedate": result["timedate"],
+                "user_name": result["user_name"],
+                "user_id": result["user_id"],
+                "secret_key": result["secret_key"],
+                "chain": result["chain"],
+                "ticker": result["ticker"],
+                "name": result["name"],
+                "supply": result["supply"],
+                "portal": result["portal"],
+                "website": result["website"],
+                "owner": result["owner"]
+            }
+        else:
+            return False
+    except mysql.connector.Error as e:
+        return f"Error: {e}"
+
 
 def delete_entry_by_user_id(user_id):
     try:

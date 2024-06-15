@@ -2,9 +2,11 @@ from telegram import *
 from telegram.ext import *
 
 import os, sentry_sdk
-from bot import commands, project
-from hooks import db
+
+from bot import admin, commands, project
 from constants import bot
+from hooks import db
+
 
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
@@ -43,6 +45,10 @@ async def error(update: Update, context: CallbackContext):
 if __name__ == "__main__":
     application.add_error_handler(error)
     application.add_handler(CommandHandler("test", test))
+
+    ## ADMIN ##
+    application.add_handler(CommandHandler("admin", admin.command))
+    application.add_handler(CommandHandler("search", admin.search))
 
     ## COMANDS ##
     application.add_handler(CommandHandler("launch", commands.launch))

@@ -1,11 +1,8 @@
 from telegram import *
 from telegram.ext import *
-from web3 import Web3
-from eth_account import Account
-from datetime import datetime
 
+from constants import bot
 from hooks import api, db
-from constants import bot, urls, bot
 
 chainscan = api.ChainScan()
 
@@ -25,6 +22,7 @@ async def start(update: Update, context: CallbackContext) -> int:
         parse_mode="Markdown"
         )
 
+
 async def reset(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
@@ -36,6 +34,7 @@ async def reset(update: Update, context: CallbackContext) -> int:
             )
         else:
             await update.message.reply_text("No projects waiting, please use /project to start")
+
 
 async def status(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type

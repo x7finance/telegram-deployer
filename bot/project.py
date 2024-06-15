@@ -1,10 +1,11 @@
 from telegram import *
 from telegram.ext import *
+
 from eth_utils import is_checksum_address
 from eth_account import Account
 from datetime import datetime
 
-from constants import chains, bot
+from constants import bot, chains
 from hooks import db
 
 STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_PORTAL, STAGE_WEBSITE, STAGE_OWNER, STAGE_CONFIRM = range(8)
@@ -30,7 +31,6 @@ async def command(update: Update, context: CallbackContext) -> int:
                 f"Or use /cancel to stop the launch.")
             return STAGE_CHAIN
         
-
 
 async def stage_chain(update: Update, context: CallbackContext) -> int:
     context.user_data['chain'] = update.message.text.upper()
@@ -151,10 +151,10 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                       user_data.get('owner')
                       )
         await update.message.reply_text(f'Please send {bot.LOAN_FEE} ETH to the following address:\n\n`{account.address}`.\n\n'
+                                        '*Make a note of this wallet address as your reference number*\n\n'
                                         f'Please note: This wallet will expire after {bot.DELETE_HOURS} hours, to check the status of your launch use /status',
                 parse_mode="Markdown")
         return ConversationHandler.END
-
 
     elif user_response == "no":
         await update.message.reply_text("Project cancelled. You can start over with /project.")
