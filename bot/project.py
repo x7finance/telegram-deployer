@@ -39,12 +39,16 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
         return STAGE_CHAIN
     else:
         await update.message.reply_text(
-            f"{context.user_data['chain']}\n\nBrilliant! Now, what's the project's token ticker?")
+            f"{context.user_data['chain']} Chain\n\nBrilliant! Now, what's the project's token ticker?")
         return STAGE_TICKER
 
 
 async def stage_ticker(update: Update, context: CallbackContext) -> int:
     context.user_data['ticker'] = update.message.text
+    if context.user_data['ticker'] > 5:
+        await update.message.reply_text(
+            "Error: The ticker must be 5 characters or fewer. Please enter a valid ticker.")
+        return STAGE_TICKER 
     await update.message.reply_text(
         f"{context.user_data['ticker']}\n\nGreat! Now, please reply with your project name.")
     return STAGE_NAME
@@ -64,13 +68,13 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
         return STAGE_SUPPLY
     context.user_data['supply'] = supply_input
     await update.message.reply_text(
-        f"{context.user_data['supply']}\n\nThanks! Now, what's your project's Telegram Group Portal Link?")
+        f"{context.user_data['supply']} Supply\n\nThanks! Now, what's your project's Telegram Group Portal Link? If you don't have one, reply 'None'.")
     return STAGE_PORTAL
 
 
 async def stage_portal(update: Update, context: CallbackContext) -> int:
     context.user_data['portal'] = update.message.text
-    if not context.user_data['portal'].startswith('t.me/'):
+    if not context.user_data['portal'].startswith('t.me/') and context.user_data['portal'] != 'None': 
         await update.message.reply_text("Error: Portal link should start with t.me/, please try again.")
         return STAGE_PORTAL
     else:

