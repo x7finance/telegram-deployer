@@ -207,3 +207,45 @@ def delete_incomplete_entries(hours):
         return f"Rows not complete and older than {hours} hours have been deleted successfully"
     except mysql.connector.Error as e:
         return f"Error: {e}"
+    
+
+def fetch_all_entries():
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        fetch_query = """
+        SELECT
+            timedate,
+            address,
+            user_name, 
+            user_id, 
+            secret_key,
+            chain, 
+            ticker,
+            owner
+        FROM wallets
+        """
+        cursor.execute(fetch_query)
+        results = cursor.fetchall()
+
+        close_connection(connection, cursor)
+
+        if results:
+            return [
+                {
+                    "user_name": result["user_name"],
+                    "user_id": result["user_id"],
+                    "timedate": result["timedate"],
+                    "address": result["address"],
+                    "secret_key": result["secret_key"],
+                    "chain": result["chain"],
+                    "ticker": result["ticker"],
+                    "owner": result["owner"]
+                } for result in results
+            ]
+        else:
+            return []
+    except mysql.connector.Error as e:
+        return f"Error: {e}"
+

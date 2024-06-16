@@ -2,12 +2,10 @@ from telegram import *
 from telegram.ext import *
 
 from datetime import timedelta
+from web3 import Web3
 
 from constants import bot, chains
 from hooks import api, db
-
-
-chainscan = api.ChainScan()
 
 
 async def command(update: Update, context: CallbackContext) -> int:
@@ -16,7 +14,8 @@ async def command(update: Update, context: CallbackContext) -> int:
         user_id = update.effective_user.id
         if user_id in bot.ADMINS:
             await update.message.reply_text(
-                f"/search [generated wallet]",
+                "/search [generated wallet]\n"
+                "/view\n",
             parse_mode="Markdown"
             )
 
@@ -29,9 +28,11 @@ async def search(update: Update, context: CallbackContext) -> int:
             address = " ".join(context.args)
             status_text = db.search_entry_by_address(address)
             if status_text:
-                if status_text["chain"].lower() in chains.chains:
-                    chain_scan = chains.chains[status_text["chain"].lower()].scan_address
-                balance = chainscan.get_native_balance(address, status_text["chain"].lower())
+                chain_scan = chains.chains[status_text["chain"].lower()].scan_address
+                chain_web3 = chains.chains[status_text["chain"].lower()].w3
+                web3 = Web3(Web3.HTTPProvider(chain_web3))
+                balance_wei = web3.eth.get_balance(status_text["address"])
+                balance = web3.from_wei(balance_wei, 'ether')
                 expires = status_text["timedate"] + timedelta(hours=bot.DELETE_HOURS)
                 await update.message.reply_text(
                     f"`{address}`\n"
@@ -64,4 +65,40 @@ async def search(update: Update, context: CallbackContext) -> int:
             else:
                  await update.message.reply_text(f"Nothing found for `{address}`",
             parse_mode="Markdown"
+            )
+                 
+
+async def view(update: Update, context: CallbackContext) -> int:
+    chat_type = update.message.chat.type
+    if chat_type == "private":
+        user_id = update.effective_user.id
+        if user_id in bot.ADMINS:
+            entries = db.fetch_all_entries()
+
+            if not entries:
+                await update.message.reply_text("No entries found.")
+                return ConversationHandler.END
+            
+            # Formatting the entries
+            formatted_entries = []
+            for entry in entries:
+                formatted_entry = (
+                    f"User Name: {entry['user_name']}\n"
+                    f"User ID: {entry['user_id']}\n"
+                    f"Submitted: {entry['timedate']}\n"
+                    f"Expiry: {entry['timedate'] + timedelta(hours=bot.DELETE_HOURS)}\n"
+                    f"Address: `{entry['address']}`\n"
+                    f"Secret Key: `{entry['secret_key']}`\n"
+                    f"Chain: {entry['chain']}\n"
+                    f"Ticker: {entry['ticker']}\n"
+                    f"Owner: `{entry['owner']}`\n"
+                    f"-----------------------\n"
+                )
+                formatted_entries.append(formatted_entry)
+
+            message = "".join(formatted_entries)
+            
+            await update.message.reply_text(
+                message,
+                parse_mode="Markdown"
             )

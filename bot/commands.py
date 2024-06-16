@@ -1,10 +1,9 @@
 from telegram import *
 from telegram.ext import *
+from web3 import Web3
 
-from constants import bot
+from constants import chains, bot, urls
 from hooks import api, db
-
-chainscan = api.ChainScan()
 
 
 async def start(update: Update, context: CallbackContext) -> int:
@@ -42,7 +41,10 @@ async def status(update: Update, context: CallbackContext) -> int:
         user_id = update.effective_user.id
         status_text = db.search_entry_by_user_id(user_id)
         if status_text:
-            balance = chainscan.get_native_balance(status_text["address"], status_text["chain"].lower())
+            chain_web3 = chains.chains[status_text["chain"].lower()].w3
+            web3 = Web3(Web3.HTTPProvider(chain_web3))
+            balance_wei = web3.eth.get_balance(status_text["address"])
+            balance = web3.from_wei(balance_wei, 'ether')
             if balance >= bot.LOAN_FEE:
                 launch_message = "Ready to launch, use /launch to continue!"
             else:
@@ -69,7 +71,10 @@ async def launch(update: Update, context: CallbackContext) -> int:
         user_id = update.effective_user.id
         status_text = db.search_entry_by_user_id(user_id)
         if status_text:
-            balance = chainscan.get_native_balance(status_text["address"], status_text["chain"].lower())
+            chain_web3 = chains.chains[status_text["chain"].lower()].w3
+            web3 = Web3(Web3.HTTPProvider(chain_web3))
+            balance_wei = web3.eth.get_balance(status_text["address"])
+            balance = web3.from_wei(balance_wei, 'ether')
             if balance >= bot.LOAN_FEE:
                  await update.message.reply_text(
                 f"Deploying {status_text["ticker"]} ({status_text["chain"]})\n\n"
