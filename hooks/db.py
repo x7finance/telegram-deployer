@@ -188,27 +188,6 @@ def delete_entry_by_user_id(user_id):
         return f"Error: {e}"
 
 
-def delete_incomplete_entries(hours):
-    try:
-        connection = create_connection()
-        cursor = connection.cursor()
-        time_threshold = datetime.now() - timedelta(hours=hours)
-
-        delete_query = """
-        DELETE FROM wallets
-        WHERE complete = FALSE AND timedate < %s
-        """
-        
-        cursor.execute(delete_query, (time_threshold,))
-        connection.commit()
-
-        close_connection(connection, cursor)
-
-        return f"Rows not complete and older than {hours} hours have been deleted successfully"
-    except mysql.connector.Error as e:
-        return f"Error: {e}"
-    
-
 def fetch_all_entries():
     try:
         connection = create_connection()

@@ -7,8 +7,6 @@ from bot import admin, commands, project
 from constants import bot
 from hooks import db
 
-
-
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 
 sentry_sdk.init(
@@ -71,7 +69,6 @@ if __name__ == "__main__":
         fallbacks=[CommandHandler('cancel', project.cancel)],
     )
     application.add_handler(start_handler)
-    
+
     ## START ##
-    db.delete_incomplete_entries(bot.DELETE_HOURS)
     application.run_polling(allowed_updates=Update.ALL_TYPES)

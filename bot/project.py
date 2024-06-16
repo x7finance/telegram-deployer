@@ -152,7 +152,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                       )
         await update.message.reply_text(f'Please send {bot.LOAN_FEE} ETH to the following address:\n\n`{account.address}`.\n\n'
                                         '*Make a note of this wallet address as your reference number*\n\n'
-                                        f'Please note: This wallet will expire after {bot.DELETE_HOURS} hours, to check the status of your launch use /status',
+                                        'To check the status of your launch use /status',
                 parse_mode="Markdown")
         return ConversationHandler.END
 

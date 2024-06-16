@@ -16,7 +16,7 @@ async def start(update: Update, context: CallbackContext) -> int:
             f"Welcome {api.escape_markdown(user_name)} to {api.escape_markdown(bot.BOT_NAME)}\n\n"
             f"Launch an Xchange pair in minutes, with {bot.LOAN_AMOUNT} ETH liquidity for {bot.LOAN_FEE} ETH\n\n"
             "Loan will be repaid after 7 days via pair liquidity unless its paid back sooner!\n\n"
-            f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned upon loan completion\n\n"
+            f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion/liquidation\n\n"
             "use /project to start your project now!",
         parse_mode="Markdown"
         )

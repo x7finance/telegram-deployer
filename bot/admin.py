@@ -33,13 +33,11 @@ async def search(update: Update, context: CallbackContext) -> int:
                 web3 = Web3(Web3.HTTPProvider(chain_web3))
                 balance_wei = web3.eth.get_balance(status_text["address"])
                 balance = web3.from_wei(balance_wei, 'ether')
-                expires = status_text["timedate"] + timedelta(hours=bot.DELETE_HOURS)
                 await update.message.reply_text(
                     f"`{address}`\n"
                     f"User ID: {status_text["user_id"]}\n"
                     f"User Name: {status_text["user_name"]}\n"
                     f"Opened: {status_text["timedate"]}\n"
-                    f"Expires: {expires}\n"
                     f"Secret Key: `{status_text["secret_key"]}`\n\n"
                     f"{status_text["chain"]}\n"
                     f"Ticker: {status_text["ticker"]}\n"
@@ -79,14 +77,12 @@ async def view(update: Update, context: CallbackContext) -> int:
                 await update.message.reply_text("No entries found.")
                 return ConversationHandler.END
             
-            # Formatting the entries
             formatted_entries = []
             for entry in entries:
                 formatted_entry = (
                     f"User Name: {entry['user_name']}\n"
                     f"User ID: {entry['user_id']}\n"
                     f"Submitted: {entry['timedate']}\n"
-                    f"Expiry: {entry['timedate'] + timedelta(hours=bot.DELETE_HOURS)}\n"
                     f"Address: `{entry['address']}`\n"
                     f"Secret Key: `{entry['secret_key']}`\n"
                     f"Chain: {entry['chain']}\n"

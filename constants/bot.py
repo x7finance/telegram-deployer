@@ -1,5 +1,4 @@
 BOT_NAME = "Xchange Launcher"
-DELETE_HOURS = 6
 LOAN_AMOUNT = 1
 LOAN_DEPOSIT = 0.1
 LOAN_FEE = 0.11
