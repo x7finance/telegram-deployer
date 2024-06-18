@@ -45,7 +45,7 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
 
 async def stage_ticker(update: Update, context: CallbackContext) -> int:
     context.user_data['ticker'] = update.message.text
-    if context.user_data['ticker'] > 5:
+    if len(context.user_data['ticker']) > 5:
         await update.message.reply_text(
             "Error: The ticker must be 5 characters or fewer. Please enter a valid ticker.")
         return STAGE_TICKER 
