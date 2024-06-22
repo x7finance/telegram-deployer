@@ -14,8 +14,6 @@ sentry_sdk.init(
     traces_sample_rate=1.0
 )
 
-async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return
 
 async def error(update: Update, context: CallbackContext):
     if update is None:
@@ -42,7 +40,7 @@ async def error(update: Update, context: CallbackContext):
 
 if __name__ == "__main__":
     application.add_error_handler(error)
-    application.add_handler(CommandHandler("test", test))
+    application.add_handler(CommandHandler("test", commands.test))
 
     ## ADMIN ##
     application.add_handler(CommandHandler("admin", admin.command))

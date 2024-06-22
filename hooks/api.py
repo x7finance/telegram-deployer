@@ -1,8 +1,9 @@
 # API
 
 import requests, time
-from datetime import datetime
-from constants import chains
+from datetime import datetime, timedelta
+from constants import ca, chains
+from web3 import Web3
 
 
 class ChainScan:
@@ -208,6 +209,14 @@ def timestamp_to_datetime(timestamp):
         return datetime_str
     except ValueError:
         return "Invalid timestamp."
+    
+
+def timestamp_deadline():
+    current_time = datetime.now()
+    future_time = current_time + timedelta(minutes=10)
+    future_timestamp = int(future_time.timestamp())
+
+    return future_timestamp
 
 
 def format_schedule(schedule1, schedule2, native_token):

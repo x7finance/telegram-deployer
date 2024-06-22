@@ -2,9 +2,14 @@ from telegram import *
 from telegram.ext import *
 from web3 import Web3
 
-from constants import chains, bot, urls
-from hooks import api, db
 
+from constants import chains, bot
+from hooks import api, db, deployments
+
+chainscan = api.ChainScan()
+
+async def test(update: Update, context: CallbackContext) -> int:
+    return
 
 async def start(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
@@ -12,9 +17,9 @@ async def start(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
         await update.message.reply_text(
-            f"*THIS IS BETA BOT, DO NOT SEND ANY FUNDS, THEY WILL BE LOST\n*\n"
+            f"*THIS IS BETA BOT, DO NOT SEND ANY FUNDS TO MAINNET WALLETS, THEY WILL BE LOST\n*\n"
             f"Welcome {api.escape_markdown(user_name)} to {api.escape_markdown(bot.BOT_NAME)}\n\n"
-            f"Launch an Xchange pair in minutes, with {bot.LOAN_AMOUNT} ETH liquidity for {bot.LOAN_FEE} ETH\n\n"
+            f"Create a token and Launch an Xchange pair in minutes, with {bot.LOAN_AMOUNT} ETH liquidity for {bot.LOAN_FEE} ETH\n\n"
             "Loan will be repaid after 7 days via pair liquidity unless its paid back sooner!\n\n"
             f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion/liquidation\n\n"
             "use /project to start your project now!",
@@ -46,7 +51,7 @@ async def status(update: Update, context: CallbackContext) -> int:
             balance_wei = web3.eth.get_balance(status_text["address"])
             balance = web3.from_wei(balance_wei, 'ether')
             if balance >= bot.LOAN_FEE:
-                launch_message = "Ready to launch, use /launch to continue!"
+                launch_message = "Ready to launch, use /launch to continue! or use /reset to restart"
             else:
                 launch_message = f"Fund `{status_text["address"]}` with {bot.LOAN_FEE} ETH or use /reset to clear this launch\n\n"
             await update.message.reply_text(
@@ -55,9 +60,9 @@ async def status(update: Update, context: CallbackContext) -> int:
                 f"Supply: {status_text["supply"]}\n"
                 f"TG Portal: {status_text["portal"]}\n"
                 f"Website: {status_text["website"]}\n\n"
+                f"Ownership will be transfered to:\n{status_text["owner"]}\n\n"
                 f"Current Balance:\n"
                 f"{balance} ETH\n\n"
-                f"Ownership will be transfered to:\n{status_text["owner"]}\n\n"
                 f"{launch_message}",
                 parse_mode="Markdown"
             )
@@ -72,31 +77,55 @@ async def launch(update: Update, context: CallbackContext) -> int:
         status_text = db.search_entry_by_user_id(user_id)
         if status_text:
             chain_web3 = chains.chains[status_text["chain"].lower()].w3
+            chain_url = chains.chains[status_text["chain"].lower()].scan_token
+            token2 = chains.chains[status_text["chain"].lower()].address
             web3 = Web3(Web3.HTTPProvider(chain_web3))
             balance_wei = web3.eth.get_balance(status_text["address"])
             balance = web3.from_wei(balance_wei, 'ether')
             if balance >= bot.LOAN_FEE:
-                 await update.message.reply_text(
-                f"Deploying {status_text["ticker"]} ({status_text["chain"]})\n\n"
-                f"Name: {status_text["name"]}\n"
-                f"Supply: {status_text["supply"]}\n"
-                f"TG Portal: {status_text["portal"]}\n"
-                f"Website: {status_text["website"]}\n\n"
-                f"Ownership will be transfered to:\n{status_text["owner"]}\n\n",
-                parse_mode="Markdown"
-            )
-            #### DEPLOY HERE ###
+                await update.message.reply_text(
+                    f"Deploying {status_text['ticker']} ({status_text['chain']})...."
+                )
+                token1 = deployments.deploy_token(
+                    status_text["chain"].lower(),
+                    status_text["name"],
+                    status_text["ticker"],
+                    status_text["supply"],
+                    status_text["owner"],
+                    status_text["address"],
+                    status_text["secret_key"]
+                )
+                pair = deployments.create_pair(
+                    status_text["chain"].lower(),
+                    token1,
+                    token2,
+                    status_text["address"],
+                    status_text["secret_key"]
+                )
+                await update.message.reply_text(
+                    f"Congrats {status_text['ticker']} has been launched and an Xchange Pair Created\n\n"
+                    f"CA: `{token1}`\n"
+                    f"Ownership transferred to:\n"
+                    f"`{status_text['owner']}`",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(
+                        [
+                            [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token1}")],
+                            [InlineKeyboardButton(text="Buy Link", url=f"{chain_url}{pair}")]
+                        ]
+                    )
+                )
             else:
                 await update.message.reply_text(
-                    f"Currently awaiting launch for {status_text["ticker"]} ({status_text["chain"]})\n\n"
-                    f"Name: {status_text["name"]}\n"
-                    f"Supply: {status_text["supply"]}\n"
-                    f"TG Portal: {status_text["portal"]}\n"
-                    f"Website: {status_text["website"]}\n\n"
+                    f"Currently awaiting launch for {status_text['ticker']} ({status_text['chain']})\n\n"
+                    f"Name: {status_text['name']}\n"
+                    f"Supply: {status_text['supply']}\n"
+                    f"TG Portal: {status_text['portal']}\n"
+                    f"Website: {status_text['website']}\n\n"
                     f"Current Balance:\n"
                     f"{balance} ETH\n\n"
-                    f"Ownership will be transfered to:\n{status_text["owner"]}\n\n"
-                    f"Fund `{status_text["address"]}` with {bot.LOAN_FEE} ETH or use /reset to clear this launch\n\n",
+                    f"Ownership will be transferred to:\n{status_text['owner']}\n\n"
+                    f"Fund `{status_text['address']}` with {bot.LOAN_FEE} ETH or use /reset to clear this launch\n\n",
                     parse_mode="Markdown"
                 )
         else:

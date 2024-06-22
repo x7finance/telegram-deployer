@@ -54,6 +54,11 @@ BASE_TOKEN = "https://basescan.org/token/"
 BASE_ADDRESS = "https://basescan.org/address/"
 BASE_TX = "https://basescan.org/tx/"
 
+# BASESEPOLICASCAN
+BASE_SEPOLIA_API = "https://api-sepolia.basescan.org/api"
+BASE_SEPOLIA_TOKEN = "https://sepolia.basescan.org/token/"
+BASE_SEPOLIA_ADDRESS = "https://sepolia.basescan.org/address/"
+BASE_SEPOLIA_TX = "https://sepolia.basescan.org/tx/"
 
 # DEXTOOLS
 def dex_tools(chain):
@@ -85,3 +90,4 @@ BSC_RPC = f"https://lb.drpc.org/ogrpc?network=bsc&dkey={os.getenv('DRPC_API_KEY'
 ARB_RPC = f"https://lb.drpc.org/ogrpc?network=arbitrum&dkey={os.getenv('DRPC_API_KEY')}"
 OP_RPC = f"https://lb.drpc.org/ogrpc?network=optimism&dkey={os.getenv('DRPC_API_KEY')}"
 POLY_RPC = f"https://lb.drpc.org/ogrpc?network=polygon&dkey={os.getenv('DRPC_API_KEY')}"
+BASE_SEPOLIA_RPC = f"https://lb.drpc.org/ogrpc?network=base-sepolia&dkey={os.getenv('DRPC_API_KEY')}"

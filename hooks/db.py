@@ -85,7 +85,8 @@ def search_entry_by_user_id(user_id):
 
         search_query = """
         SELECT 
-            address, 
+            address,
+            secret_key,
             chain, 
             ticker, 
             name, 
@@ -104,6 +105,7 @@ def search_entry_by_user_id(user_id):
         if result:
             return {
                 "address": result["address"],
+                "secret_key": result["secret_key"],
                 "chain": result["chain"],
                 "ticker": result["ticker"],
                 "name": result["name"],
