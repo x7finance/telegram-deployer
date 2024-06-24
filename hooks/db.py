@@ -84,7 +84,8 @@ def search_entry_by_user_id(user_id):
         cursor = connection.cursor(dictionary=True)
 
         search_query = """
-        SELECT 
+        SELECT
+            complete, 
             address,
             secret_key,
             chain, 
@@ -104,6 +105,7 @@ def search_entry_by_user_id(user_id):
 
         if result:
             return {
+                "complete": result["complete"],
                 "address": result["address"],
                 "secret_key": result["secret_key"],
                 "chain": result["chain"],
@@ -230,3 +232,47 @@ def fetch_all_entries():
     except mysql.connector.Error as e:
         return f"Error: {e}"
 
+def mark_entry_as_complete_by_user_id(user_id):
+    try:
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        update_query = """
+        UPDATE wallets
+        SET complete = %s
+        WHERE user_id = %s
+        """
+        cursor.execute(update_query, (True, user_id))
+        connection.commit()
+
+        close_connection(connection, cursor)
+
+        if cursor.rowcount > 0:
+            return True
+        else:
+            return False
+    except mysql.connector.Error as e:
+        return f"Error: {e}"
+
+
+def set_complete(address):
+    try:
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        update_query = """
+        UPDATE wallets
+        SET complete = %s
+        WHERE address = %s
+        """
+        cursor.execute(update_query, (True, address))
+        connection.commit()
+
+        close_connection(connection, cursor)
+
+        if cursor.rowcount > 0:
+            return True
+        else:
+            return False
+    except mysql.connector.Error as e:
+        return f"Error: {e}"

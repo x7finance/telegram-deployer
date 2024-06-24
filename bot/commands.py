@@ -50,83 +50,89 @@ async def status(update: Update, context: CallbackContext) -> int:
             web3 = Web3(Web3.HTTPProvider(chain_web3))
             balance_wei = web3.eth.get_balance(status_text["address"])
             balance = web3.from_wei(balance_wei, 'ether')
+            balance_str = format(balance, '.18f')
             if balance >= bot.LOAN_FEE:
-                launch_message = "Ready to launch, use /launch to continue! or use /reset to restart"
+                if status_text["complete"] == 0:
+                    button = InlineKeyboardMarkup(
+                            [
+                                [InlineKeyboardButton(text="LAUNCH", callback_data="launch")],
+                            ]
+                        )
+                    message = "Ready to launch, hit the button below!"
+                    header = "*LAUNCH STATUS - READY*"
+                    was_will_be = "will be"
+                else:
+                    button = ""
+                    message = f"Fund `{status_text["address"]}` with {bot.LOAN_FEE} ETH or use /reset to clear this launch"
+                    header = "*LAUNCH STATUS - WAITING*"
+                    was_will_be = "will be"
+
             else:
-                launch_message = f"Fund `{status_text["address"]}` with {bot.LOAN_FEE} ETH or use /reset to clear this launch\n\n"
+                message = "Use /reset to clear this launch"
+                header = "*LAUNCH STATUS - CONFIRMED*"
+                was_will_be = "was"
+                button = ""
+
             await update.message.reply_text(
-                f"Currently awaiting launch for {status_text["ticker"]} ({status_text["chain"]})\n\n"
-                f"Name: {status_text["name"]}\n"
-                f"Supply: {status_text["supply"]}\n"
-                f"TG Portal: {status_text["portal"]}\n"
-                f"Website: {status_text["website"]}\n\n"
-                f"Ownership will be transfered to:\n{status_text["owner"]}\n\n"
-                f"Current Balance:\n"
-                f"{balance} ETH\n\n"
-                f"{launch_message}",
-                parse_mode="Markdown"
+                    f"{header}\n\n"
+                    f"{status_text["ticker"]} ({status_text["chain"]})\n\n"
+                    f"Name: {status_text["name"]}\n"
+                    f"Supply: {status_text["supply"]}\n"
+                    f"Ownership {was_will_be} transfered to:\n`{status_text["owner"]}`\n\n"
+                    f"Current Deployer Wallet Balance:\n"
+                    f"{balance_str} ETH\n\n"
+                    f"{message}",
+                parse_mode="Markdown",
+                reply_markup=button
             )
         else:
             await update.message.reply_text("No projects waiting, please use /project to start")
 
 
 async def launch(update: Update, context: CallbackContext) -> int:
-    chat_type = update.message.chat.type
-    if chat_type == "private":
-        user_id = update.effective_user.id
-        status_text = db.search_entry_by_user_id(user_id)
-        if status_text:
-            chain_web3 = chains.chains[status_text["chain"].lower()].w3
-            chain_url = chains.chains[status_text["chain"].lower()].scan_token
-            token2 = chains.chains[status_text["chain"].lower()].address
-            web3 = Web3(Web3.HTTPProvider(chain_web3))
-            balance_wei = web3.eth.get_balance(status_text["address"])
-            balance = web3.from_wei(balance_wei, 'ether')
-            if balance >= bot.LOAN_FEE:
-                await update.message.reply_text(
-                    f"Deploying {status_text['ticker']} ({status_text['chain']})...."
-                )
-                token1 = deployments.deploy_token(
-                    status_text["chain"].lower(),
-                    status_text["name"],
-                    status_text["ticker"],
-                    status_text["supply"],
-                    status_text["owner"],
-                    status_text["address"],
-                    status_text["secret_key"]
-                )
-                pair = deployments.create_pair(
-                    status_text["chain"].lower(),
-                    token1,
-                    token2,
-                    status_text["address"],
-                    status_text["secret_key"]
-                )
-                await update.message.reply_text(
-                    f"Congrats {status_text['ticker']} has been launched and an Xchange Pair Created\n\n"
-                    f"CA: `{token1}`\n"
-                    f"Ownership transferred to:\n"
-                    f"`{status_text['owner']}`",
-                    parse_mode="Markdown",
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token1}")],
-                            [InlineKeyboardButton(text="Buy Link", url=f"{chain_url}{pair}")]
-                        ]
-                    )
-                )
-            else:
-                await update.message.reply_text(
-                    f"Currently awaiting launch for {status_text['ticker']} ({status_text['chain']})\n\n"
-                    f"Name: {status_text['name']}\n"
-                    f"Supply: {status_text['supply']}\n"
-                    f"TG Portal: {status_text['portal']}\n"
-                    f"Website: {status_text['website']}\n\n"
-                    f"Current Balance:\n"
-                    f"{balance} ETH\n\n"
-                    f"Ownership will be transferred to:\n{status_text['owner']}\n\n"
-                    f"Fund `{status_text['address']}` with {bot.LOAN_FEE} ETH or use /reset to clear this launch\n\n",
-                    parse_mode="Markdown"
-                )
-        else:
-            await update.message.reply_text("No projects waiting, please use /project to start")
+    query = update.callback_query
+    await query.answer()
+    user_id = update.effective_user.id
+    status_text = db.search_entry_by_user_id(user_id)
+    chain_url = chains.chains[status_text["chain"].lower()].scan_token
+    token2 = chains.chains[status_text["chain"].lower()].address
+    await query.edit_message_text(
+        f"Deploying {status_text['ticker']} ({status_text['chain']})...."
+    )
+    token1 = deployments.deploy_token(
+        status_text["chain"].lower(),
+        status_text["name"],
+        status_text["ticker"],
+        status_text["supply"],
+        status_text["owner"],
+        status_text["address"],
+        status_text["secret_key"]
+    )
+    pair = deployments.create_pair(
+        status_text["chain"].lower(),
+        token1,
+        token2,
+        status_text["address"],
+        status_text["secret_key"]
+    )
+    deployments.transfer_balance(
+        status_text["chain"].lower(),
+        status_text["address"],
+        status_text["owner"],
+        status_text["secret_key"]
+    )
+    await query.edit_message_text(
+        f"Congrats {status_text['ticker']} has been launched and an Xchange Pair Created\n\n"
+        f"CA: `{token1}`\n\n"
+        f"Ownership transferred to:\n"
+        f"`{status_text['owner']}`",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token1}")],
+                [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair}")],
+                [InlineKeyboardButton(text="Buy Link", url=f"{chain_url}{pair}")]
+            ]
+        )
+    )
+    db.set_complete(status_text["address"])

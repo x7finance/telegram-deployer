@@ -17,6 +17,8 @@ def FACTORY(chain):
         return "0x7de800467aFcE442019884f51A4A1B9143a34fAc"
 
 def LPOOL(chain, loan_id=None):
+    if chain == "base-sepolia":
+        return "0xB2996ee6b84E03D33c276cE4ca8d5e268fB29908"
     if chain == "eth":
         if loan_id is not None and loan_id < 21:
             return "0x740015c39da5d148fca25a467399d00bce10c001"

@@ -18,29 +18,37 @@ async def command(update: Update, context: CallbackContext) -> int:
         status_text = db.search_entry_by_user_id(user_id)
         if status_text:
             await update.message.reply_text(
-                f"Currently awaiting launch for {status_text["ticker"]} ({status_text["chain"]})\n\n"
-                f"Fund `{status_text["address"]}` with {bot.LOAN_FEE} ETH\n\n"
-                f"Ownership will be transfered to:\n{status_text["owner"]}\n\n"
+                f"Currently awaiting launch for {status_text['ticker']} ({status_text['chain']})\n\n"
+                f"Fund `{status_text['address']}` with {bot.LOAN_FEE} ETH\n\n"
+                f"Ownership will be transferred to:\n{status_text['owner']}\n\n"
                 f"To clear this deployment use /reset",
                 parse_mode="Markdown"
             )
         else:
+            buttons = [
+                [InlineKeyboardButton(chain.upper(), callback_data=f'chain_{chain.lower()}')]
+                for chain in chains.live
+            ]
+            keyboard = InlineKeyboardMarkup(buttons)
             await update.message.reply_text(
                 f"Lets get you launched by answering a few questions about your project...\n\n"
-                f"First, select your chain\n\nCurrent Supported Chains:\n{chains.live_list}\n\n"
-                f"Or use /cancel to stop the launch.")
+                f"First, select your chain:",
+                reply_markup=keyboard
+            )
             return STAGE_CHAIN
         
 
 async def stage_chain(update: Update, context: CallbackContext) -> int:
-    context.user_data['chain'] = update.message.text.upper()
-    if context.user_data['chain'].lower() not in chains.live:
-        await update.message.reply_text(f"Error: Chain Not Found\n\nSupported Chains:\n{chains.live_list}")
-        return STAGE_CHAIN
-    else:
-        await update.message.reply_text(
-            f"{context.user_data['chain']} Chain\n\nBrilliant! Now, what's the project's token ticker?")
-        return STAGE_TICKER
+    query = update.callback_query
+    await query.answer()
+    chain = query.data.split('_')[1].upper()
+    context.user_data['chain'] = chain
+    await context.bot.send_message(
+        chat_id=query.message.chat_id,
+        text=
+            f"{context.user_data['chain']} Chain\n\nBrilliant! Now, what's the project's token ticker?"
+    )
+    return STAGE_TICKER
 
 
 async def stage_ticker(update: Update, context: CallbackContext) -> int:
@@ -68,7 +76,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
         return STAGE_SUPPLY
     context.user_data['supply'] = supply_input
     await update.message.reply_text(
-        f"{context.user_data['supply']} Supply\n\nThanks! Now, what's your project's Telegram Group Portal Link? If you don't have one, reply 'None'.")
+        f"{context.user_data['supply']} Supply\n\nThanks! Now, what's your project's Telegram Group Portal Link?\n\nIf you don't have one, reply 'None'.")
     return STAGE_PORTAL
 
 
@@ -79,7 +87,7 @@ async def stage_portal(update: Update, context: CallbackContext) -> int:
         return STAGE_PORTAL
     else:
         await update.message.reply_text(
-            f"{context.user_data['portal']}\n\nThanks! Now, what's your project's website? If you don't have one, reply 'None'.")
+            f"{context.user_data['portal']}\n\nThanks! Now, what's your project's website?\n\nIf you don't have one, reply 'None'.")
         return STAGE_WEBSITE
 
 
@@ -120,7 +128,6 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                     f"Supply: {supply}\n"
                     f"Portal: {portal}\n"
                     f"Website: {website}\n\n"
-                    f"Pair will be launched with 1 ETH Initial Liquidity, the loan will be paid back via liqudity after 7 days unless paid back sooner!\n\n"
                     f"Ownership of the project will be transferred to:\n`{address}`\n\n"
                     "Are these details correct?"
                 ),

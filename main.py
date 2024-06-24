@@ -48,14 +48,13 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("view", admin.view))
 
     ## COMANDS ##
-    application.add_handler(CommandHandler("launch", commands.launch))
     application.add_handler(CommandHandler("reset", commands.reset))
     application.add_handler(CommandHandler("start", commands.start))
     application.add_handler(CommandHandler("status", commands.status))
     start_handler = ConversationHandler(
         entry_points=[CommandHandler('project', project.command)],
         states={
-            project.STAGE_CHAIN: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_chain)],
+            project.STAGE_CHAIN: [CallbackQueryHandler(project.stage_chain, pattern='^chain_')],
             project.STAGE_TICKER: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_ticker)],
             project.STAGE_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_name)],
             project.STAGE_SUPPLY: [MessageHandler(filters.TEXT & ~filters.COMMAND, project.stage_supply)],
@@ -67,6 +66,7 @@ if __name__ == "__main__":
         fallbacks=[CommandHandler('cancel', project.cancel)],
     )
     application.add_handler(start_handler)
+    application.add_handler(CallbackQueryHandler(commands.launch, pattern='^launch$'))
 
     ## START ##
     application.run_polling(allowed_updates=Update.ALL_TYPES)
