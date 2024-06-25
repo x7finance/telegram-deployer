@@ -232,7 +232,7 @@ async def function(update: Update, context: CallbackContext) -> int:
     team_percentage = int(status_text["amount"])
 
     amount_to_subtract = supply * (team_percentage / 100)
-    liquidity = supply - amount_to_subtract
+    loan_supply = supply - amount_to_subtract
     
     try:
         await query.edit_message_text(
@@ -243,7 +243,8 @@ async def function(update: Update, context: CallbackContext) -> int:
             status_text["chain"].lower(),
             status_text["name"],
             status_text["ticker"],
-            liquidity,
+            status_text["supply"],
+            loan_supply,
             status_text["loan"],
             status_text["owner"],
             status_text["address"],
