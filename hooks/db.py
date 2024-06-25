@@ -29,8 +29,8 @@ def add_entry(
         ticker, 
         name, 
         supply,
-        portal,
-        website,
+        amount,
+        loan,
         owner
         ):
     try:
@@ -48,8 +48,8 @@ def add_entry(
             ticker, 
             name, 
             supply,
-            portal,
-            website,
+            amount,
+            loan,
             owner
             )
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -64,8 +64,8 @@ def add_entry(
             ticker, 
             name, 
             supply,
-            portal,
-            website,
+            amount,
+            loan,
             owner
             )
         cursor.execute(add_entry_query, entry_data)
@@ -92,8 +92,8 @@ def search_entry_by_user_id(user_id):
             ticker, 
             name, 
             supply,
-            portal,
-            website,
+            amount,
+            loan,
             owner
         FROM wallets
         WHERE user_id = %s
@@ -112,8 +112,8 @@ def search_entry_by_user_id(user_id):
                 "ticker": result["ticker"],
                 "name": result["name"],
                 "supply": result["supply"],
-                "portal": result["portal"],
-                "website": result["website"],
+                "amount": result["amount"],
+                "loan": result["loan"],
                 "owner": result["owner"]
             }
         else:
@@ -138,8 +138,8 @@ def search_entry_by_address(address):
             ticker, 
             name, 
             supply,
-            portal,
-            website,
+            amount,
+            loan,
             owner
         FROM wallets
         WHERE address = %s
@@ -160,8 +160,8 @@ def search_entry_by_address(address):
                 "ticker": result["ticker"],
                 "name": result["name"],
                 "supply": result["supply"],
-                "portal": result["portal"],
-                "website": result["website"],
+                "amount": result["amount"],
+                "loan": result["loan"],
                 "owner": result["owner"]
             }
         else:
@@ -266,6 +266,29 @@ def set_complete(address):
         WHERE address = %s
         """
         cursor.execute(update_query, (True, address))
+        connection.commit()
+
+        close_connection(connection, cursor)
+
+        if cursor.rowcount > 0:
+            return True
+        else:
+            return False
+    except mysql.connector.Error as e:
+        return f"Error: {e}"
+
+
+def set_incomplete(address):
+    try:
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        update_query = """
+        UPDATE wallets
+        SET complete = %s
+        WHERE address = %s
+        """
+        cursor.execute(update_query, (False, address))
         connection.commit()
 
         close_connection(connection, cursor)

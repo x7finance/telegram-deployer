@@ -2,7 +2,7 @@
 
 def DEPLOYER(chain):
     if chain == "base-sepolia":
-        return "0x507c527379ebe223fb1e5ac4b750123ad88c68ee"
+        return "0xb16FC07A09eF3dEBe90d99eb553A3061Cc0E513F"
     if chain  == "base":
         return "0x47b95167B8cbe70Fffc1dCEE812e7C0388ACB81d"
     else:
@@ -54,6 +54,8 @@ def ILL003(chain):
         return "0x74001C747B6cc9091EE63bC9424DfF633FBAc617"
     
 def ILL004(chain):
+    if chain =="base-sepolia":
+        return "0xd95f799276A8373F7F234A7F211DE9E3a0ae6639"
     if chain == "base":
         return "0xF9832C813104a6256771dfBDd3a243D24B7D7941"
     else:
