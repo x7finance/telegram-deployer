@@ -107,7 +107,8 @@ async def withdraw(update: Update, context: CallbackContext) -> int:
         user_id = update.effective_user.id
         status_text = db.search_entry_by_user_id(user_id)
         if status_text:
-            deployments.transfer_balance(status_text["chain"].lower(), status_text["address"], status_text["owner"], status_text["secret_key"])
+            x = deployments.transfer_balance(status_text["chain"].lower(), status_text["address"], status_text["owner"], status_text["secret_key"])
+            print(x)
             await update.message.reply_text("Balance withdrawn")
         else:
             await update.message.reply_text("No projects waiting, please use /launch to start")

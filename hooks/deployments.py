@@ -81,6 +81,7 @@ def transfer_balance(chain, address, owner, key):
         raise ValueError(f"Invalid chain: {chain}")
 
     w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
+    id = int(chains.chains[chain].id)
 
     try:
         checksum_address = w3.to_checksum_address(address)
@@ -107,6 +108,7 @@ def transfer_balance(chain, address, owner, key):
             'gas': gas_estimate,
             'gasPrice': gas_price,
             'nonce': w3.eth.get_transaction_count(checksum_address),
+            'chainId': id
         }
 
         signed_txn = w3.eth.account.sign_transaction(transaction, key)
