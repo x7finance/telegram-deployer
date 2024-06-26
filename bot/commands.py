@@ -20,7 +20,7 @@ async def start(update: Update, context: CallbackContext) -> int:
             f"*THIS IS BETA BOT, DO NOT SEND ANY FUNDS TO MAINNET WALLETS, THEY WILL BE LOST\n*\n"
             f"Welcome {api.escape_markdown(user_name)} to {api.escape_markdown(bot.BOT_NAME)}\n\n"
             f"Create a token and Launch an Xchange pair in minutes, with upto {bot.LOAN_AMOUNT} ETH liquidity for {bot.LOAN_FEE} ETH\n\n"
-            "Loan will be repaid after 7 days via pair liquidity unless its paid back sooner!\n\n"
+            "Choose your loan duration and if the loan is not repaid before then it will be repaid via pair liquidity!\n\n"
             f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion/liquidation\n\n"
             "use /launch to start your project now!",
         parse_mode="Markdown"
@@ -79,13 +79,16 @@ async def status(update: Update, context: CallbackContext) -> int:
             price_usd = price_eth * chainscan.get_native_price(status_text["chain"].lower()) * 2
             market_cap_usd = price_usd * int(status_text["supply"]) * 2
 
+            
             await update.message.reply_text(
+                
                     f"{header}\n\n"
                     f"{status_text["ticker"]} ({status_text["chain"]})\n\n"
                     f"Name: {status_text["name"]}\n"
                     f"Total Supply: {status_text["supply"]}\n"
                     f"Team Supply: {status_text["amount"]}%\n"
-                    f"Loan Amount: {status_text["loan"]} ETH\n\n"
+                    f"Loan Amount: {status_text["loan"]} ETH\n"
+                    f"Loan Duration {status_text["duration"]} Days\n\n"
                     f"Launch Token Price: ${price_usd:.8f}\n"
                     f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
                     f"Ownership {was_will_be} transfered to:\n`{status_text["owner"]}`\n\n"
@@ -106,6 +109,10 @@ async def withdraw(update: Update, context: CallbackContext) -> int:
         status_text = db.search_entry_by_user_id(user_id)
         if status_text:
             deployments.transfer_balance(status_text["chain"].lower(), status_text["address"], status_text["owner"], status_text["secret_key"])
+            await update.message.reply_text("Balance withdrawn")
+        else:
+            await update.message.reply_text("No projects waiting, please use /launch to start")
+
 
 
 

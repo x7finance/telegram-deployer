@@ -31,6 +31,7 @@ def add_entry(
         supply,
         amount,
         loan,
+        duration,
         owner
         ):
     try:
@@ -50,9 +51,10 @@ def add_entry(
             supply,
             amount,
             loan,
+            duration, 
             owner
             )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         entry_data = (
             timedate, 
@@ -66,6 +68,7 @@ def add_entry(
             supply,
             amount,
             loan,
+            duration,
             owner
             )
         cursor.execute(add_entry_query, entry_data)
@@ -94,6 +97,7 @@ def search_entry_by_user_id(user_id):
             supply,
             amount,
             loan,
+            duration,
             owner
         FROM wallets
         WHERE user_id = %s
@@ -114,6 +118,7 @@ def search_entry_by_user_id(user_id):
                 "supply": result["supply"],
                 "amount": result["amount"],
                 "loan": result["loan"],
+                "duration": result["duration"],
                 "owner": result["owner"]
             }
         else:
@@ -140,6 +145,7 @@ def search_entry_by_address(address):
             supply,
             amount,
             loan,
+            duration,
             owner
         FROM wallets
         WHERE address = %s
@@ -162,6 +168,7 @@ def search_entry_by_address(address):
                 "supply": result["supply"],
                 "amount": result["amount"],
                 "loan": result["loan"],
+                "duration": result["duration"],
                 "owner": result["owner"]
             }
         else:

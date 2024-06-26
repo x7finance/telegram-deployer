@@ -5,12 +5,12 @@ from eth_utils import is_checksum_address
 from eth_account import Account
 from datetime import datetime
 
-from constants import bot, chains
+from constants import ca, bot, chains
 from hooks import api, db, deployments
 
 chainscan = api.ChainScan()
 
-STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_LOAN, STAGE_OWNER, STAGE_CONFIRM = range(8)
+STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM = range(9)
 
 async def command(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
@@ -109,7 +109,7 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     pool = deployments.get_pool_funds("base-sepolia")
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{amount_str}\n\nThanks! Now, how much ETH do you want in Initial Liquidity?\n\nCurrently Available :{pool / 10 ** 18} ETH\n",
+        text=f"{amount_str}\n\nThanks! Now, how much ETH do you want in Initial Liquidity?\n\nCurrently Available: {pool / 10 ** 18} ETH\n",
         reply_markup=keyboard
     )
     return STAGE_LOAN
@@ -119,9 +119,33 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     await query.answer()
     loan_amount = query.data.split('_')[1]
     context.user_data['loan'] = loan_amount
+    buttons = [
+        [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
+        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
+        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
+        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
+        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
+        [InlineKeyboardButton("6 Days", callback_data=f'duration_5')],
+        [InlineKeyboardButton("7 Days", callback_data=f'duration_5')]
+
+    ]
+    keyboard = InlineKeyboardMarkup(buttons)
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{loan_amount} ETH will be allocated for initial liquidity.\n\nNow Please provide the address you want owenership transferred to."
+        text=f"{loan_amount} ETH will be allocated for initial liquidity.\n\nHow long do you want the loan for?",
+        reply_markup=keyboard
+    )
+    return STAGE_DURATION
+
+async def stage_duration(update: Update, context: CallbackContext) -> int:
+    query = update.callback_query
+    await query.answer()
+    duration = query.data.split('_')[1]
+    context.user_data['duration'] = duration
+    await context.bot.send_message(
+        chat_id=query.message.chat_id,
+        text=f"{duration} days, If the loan is not paid before then, the loan is eligible for liquidiation meaning the loaned amount will be withdrawn from the pair liquidity\n\n"
+        "Now Please provide the address you want owenership transferred to."
     )
     return STAGE_OWNER
 
@@ -139,9 +163,10 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         supply = user_data.get('supply')
         amount = user_data.get('amount')
         loan = user_data.get('loan')
+        duration = user_data.get('duration')
         address = user_data.get('owner')
 
-        if all([name, ticker, chain, supply, amount, loan, address]):
+        if all([name, ticker, chain, supply, amount, loan, duration, address]):
             
             team_tokens = int(supply) * (int(amount) / 100)
             liquidity_tokens = int(supply) - team_tokens
@@ -159,7 +184,8 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                     f"Project Name: {name}\n"
                     f"Total Supply: {supply}\n"
                     f"Team Supply: {amount}%\n"
-                    f"Loan Amount: {loan} ETH\n\n"
+                    f"Loan Amount: {loan} ETH\n"
+                    f"Loan Duration: {duration} Days\n\n"
                     f"Ownership of the project will be transferred to:\n`{address}`\n\n"
                     f"Launch Token Price: ${price_usd:.8f}\n"
                     f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
@@ -192,7 +218,8 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                       user_data.get('name'), 
                       user_data.get('supply'), 
                       user_data.get('amount'), 
-                      user_data.get('loan'), 
+                      user_data.get('loan'),
+                      user_data.get('duration'), 
                       user_data.get('owner')
                       )
         await update.message.reply_text(f'Please send {bot.LOAN_FEE} ETH to the following address:\n\n`{account.address}`.\n\n'
@@ -228,24 +255,21 @@ async def function(update: Update, context: CallbackContext) -> int:
     token_0 = chains.chains[status_text["chain"].lower()].address
     chain_id = chains.chains[status_text["chain"].lower()].id
 
-    supply = int(status_text["supply"])
-    team_percentage = int(status_text["amount"])
+    team_supply = int(status_text["supply"]) * int(status_text["amount"])
+    loan_supply = int(status_text["supply"]) - team_supply
 
-    amount_to_subtract = supply * (team_percentage / 100)
-    loan_supply = supply - amount_to_subtract
-    
     try:
         await query.edit_message_text(
             f"Deploying {status_text['ticker']} ({status_text['chain']})...."
         )
-        
         result = deployments.deploy_token(
             status_text["chain"].lower(),
             status_text["name"],
             status_text["ticker"],
             status_text["supply"],
             loan_supply,
-            status_text["loan"],
+            int(status_text["loan"]) * 10 ** 18,
+            int(status_text["duration"]) * 60 * 60 * 24,
             status_text["owner"],
             status_text["address"],
             status_text["secret_key"]
@@ -278,8 +302,7 @@ async def function(update: Update, context: CallbackContext) -> int:
                 [
                     [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token_address}")],
                     [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair_address}")],
-                    
-                    [InlineKeyboardButton(text="Buy Link", url=f"x7finance.org//swap?chainId={chain_id}&token0={token_0}&token1={token_address}")]
+                    [InlineKeyboardButton(text="Buy Link", url=f"x7finance.org//swap?chainId={chain_id}&token0={token_0}&token1={token_address}")],
                     [InlineKeyboardButton(text="Loan Dashboard", url=f"https://www.x7finance.org/loans?tab=open-positions")]
                 ]
             )
@@ -289,4 +312,3 @@ async def function(update: Update, context: CallbackContext) -> int:
     
     except Exception as e:
         await query.edit_message_text(f"Error deploying token: {str(e)}")
-
