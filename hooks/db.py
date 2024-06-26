@@ -32,7 +32,8 @@ def add_entry(
         amount,
         loan,
         duration,
-        owner
+        owner,
+        fee
         ):
     try:
         connection = create_connection()
@@ -52,9 +53,10 @@ def add_entry(
             amount,
             loan,
             duration, 
-            owner
+            owner,
+            fee
             )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         entry_data = (
             timedate, 
@@ -69,7 +71,8 @@ def add_entry(
             amount,
             loan,
             duration,
-            owner
+            owner,
+            fee
             )
         cursor.execute(add_entry_query, entry_data)
         connection.commit()
@@ -98,7 +101,8 @@ def search_entry_by_user_id(user_id):
             amount,
             loan,
             duration,
-            owner
+            owner,
+            fee
         FROM wallets
         WHERE user_id = %s
         """
@@ -119,7 +123,8 @@ def search_entry_by_user_id(user_id):
                 "amount": result["amount"],
                 "loan": result["loan"],
                 "duration": result["duration"],
-                "owner": result["owner"]
+                "owner": result["owner"],
+                "fee": result["fee"]
             }
         else:
             return False
@@ -146,7 +151,8 @@ def search_entry_by_address(address):
             amount,
             loan,
             duration,
-            owner
+            owner,
+            fee
         FROM wallets
         WHERE address = %s
         """
@@ -169,7 +175,8 @@ def search_entry_by_address(address):
                 "amount": result["amount"],
                 "loan": result["loan"],
                 "duration": result["duration"],
-                "owner": result["owner"]
+                "owner": result["owner"],
+                "fee": result["fee"]
             }
         else:
             return False

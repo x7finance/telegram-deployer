@@ -39,10 +39,10 @@ async def error(update: Update, context: CallbackContext):
 if __name__ == "__main__":
     application.add_error_handler(error)
     application.add_handler(CommandHandler("test", commands.test))
-    application.add_handler(CommandHandler("withdraw", commands.withdraw))
 
     ## ADMIN ##
     application.add_handler(CommandHandler("admin", admin.command))
+    application.add_handler(CommandHandler("refund", admin.refund))
     application.add_handler(CommandHandler("search", admin.search))
     application.add_handler(CommandHandler("view", admin.view))
 
@@ -50,6 +50,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("reset", commands.reset))
     application.add_handler(CommandHandler("start", commands.start))
     application.add_handler(CommandHandler("status", commands.status))
+    application.add_handler(CommandHandler("withdraw", commands.withdraw))
     launch_handler = ConversationHandler(
         entry_points=[CommandHandler('launch', launch.command)],
         states={

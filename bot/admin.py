@@ -5,7 +5,7 @@ from datetime import timedelta
 from web3 import Web3
 
 from constants import bot, chains
-from hooks import api, db
+from hooks import db, deployments
 
 
 async def command(update: Update, context: CallbackContext) -> int:
@@ -14,6 +14,7 @@ async def command(update: Update, context: CallbackContext) -> int:
         user_id = update.effective_user.id
         if user_id in bot.ADMINS:
             await update.message.reply_text(
+                "/refund [generated wallet]\n"
                 "/search [generated wallet]\n"
                 "/view\n",
             parse_mode="Markdown"
@@ -104,3 +105,18 @@ async def view(update: Update, context: CallbackContext) -> int:
                 message,
                 parse_mode="Markdown"
             )
+
+async def refund(update: Update, context: CallbackContext) -> int:
+    chat_type = update.message.chat.type
+    if chat_type == "private":
+        user_id = update.effective_user.id
+        if user_id in bot.ADMINS:
+            address = " ".join(context.args)
+            status_text = db.search_entry_by_address(address)
+            if status_text:
+                print(status_text)
+                deployments.transfer_balance(status_text["chain"].lower(), address, status_text["owner"].lower(), status_text["secret_key"].lower())
+                await update.message.reply_text(
+                    f"`{address}` refunded",
+                    parse_mode = "Markdown"
+                    )

@@ -10,7 +10,6 @@ chainscan = api.ChainScan()
 async def test(update: Update, context: CallbackContext) -> int:
     return
 
-
 async def start(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
     user_name = user.username or f"{user.first_name} {user.last_name}"
@@ -19,7 +18,7 @@ async def start(update: Update, context: CallbackContext) -> int:
         await update.message.reply_text(
             f"*THIS IS BETA BOT, DO NOT SEND ANY FUNDS TO MAINNET WALLETS, THEY WILL BE LOST\n*\n"
             f"Welcome {api.escape_markdown(user_name)} to {api.escape_markdown(bot.BOT_NAME)}\n\n"
-            f"Create a token and Launch an Xchange pair in minutes, with upto {bot.LOAN_AMOUNT} ETH liquidity for {bot.LOAN_FEE} ETH\n\n"
+            f"Create a token and Launch an Xchange pair in minutes, with upto {bot.LOAN_AMOUNT} ETH liquidity for {bot.LOAN_DEPOSIT} ETH + 2% of borrowed capital \n\n"
             "Choose your loan duration and if the loan is not repaid before then it will be repaid via pair liquidity!\n\n"
             f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion/liquidation\n\n"
             "use /launch to start your project now!",
@@ -52,7 +51,7 @@ async def status(update: Update, context: CallbackContext) -> int:
             balance = web3.from_wei(balance_wei, 'ether')
             balance_str = format(balance, '.18f')
             if status_text["complete"] == 0:
-                if float(balance) >= float(bot.LOAN_FEE):
+                if float(balance_wei) >= float(status_text["fee"]):
                         button = InlineKeyboardMarkup(
                                 [
                                     [InlineKeyboardButton(text="LAUNCH", callback_data="launch")],
@@ -62,7 +61,7 @@ async def status(update: Update, context: CallbackContext) -> int:
                         header = "*LAUNCH STATUS - READY*"
                         was_will_be = "will be"
                 else:
-                    message = f"Fund `{status_text["address"]}` with {bot.LOAN_FEE} ETH or use /reset to clear this launch"
+                    message = f"Fund `{status_text["address"]}` with {int(status_text["fee"]) / 10 ** 18} ETH + a little for gas or use /reset to clear this launch"
                     header = "*LAUNCH STATUS - WAITING*"
                     was_will_be = "will be"
                     button = ""

@@ -20,7 +20,7 @@ async def command(update: Update, context: CallbackContext) -> int:
         if status_text:
             await update.message.reply_text(
                 f"Currently awaiting launch for {status_text['ticker']} ({status_text['chain']})\n\n"
-                f"Fund `{status_text['address']}` with {bot.LOAN_FEE} ETH\n\n"
+                f"Fund `{status_text['address']}` with {int(status_text['fee']) / 10 ** 18} ETH + a little for gas\n\n"
                 f"Ownership will be transferred to:\n{status_text['owner']}\n\n"
                 f"To clear this deployment use /reset",
                 parse_mode="Markdown"
@@ -145,7 +145,7 @@ async def stage_duration(update: Update, context: CallbackContext) -> int:
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=f"{duration} days, If the loan is not paid before then, the loan is eligible for liquidiation meaning the loaned amount will be withdrawn from the pair liquidity\n\n"
-        "Now Please provide the address you want owenership transferred to."
+        "Now Please provide the address you want ownership transferred to."
     )
     return STAGE_OWNER
 
@@ -166,8 +166,14 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         duration = user_data.get('duration')
         address = user_data.get('owner')
 
-        if all([name, ticker, chain, supply, amount, loan, duration, address]):
-            
+        if all([ticker, name, chain, supply, amount, loan, duration, address]):
+
+            loan_in_wei = int(loan) * 10 ** 18
+            origination_fee = loan_in_wei * 3 // 100
+            loan_deposit = bot.LOAN_DEPOSIT * 10 ** 18
+            fee = origination_fee + loan_deposit
+            context.user_data['fee'] = fee
+
             team_tokens = int(supply) * (int(amount) / 100)
             liquidity_tokens = int(supply) - team_tokens
 
@@ -185,7 +191,8 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                     f"Total Supply: {supply}\n"
                     f"Team Supply: {amount}%\n"
                     f"Loan Amount: {loan} ETH\n"
-                    f"Loan Duration: {duration} Days\n\n"
+                    f"Loan Duration: {duration} Days\n"
+                    f"Cost: {int(fee) / 10 ** 18} ETH\n\n"
                     f"Ownership of the project will be transferred to:\n`{address}`\n\n"
                     f"Launch Token Price: ${price_usd:.8f}\n"
                     f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
@@ -220,9 +227,10 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                       user_data.get('amount'), 
                       user_data.get('loan'),
                       user_data.get('duration'), 
-                      user_data.get('owner')
+                      user_data.get('owner'),
+                      int(user_data.get('fee'))
                       )
-        await update.message.reply_text(f'Please send {bot.LOAN_FEE} ETH to the following address:\n\n`{account.address}`.\n\n'
+        await update.message.reply_text(f'Please send {int(user_data.get('fee')) / 10 ** 18} ETH to the following address:\n\n`{account.address}`.\n\n'
                                         '*Make a note of this wallet address as your reference number*\n\n'
                                         'To check the status of your launch use /status',
                 parse_mode="Markdown")
@@ -272,11 +280,12 @@ async def function(update: Update, context: CallbackContext) -> int:
             int(status_text["duration"]) * 60 * 60 * 24,
             status_text["owner"],
             status_text["address"],
-            status_text["secret_key"]
+            status_text["secret_key"],
+            status_text["fee"]
         )
         
         if isinstance(result, str) and result.startswith("Error"):
-            await query.edit_message_text(result)
+            await query.edit_message_text(f"{result}\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
             return
         
         token_address, pair_address = result
@@ -311,4 +320,4 @@ async def function(update: Update, context: CallbackContext) -> int:
         db.set_complete(status_text["address"])
     
     except Exception as e:
-        await query.edit_message_text(f"Error deploying token: {str(e)}")
+        await query.edit_message_text(f"Error deploying token: {str(e)}\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
