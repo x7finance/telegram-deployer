@@ -202,12 +202,12 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     chain_native = chains.chains[context.user_data['chain'].lower()].token
     context.user_data['loan'] = loan_amount
     buttons = [
-       [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
-        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
-        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
-        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
-        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
-        [InlineKeyboardButton("6 Days", callback_data=f'duration_6')],
+#       [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
+#        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
+#        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
+#        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
+#        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
+#        [InlineKeyboardButton("6 Days", callback_data=f'duration_6')],
         [InlineKeyboardButton("7 Days", callback_data=f'duration_7')]
 
     ]
@@ -352,7 +352,9 @@ async def function(update: Update, context: CallbackContext) -> int:
     token_0 = chains.chains[chain].address
     chain_id = chains.chains[chain].id
     chain_scan = chains.chains[chain].address
-    
+    chain_tx = chains.chains[chain].scan_tx
+    fee, loan_contract = bot.ACTIVE_LOAN(chain, status_text["loan"])
+
     try:
         await query.edit_message_text(
             f"Deploying {status_text['ticker']} ({status_text['chain']})...."
@@ -386,11 +388,14 @@ async def function(update: Update, context: CallbackContext) -> int:
         )
         
         if isinstance(refund, str) and refund.startswith("Error"):
-            await query.edit_message_text(refund)
-            return
-        
+            refund_text = f"{refund}\n\nUse /withdraw to claim any unused funds"
+        else:
+            refund_text = (
+                "Excess funds withdrawn\n\n"
+                f"{chain_tx}{refund}"
+            )
+
         try:
-            fee, loan_contract = bot.ACTIVE_LOAN(chain, loan)
             chain_web3 = chains.chains[chain].w3
             web3 = Web3(Web3.HTTPProvider(chain_web3))
             contract = web3.eth.contract(address=web3.to_checksum_address(loan_contract), abi=chainscan.get_abi(loan_contract, chain))
@@ -414,13 +419,17 @@ async def function(update: Update, context: CallbackContext) -> int:
                     [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token_address}")],
                     [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair_address}")],
                     [InlineKeyboardButton(text="Buy Link", url=f"https://x7finance.org/?chainId={chain_id}&token1={token_address}")],
-                    [InlineKeyboardButton(text="Loan Dashboard", url=f"https://www.x7finance.org/loans?tab=open-positions")]
+                    [InlineKeyboardButton(text="Loan Dashboard", url=f"https://www.x7finance.org/loans?tab=open-positions")],
                     [InlineKeyboardButton(text="Loan Contract", url=f"{chain_scan}{loan_contract}#writeContract#F7")]
                 ]
             )
         )
         
         db.set_complete(status_text["address"])
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=refund_text
+    )
     
     except Exception as e:
         await query.edit_message_text(f"Error deploying token: {str(e)}\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
