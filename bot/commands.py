@@ -74,21 +74,24 @@ async def status(update: Update, context: CallbackContext) -> int:
             team_tokens = int(status_text["supply"]) * (int(status_text["amount"]) / 100)
             liquidity_tokens = int(status_text["supply"]) - team_tokens
 
-            price_eth = int(status_text["loan"]) / liquidity_tokens
+            price_eth = float(status_text["loan"]) / liquidity_tokens
             price_usd = price_eth * chainscan.get_native_price(status_text["chain"].lower()) * 2
             market_cap_usd = price_usd * int(status_text["supply"]) * 2
 
-            
+            supply_float = float(status_text["supply"])
+            amount_percentage = float(status_text["amount"]) / 100
+            team_supply = supply_float * amount_percentage
+            loan_supply = supply_float - team_supply
+
             await update.message.reply_text(
-                
                     f"{header}\n\n"
                     f"{status_text["ticker"]} ({status_text["chain"]})\n\n"
                     f"Name: {status_text["name"]}\n"
-                    f"Total Supply: {status_text["supply"]}\n"
-                    f"Team Supply: {status_text["amount"]}%\n"
+                    f"Total Supply: {supply_float:,.0f}\n"
+                    f"Team Supply: {team_supply:,.0f} ({status_text["amount"]}%)\n"
+                    f"Loan Supply: {loan_supply:,.0f}\n"
                     f"Loan Amount: {status_text["loan"]} ETH\n"
                     f"Loan Duration {status_text["duration"]} Days\n\n"
-                    f"Launch Token Price: ${price_usd:.8f}\n"
                     f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
                     f"Ownership {was_will_be} transfered to:\n`{status_text["owner"]}`\n\n"
                     f"Current Deployer Wallet Balance:\n"
@@ -107,9 +110,13 @@ async def withdraw(update: Update, context: CallbackContext) -> int:
         user_id = update.effective_user.id
         status_text = db.search_entry_by_user_id(user_id)
         if status_text:
-            x = deployments.transfer_balance(status_text["chain"].lower(), status_text["address"], status_text["owner"], status_text["secret_key"])
-            print(x)
-            await update.message.reply_text("Balance withdrawn")
+            result = deployments.transfer_balance(status_text["chain"].lower(), status_text["address"], status_text["owner"], status_text["secret_key"])
+            if result.startswith("Error"):
+                await update.message.reply_text(result)
+            else:
+                chain_link = chains.chains[status_text["chain"].lower()].scan_tx
+                await update.message.reply_text(f"Balance withdrawn\n\n{chain_link}{result}")
+
         else:
             await update.message.reply_text("No projects waiting, please use /launch to start")
 

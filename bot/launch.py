@@ -76,6 +76,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
         )
         return STAGE_SUPPLY
     context.user_data['supply'] = supply_input
+    supply_float = float(supply_input)
     buttons = [
         [InlineKeyboardButton("0", callback_data=f'amount_0')],
         [InlineKeyboardButton("5%", callback_data=f'amount_5')],
@@ -83,8 +84,9 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
         [InlineKeyboardButton("25%", callback_data=f'amount_25')]
     ]
     keyboard = InlineKeyboardMarkup(buttons)
+    
     await update.message.reply_text(
-        f"{context.user_data['supply']} Total supply\n\nThanks! Now, What percentage of tokens do you want to keep back as 'team supply'?",
+        f"{supply_float:,.0f} Total supply\n\nThanks! Now, What percentage of tokens do you want to keep back as 'team supply'?",
         reply_markup=keyboard
     )
     return STAGE_AMOUNT
@@ -95,6 +97,7 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     amount = query.data.split('_')[1]
     context.user_data['amount'] = amount
     buttons = [
+        [InlineKeyboardButton("0.5 ETH", callback_data=f'loan_0.5')],
         [InlineKeyboardButton("1 ETH", callback_data=f'loan_1')],
         [InlineKeyboardButton("2 ETH", callback_data=f'loan_2')],
         [InlineKeyboardButton("3 ETH", callback_data=f'loan_3')],
@@ -168,8 +171,8 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
 
         if all([ticker, name, chain, supply, amount, loan, duration, address]):
 
-            loan_in_wei = int(loan) * 10 ** 18
-            origination_fee = loan_in_wei * 3 // 100
+            loan_in_wei = float(loan) * 10 ** 18
+            origination_fee = int(loan_in_wei) * 3 // 100
             loan_deposit = bot.LOAN_DEPOSIT * 10 ** 18
             fee = origination_fee + loan_deposit
             context.user_data['fee'] = fee
@@ -177,9 +180,15 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
             team_tokens = int(supply) * (int(amount) / 100)
             liquidity_tokens = int(supply) - team_tokens
 
-            price_eth = int(loan) / liquidity_tokens
+            price_eth = float(loan) / liquidity_tokens
             price_usd = price_eth * chainscan.get_native_price(chain.lower()) * 2
             market_cap_usd = price_usd * int(supply) * 2
+
+            supply_float = float(supply)
+            supply_float = float(supply)
+            amount_percentage = float(amount) / 100
+            team_supply = supply_float * amount_percentage
+            loan_supply = supply_float - team_supply
 
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
@@ -188,13 +197,13 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                     f"Chain: {chain}\n"
                     f"Ticker: {ticker}\n"
                     f"Project Name: {name}\n"
-                    f"Total Supply: {supply}\n"
-                    f"Team Supply: {amount}%\n"
+                    f"Total Supply: {supply_float:,.0f}\n"
+                    f"Team Supply: {team_supply:,.0f} ({amount}%)\n"
+                    f"Loan Supply: {loan_supply:,.0f}\n"
                     f"Loan Amount: {loan} ETH\n"
                     f"Loan Duration: {duration} Days\n"
                     f"Cost: {int(fee) / 10 ** 18} ETH\n\n"
                     f"Ownership of the project will be transferred to:\n`{address}`\n\n"
-                    f"Launch Token Price: ${price_usd:.8f}\n"
                     f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
                     "Do you want to proceed with the launch?"
                 ),
@@ -258,37 +267,40 @@ async def function(update: Update, context: CallbackContext) -> int:
     if not status_text:
         await query.edit_message_text("No deployment status found")
         return
-    
+
     chain_url = chains.chains[status_text["chain"].lower()].scan_token
     token_0 = chains.chains[status_text["chain"].lower()].address
     chain_id = chains.chains[status_text["chain"].lower()].id
 
-    team_supply = int(status_text["supply"]) * int(status_text["amount"])
+    team_supply = int(status_text["supply"]) * int(status_text["amount"]) // 100
     loan_supply = int(status_text["supply"]) - team_supply
+
 
     try:
         await query.edit_message_text(
             f"Deploying {status_text['ticker']} ({status_text['chain']})...."
         )
-        result = deployments.deploy_token(
+
+
+        loan = deployments.deploy_token(
             status_text["chain"].lower(),
             status_text["name"],
             status_text["ticker"],
-            status_text["supply"],
+            int(status_text["supply"]),
             loan_supply,
-            int(status_text["loan"]) * 10 ** 18,
+            float(status_text["loan"]) * 10 ** 18,
             int(status_text["duration"]) * 60 * 60 * 24,
             status_text["owner"],
             status_text["address"],
             status_text["secret_key"],
-            status_text["fee"]
+            int(status_text["fee"])
         )
         
-        if isinstance(result, str) and result.startswith("Error"):
-            await query.edit_message_text(f"{result}\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
+        if isinstance(loan, str) and loan.startswith("Error"):
+            await query.edit_message_text(f"{loan}\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
             return
         
-        token_address, pair_address = result
+        token_address, pair_address = loan
         
         refund = deployments.transfer_balance(
             status_text["chain"].lower(),
@@ -321,3 +333,5 @@ async def function(update: Update, context: CallbackContext) -> int:
     
     except Exception as e:
         await query.edit_message_text(f"Error deploying token: {str(e)}\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
+
+    return

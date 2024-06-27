@@ -9,53 +9,46 @@ from hooks import api
 def deploy_token(chain, name, symbol, supply, loan_supply, loan_amount, duration, owner, address, key, loan_fee):
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
-    
+
     w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
+
     deployer_address = ca.DEPLOYER(chain)
     factory_address = ca.FACTORY(chain)
-    
+
     deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
     factory_abi = api.ChainScan().get_abi(factory_address, chain)
-    
+
     deployer_contract = w3.eth.contract(address=w3.to_checksum_address(deployer_address), abi=deployer_abi)
     factory_contract = w3.eth.contract(address=w3.to_checksum_address(factory_address), abi=factory_abi)
+
     deadline = api.timestamp_deadline()
     gas_price = w3.eth.gas_price
-    
+    nonce = w3.eth.get_transaction_count(address)
+
+    params = {
+            'name': name,
+            'symbol': symbol,
+            'supply': int(supply),
+            'loanSupply': int(loan_supply),
+            'newOwner': owner,
+            'loanTermContract': ca.ILL004(chain),
+            'loanAmount': int(loan_amount),
+            'loanDurationSeconds': int(duration),
+            'liquidityReceiver': address, 
+            'deadline': deadline
+        }
+
     try:
-        gas_estimate = deployer_contract.functions.deployToken(
-            name,
-            symbol,
-            int(supply),
-            int(loan_supply),
-            owner,
-            ca.ILL004(chain),
-            int(loan_amount),
-            int(duration),
-            owner,
-            deadline
-        ).estimate_gas({
+        gas_estimate = deployer_contract.functions.deployToken(params).estimate_gas({
             'from': address,
-            'nonce': w3.eth.get_transaction_count(address),
+            'nonce': nonce,
             'gasPrice': gas_price,
             'value': loan_fee
         })
 
-
-        transaction = deployer_contract.functions.deployToken(
-            name,
-            symbol,
-            int(supply),
-            int(loan_supply),
-            owner,
-            ca.ILL004(chain),
-            int(loan_amount),
-            int(duration),
-            owner,
-            deadline
-        ).build_transaction({
+        transaction = deployer_contract.functions.deployToken(params).build_transaction({
             'from': address,
-            'nonce': w3.eth.get_transaction_count(address),
+            'nonce': nonce,
             'gasPrice': gas_price,
             'gas': gas_estimate,
             'value': loan_fee
@@ -65,14 +58,12 @@ def deploy_token(chain, name, symbol, supply, loan_supply, loan_amount, duration
         tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
-        create_log = deployer_contract.events.TokenDeployed().process_receipt(tx_receipt)
-        pair_log = factory_contract.events.PairCreated().process_receipt(tx_receipt)
+        create_log = deployer_contract.events.TokenDeployed().processReceipt(tx_receipt)
+        pair_log = factory_contract.events.PairCreated().processReceipt(tx_receipt)
 
         return create_log[0]['args']['tokenAddress'], pair_log[0]['args']['pair']
 
-
     except Exception as e:
-        print(f"Exception: {e}")
         return f'Error deploying token: {str(e)}'
 
 
