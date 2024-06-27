@@ -28,6 +28,8 @@ def LPOOL(chain, loan_id=None):
         return "0x740015c39da5d148fca25a467399d00bce10c001"
 
 def LPOOL_RESERVE(chain):
+    if chain == "base-sepolia":
+        return "0x8549Ccd56B35AF4FC3f8B8C5BA3dda52AfE4dcE8"
     if chain == "base":
         return "0x7Ca54e9Aa3128bF15f764fa0f0f93e72b5267000"
     else:
@@ -41,9 +43,8 @@ def ROUTER(chain):
     else:
         return "0x7DE8063E9fB43321d2100e8Ddae5167F56A50060"
 
-
 def ILL004(chain):
-    if chain =="base-sepolia":
+    if chain == "base-sepolia":
         return "0xd95f799276A8373F7F234A7F211DE9E3a0ae6639"
     if chain == "base":
         return "0xF9832C813104a6256771dfBDd3a243D24B7D7941"

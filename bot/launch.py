@@ -149,9 +149,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     keyboard = InlineKeyboardMarkup(buttons)
     
     await update.message.reply_text(
-        f"{supply_float:,.0f} Total supply\n\nThanks! Now, What percentage of tokens do you want to keep back as 'team supply'?"
-        "\n\nCOMING SOON!"
-        ,
+        f"{supply_float:,.0f} Total supply\n\nThanks! Now, What percentage of tokens do you want to keep back as 'team supply'?",
         reply_markup=keyboard
     )
     return STAGE_AMOUNT
@@ -164,11 +162,11 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     context.user_data['amount'] = amount
     buttons = [
         [InlineKeyboardButton(f"0.5 {chain_native.upper()}", callback_data=f'loan_0.5')],
-        [InlineKeyboardButton(f"1 {chain_native.upper()}", callback_data=f'loan_1')],
-        [InlineKeyboardButton(f"2 {chain_native.upper()}", callback_data=f'loan_2')],
-        [InlineKeyboardButton(f"3 {chain_native.upper()}", callback_data=f'loan_3')],
-        [InlineKeyboardButton(f"4 {chain_native.upper()}", callback_data=f'loan_4')],
-        [InlineKeyboardButton(f"5 {chain_native.upper()}", callback_data=f'loan_5')]
+#        [InlineKeyboardButton(f"1 {chain_native.upper()}", callback_data=f'loan_1')],
+#        [InlineKeyboardButton(f"2 {chain_native.upper()}", callback_data=f'loan_2')],
+#        [InlineKeyboardButton(f"3 {chain_native.upper()}", callback_data=f'loan_3')],
+#        [InlineKeyboardButton(f"4 {chain_native.upper()}", callback_data=f'loan_4')],
+#        [InlineKeyboardButton(f"5 {chain_native.upper()}", callback_data=f'loan_5')]
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     if amount == "0":
@@ -190,12 +188,12 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     chain_native = chains.chains[context.user_data['chain'].lower()].token
     context.user_data['loan'] = loan_amount
     buttons = [
-        [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
-        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
-        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
-        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
-        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
-        [InlineKeyboardButton("6 Days", callback_data=f'duration_6')],
+#       [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
+#        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
+#        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
+#        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
+#        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
+#        [InlineKeyboardButton("6 Days", callback_data=f'duration_6')],
         [InlineKeyboardButton("7 Days", callback_data=f'duration_7')]
 
     ]
