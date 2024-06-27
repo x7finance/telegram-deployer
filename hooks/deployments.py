@@ -6,7 +6,7 @@ from web3 import Web3
 from hooks import api
 
 
-def deploy_token(chain, name, symbol, supply, team_percent, loan_amount, duration, owner, address, key, loan_fee):
+def deploy_token(chain, name, symbol, supply, percent, loan_amount, duration, owner, address, key, loan_fee):
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
     
@@ -31,7 +31,7 @@ def deploy_token(chain, name, symbol, supply, team_percent, loan_amount, duratio
             name,
             symbol,
             int(supply),
-    #        int(team_percent),
+    #        int(percent),
             owner,
             loan_contract,
             int(loan_amount),
@@ -49,7 +49,7 @@ def deploy_token(chain, name, symbol, supply, team_percent, loan_amount, duratio
             name,
             symbol,
             int(supply),
-    #        int(team_percent),
+    #        int(percent),
             owner,
             loan_contract,
             int(loan_amount),

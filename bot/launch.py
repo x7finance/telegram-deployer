@@ -102,14 +102,26 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
     context.user_data['chain'] = chain
     chain_native = chains.chains[chain.lower()].token
     funds = deployments.get_pool_funds(chain.lower()) / 10 ** 18
-    await context.bot.send_message(
-        chat_id=query.message.chat_id,
-        text=
-            f"{context.user_data['chain']} Chain\n\nBrilliant!\n\n"
-            f"Theres currently {funds} {chain_native.upper()} in the lending pool ready to be deployed!\n\n"
-            "Lets get your project launched! Now, what's the project's token ticker?"
+    if funds < bot.MIN_LOAN_AMOUNT:
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=
+                f"Theres currently only {funds} {chain_native.upper()} in the {context.user_data['chain']} Chain lending pool\n\n"
+                f"Pop back later once the pool is refilled, or check the link below to see how you can deposit your {chain_native.upper()} and earn yield!",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("X7D Lending Dashboard", url=f"x7finance.org/fund")]
+            ])
         )
-    return STAGE_TICKER
+        return ConversationHandler.END
+    else:
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=
+                f"{context.user_data['chain']} Chain\n\nBrilliant!\n\n"
+                f"Theres currently {funds} {chain_native.upper()} in the lending pool ready to be deployed!\n\n"
+                "Lets get your project launched! Now, what's the project's token ticker?"
+            )
+        return STAGE_TICKER
 
 async def stage_ticker(update: Update, context: CallbackContext) -> int:
     context.user_data['ticker'] = update.message.text
@@ -140,7 +152,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     context.user_data['supply'] = supply_input
     supply_float = float(supply_input)
     buttons = [
-        [InlineKeyboardButton("0", callback_data=f'amount_0')]
+        [InlineKeyboardButton("0%", callback_data=f'amount_0')]
 #        ,
 #        [InlineKeyboardButton("5%", callback_data=f'amount_5')],
 #        [InlineKeyboardButton("10%", callback_data=f'amount_10')],
@@ -149,7 +161,8 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     keyboard = InlineKeyboardMarkup(buttons)
     
     await update.message.reply_text(
-        f"{supply_float:,.0f} Total supply\n\nThanks! Now, What percentage of tokens do you want to keep back as 'team supply'?",
+        f"{supply_float:,.0f} Total supply\n\nThanks! Now, What percentage of tokens (if any) do you want to keep back as 'team supply'?\n\n"
+        "These tokens will not be added to initial liquidity",
         reply_markup=keyboard
     )
     return STAGE_AMOUNT
@@ -157,9 +170,9 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
 async def stage_amount(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
-    amount = query.data.split('_')[1]
+    percent = query.data.split('_')[1]
     chain_native = chains.chains[context.user_data['chain'].lower()].token
-    context.user_data['amount'] = amount
+    context.user_data['percent'] = percent
     buttons = [
         [InlineKeyboardButton(f"0.5 {chain_native.upper()}", callback_data=f'loan_0.5')],
 #        [InlineKeyboardButton(f"1 {chain_native.upper()}", callback_data=f'loan_1')],
@@ -169,14 +182,15 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
 #        [InlineKeyboardButton(f"5 {chain_native.upper()}", callback_data=f'loan_5')]
     ]
     keyboard = InlineKeyboardMarkup(buttons)
-    if amount == "0":
-        amount_str = 'No tokens will be held, 100% of tokens will go into the liquidity.'
+    if percent == "0":
+        percent_str = 'No tokens will be held, 100% of tokens will go into the liquidity.'
     else:
-        amount_str = f"{amount}% of tokens will be held as team supply."
+        percent_str = f"{percent}% of tokens will be held as team supply."
     pool = deployments.get_pool_funds("base-sepolia")
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{amount_str}\n\nThanks! Now, how much {chain_native.upper()} do you want in Initial Liquidity?\n\nCurrently Available: {pool / 10 ** 18} {chain_native.upper()}\n",
+        text=f"{percent_str}\n\nThanks! Now, how much {chain_native.upper()} do you want in Initial Liquidity?\n\n"
+        f"Currently Available: {pool / 10 ** 18} {chain_native.upper()}\n",
         reply_markup=keyboard
     )
     return STAGE_LOAN
@@ -188,12 +202,12 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     chain_native = chains.chains[context.user_data['chain'].lower()].token
     context.user_data['loan'] = loan_amount
     buttons = [
-#       [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
-#        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
-#        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
-#        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
-#        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
-#        [InlineKeyboardButton("6 Days", callback_data=f'duration_6')],
+       [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
+        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
+        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
+        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
+        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
+        [InlineKeyboardButton("6 Days", callback_data=f'duration_6')],
         [InlineKeyboardButton("7 Days", callback_data=f'duration_7')]
 
     ]
@@ -229,17 +243,17 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         name = user_data.get('name')
         chain = user_data.get('chain')
         supply = user_data.get('supply')
-        amount = user_data.get('amount')
+        percent = user_data.get('percent')
         loan = user_data.get('loan')
         duration = user_data.get('duration')
         address = user_data.get('owner')
 
-        if all([ticker, name, chain, supply, amount, loan, duration, address]):
+        if all([ticker, name, chain, supply, percent, loan, duration, address]):
 
             fee, loan_contract = bot.ACTIVE_LOAN(chain, loan)
             context.user_data['fee'] = fee
 
-            team_tokens = int(supply) * (int(amount) / 100)
+            team_tokens = int(supply) * (int(percent) / 100)
             liquidity_tokens = int(supply) - team_tokens
 
             price_eth = float(loan) / liquidity_tokens
@@ -248,7 +262,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
 
             supply_float = float(supply)
             supply_float = float(supply)
-            amount_percentage = float(amount) / 100
+            amount_percentage = float(percent) / 100
             team_supply = supply_float * amount_percentage
             loan_supply = supply_float - team_supply
 
@@ -260,7 +274,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                     f"Ticker: {ticker}\n"
                     f"Project Name: {name}\n"
                     f"Total Supply: {supply_float:,.0f}\n"
-                    f"Team Supply: {team_supply:,.0f} ({amount}%)\n"
+                    f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
                     f"Loan Supply: {loan_supply:,.0f}\n"
                     f"Loan Amount: {loan} ETH\n"
                     f"Loan Duration: {duration} Days\n"
@@ -296,7 +310,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
             user_data.get('ticker'),
             user_data.get('name'), 
             user_data.get('supply'), 
-            user_data.get('amount'), 
+            user_data.get('percent'), 
             user_data.get('loan'),
             user_data.get('duration'), 
             user_data.get('owner'),
@@ -337,8 +351,8 @@ async def function(update: Update, context: CallbackContext) -> int:
     chain_url = chains.chains[chain].scan_token
     token_0 = chains.chains[chain].address
     chain_id = chains.chains[chain].id
+    chain_scan = chains.chains[chain].address
     
-
     try:
         await query.edit_message_text(
             f"Deploying {status_text['ticker']} ({status_text['chain']})...."
@@ -349,7 +363,7 @@ async def function(update: Update, context: CallbackContext) -> int:
             status_text["name"],
             status_text["ticker"],
             int(status_text["supply"]),
-            int(status_text["amount"]),
+            int(status_text["percent"]),
             float(status_text["loan"]) * 10 ** 18,
             int(status_text["duration"]) * 60 * 60 * 24,
             status_text["owner"],
@@ -389,6 +403,7 @@ async def function(update: Update, context: CallbackContext) -> int:
         await query.edit_message_text(
             f"Congrats {status_text['ticker']} has been launched and an Xchange ILL Created\n\n"
             f"CA: `{token_address}`\n\n"
+            f"Loan ID: {loan_id}\n\n"
             f"Ownership transferred to:\n"
             f"`{status_text['owner']}`\n\n"
             f"Payment Schedule:\n\n"
@@ -398,8 +413,9 @@ async def function(update: Update, context: CallbackContext) -> int:
                 [
                     [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token_address}")],
                     [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair_address}")],
-                    [InlineKeyboardButton(text="Buy Link", url=f"x7finance.org//swap?chainId={chain_id}&token0={token_0}&token1={token_address}")],
+                    [InlineKeyboardButton(text="Buy Link", url=f"https://x7finance.org/?chainId={chain_id}&token1={token_address}")],
                     [InlineKeyboardButton(text="Loan Dashboard", url=f"https://www.x7finance.org/loans?tab=open-positions")]
+                    [InlineKeyboardButton(text="Loan Contract", url=f"{chain_scan}{loan_contract}#writeContract#F7")]
                 ]
             )
         )

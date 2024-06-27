@@ -3,6 +3,7 @@ from constants import ca
 BOT_NAME = "Xchange Launcher"
 LOAN_DEPOSIT = 0.1
 MAX_LOAN_AMOUNT = 5
+MIN_LOAN_AMOUNT = 0.5
 ADMINS = [1667971437]
 
 ACTIVE_LOAN_ADDRESS = "ILL004"
