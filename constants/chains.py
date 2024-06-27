@@ -53,7 +53,7 @@ chains = {
         os.getenv('BASE'),
     ),
     "eth": ChainInfo(
-        True,
+        False,
         "ETH",
         "Etherscan",
         "1",
@@ -68,7 +68,7 @@ chains = {
         os.getenv('ETHER'),
     ),
     "base": ChainInfo(
-        True,
+        False,
         "Base",
         "Basescan",
         "8453",
