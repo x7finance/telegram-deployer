@@ -39,7 +39,7 @@ class ChainInfo:
 chains = {
     "base-sepolia": ChainInfo(
         True,
-        "ETH",
+        "Base Sepolia",
         "Base Sepolia Scan",
         "84532",
         "eth",
@@ -53,7 +53,7 @@ chains = {
         os.getenv('BASE'),
     ),
     "eth": ChainInfo(
-        False,
+        True,
         "ETH",
         "Etherscan",
         "1",
@@ -68,7 +68,7 @@ chains = {
         os.getenv('ETHER'),
     ),
     "base": ChainInfo(
-        False,
+        True,
         "Base",
         "Basescan",
         "8453",
@@ -97,7 +97,7 @@ chains = {
         urls.BSC_API,
         os.getenv('BSC')
     ),
-    "arb": ChainInfo(
+    "arbitrum": ChainInfo(
         False,
         "Arbitrum",
         "Arbiscan",
@@ -112,7 +112,7 @@ chains = {
         urls.ARB_API,
         os.getenv('ARB')
     ),
-    "op": ChainInfo(
+    "optimism": ChainInfo(
         False,
         "Optimism",
         "Optimisticscan",

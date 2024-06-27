@@ -6,12 +6,13 @@ from web3 import Web3
 from hooks import api
 
 
-def deploy_token(chain, name, symbol, supply, loan_supply, loan_amount, duration, owner, address, key, loan_fee):
+def deploy_token(chain, name, symbol, supply, team_percent, loan_amount, duration, owner, address, key, loan_fee):
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
+    
+    _, loan_contract = bot.ACTIVE_LOAN(chain, loan_amount)
 
     w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
-
     deployer_address = ca.DEPLOYER(chain)
     factory_address = ca.FACTORY(chain)
 
@@ -25,28 +26,37 @@ def deploy_token(chain, name, symbol, supply, loan_supply, loan_amount, duration
     gas_price = w3.eth.gas_price
     nonce = w3.eth.get_transaction_count(address)
 
-    params = {
-            'name': name,
-            'symbol': symbol,
-            'supply': int(supply),
-            'loanSupply': int(loan_supply),
-            'newOwner': owner,
-            'loanTermContract': ca.ILL004(chain),
-            'loanAmount': int(loan_amount),
-            'loanDurationSeconds': int(duration),
-            'liquidityReceiver': address, 
-            'deadline': deadline
-        }
-
     try:
-        gas_estimate = deployer_contract.functions.deployToken(params).estimate_gas({
+        gas_estimate = deployer_contract.functions.deployToken(
+            name,
+            symbol,
+            int(supply),
+    #        int(team_percent),
+            owner,
+            loan_contract,
+            int(loan_amount),
+            int(duration),
+            owner,
+            deadline
+        ).estimate_gas({
             'from': address,
             'nonce': nonce,
             'gasPrice': gas_price,
             'value': loan_fee
         })
 
-        transaction = deployer_contract.functions.deployToken(params).build_transaction({
+        transaction = deployer_contract.functions.deployToken(
+            name,
+            symbol,
+            int(supply),
+    #        int(team_percent),
+            owner,
+            loan_contract,
+            int(loan_amount),
+            int(duration),
+            owner,
+            deadline
+        ).build_transaction({
             'from': address,
             'nonce': nonce,
             'gasPrice': gas_price,
@@ -58,10 +68,10 @@ def deploy_token(chain, name, symbol, supply, loan_supply, loan_amount, duration
         tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
-        create_log = deployer_contract.events.TokenDeployed().processReceipt(tx_receipt)
-        pair_log = factory_contract.events.PairCreated().processReceipt(tx_receipt)
+        create_log = deployer_contract.events.TokenDeployed().process_receipt(tx_receipt)
+        pair_log = factory_contract.events.PairCreated().process_receipt(tx_receipt)
 
-        return create_log[0]['args']['tokenAddress'], pair_log[0]['args']['pair']
+        return create_log[0]['args']['tokenAddress'], pair_log[0]['args']['pair'], create_log[0]['args']['loanID']
 
     except Exception as e:
         return f'Error deploying token: {str(e)}'
@@ -110,40 +120,6 @@ def transfer_balance(chain, address, owner, key):
 
     except Exception as e:
         return f'Error transferring balance: {e}'
-    
-
-def approve_tokens(chain, token_address, spender, amount, address, key):
-    if chain not in chains.chains:
-        raise ValueError(f"Invalid chain: {chain}")
-    
-    w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
-    token_abi = api.ChainScan().get_abi(token_address, chain)
-    token_contract = w3.eth.contract(
-        address=w3.to_checksum_address(token_address),
-        abi=token_abi
-    )
-    
-    try:
-        gas_estimate = token_contract.functions.approve(spender, amount).estimate_gas({
-            'from': address
-        })
-        
-        gas_price = w3.eth.gas_price
-        transaction = token_contract.functions.approve(spender, amount).build_transaction({
-            'from': address,
-            'nonce': w3.eth.get_transaction_count(address),
-            'gasPrice': gas_price,
-            'gas': gas_estimate,
-        })
-        
-        signed_txn = w3.eth.account.sign_transaction(transaction, key)
-        tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-        
-        return tx_hash.hex()
-    
-    except Exception as e:
-        return f'Error approving tokens: {e}'
     
 
 def get_pool_funds(chain):
