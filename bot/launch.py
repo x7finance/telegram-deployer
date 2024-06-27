@@ -51,7 +51,7 @@ async def command(update: Update, context: CallbackContext) -> int:
                 header = "*LAUNCH STATUS - CONFIRMED*"
                 was_will_be = "was"
 
-            team_tokens = int(status_text["supply"]) * (int(status_text["amount"]) / 100)
+            team_tokens = int(status_text["supply"]) * (int(status_text["percent"]) / 100)
             liquidity_tokens = int(status_text["supply"]) - team_tokens
 
             price_eth = float(status_text["loan"]) / liquidity_tokens
@@ -59,7 +59,7 @@ async def command(update: Update, context: CallbackContext) -> int:
             market_cap_usd = price_usd * int(status_text["supply"]) * 2
 
             supply_float = float(status_text["supply"])
-            amount_percentage = float(status_text["amount"]) / 100
+            amount_percentage = float(status_text["percent"]) / 100
             team_supply = supply_float * amount_percentage
             loan_supply = supply_float - team_supply
 
@@ -68,7 +68,7 @@ async def command(update: Update, context: CallbackContext) -> int:
                 f"{status_text["ticker"]} ({status_text["chain"]})\n\n"
                 f"Project Name: {status_text["name"]}\n"
                 f"Total Supply: {supply_float:,.0f}\n"
-                f"Team Supply: {team_supply:,.0f} ({status_text["amount"]}%)\n"
+                f"Team Supply: {team_supply:,.0f} ({status_text["percent"]}%)\n"
                 f"Loan Supply: {loan_supply:,.0f}\n"
                 f"Loan Amount: {status_text["loan"]} {chain_native.upper()}\n"
                 f"Loan Duration {status_text["duration"]} Days\n"
