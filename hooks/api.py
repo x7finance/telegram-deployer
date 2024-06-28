@@ -2,7 +2,7 @@
 
 import requests, time
 from datetime import datetime, timedelta
-from constants import ca, chains
+from constants import chains
 from web3 import Web3
 
 
