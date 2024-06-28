@@ -245,7 +245,8 @@ def fetch_all_entries():
     except mysql.connector.Error as e:
         return f"Error: {e}"
 
-def mark_entry_as_complete_by_user_id(user_id):
+
+def set_complete(user_id):
     try:
         connection = create_connection()
         cursor = connection.cursor()
@@ -258,57 +259,28 @@ def mark_entry_as_complete_by_user_id(user_id):
         cursor.execute(update_query, (True, user_id))
         connection.commit()
 
-        close_connection(connection, cursor)
-
-        if cursor.rowcount > 0:
-            return True
-        else:
-            return False
-    except mysql.connector.Error as e:
-        return f"Error: {e}"
-
-
-def set_complete(address):
-    try:
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        update_query = """
-        UPDATE wallets
-        SET complete = %s
-        WHERE address = %s
-        """
-        cursor.execute(update_query, (True, address))
+        increment_query = "INSERT INTO log (count) VALUES (1)"
+        cursor.execute(increment_query)
         connection.commit()
 
         close_connection(connection, cursor)
 
-        if cursor.rowcount > 0:
-            return True
-        else:
-            return False
+        return True
     except mysql.connector.Error as e:
         return f"Error: {e}"
 
 
-def set_incomplete(address):
+def count_launches():
     try:
         connection = create_connection()
         cursor = connection.cursor()
 
-        update_query = """
-        UPDATE wallets
-        SET complete = %s
-        WHERE address = %s
-        """
-        cursor.execute(update_query, (False, address))
-        connection.commit()
+        select_query = "SELECT SUM(count) FROM log"
+        cursor.execute(select_query)
+        count = cursor.fetchone()[0]
 
         close_connection(connection, cursor)
 
-        if cursor.rowcount > 0:
-            return True
-        else:
-            return False
+        return count
     except mysql.connector.Error as e:
-        return f"Error: {e}"
+        return f"N/A"

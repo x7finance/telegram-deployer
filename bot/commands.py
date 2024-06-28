@@ -15,6 +15,7 @@ async def start(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
     user_name = user.username or f"{user.first_name} {user.last_name}"
     chat_type = update.message.chat.type
+    count = db.count_launches()
     if chat_type == "private":
         await update.message.reply_text(
             f"*THIS IS BETA BOT, DO NOT SEND ANY FUNDS TO MAINNET WALLETS, THEY WILL BE LOST\n*\n"
@@ -22,6 +23,7 @@ async def start(update: Update, context: CallbackContext) -> int:
             f"Create a token and launch on Xchange in minutes, with upto {bot.MAX_LOAN_AMOUNT} ETH liquidity for {bot.LOAN_DEPOSIT} ETH + 2% of borrowed capital\n\n"
             "Choose your loan duration and if the loan is not repaid before then it will be repaid via pair liquidity!\n\n"
             f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion/liquidation\n\n"
+            f"Total {bot.BOT_NAME} launches: {count}\n\n" 
             "use /launch to start your project now!",
         parse_mode="Markdown"
         )
