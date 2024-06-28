@@ -27,11 +27,11 @@ async def refund(update: Update, context: CallbackContext) -> int:
             address = " ".join(context.args)
             search = db.search_entry_by_address(address)
             if search:
-                result = deployments.transfer_balance(search["chain"].lower(), address, search["owner"], search["secret_key"])
+                result = deployments.transfer_balance(search["chain"], address, search["owner"], search["secret_key"])
                 if result.startswith("Error"):
                     await update.message.reply_text(result)
                 else:
-                    chain_link = chains.chains[search["chain"].lower()].scan_tx
+                    chain_link = chains.chains[search["chain"]].scan_tx
                     await update.message.reply_text(f"Balance withdrawn\n\n{chain_link}{result}")
             else:
                 await update.message.reply_text(
@@ -51,7 +51,7 @@ async def search(update: Update, context: CallbackContext) -> int:
             else:
                 entry = db.search_entry_by_address(address)
                 if entry:
-                    chain_web3 = chains.chains[entry["chain"].lower()].w3
+                    chain_web3 = chains.chains[entry["chain"]].w3
                     web3 = Web3(Web3.HTTPProvider(chain_web3))
                     balance_wei = web3.eth.get_balance(address)
                     balance = web3.from_wei(balance_wei, 'ether')
@@ -84,8 +84,8 @@ async def view(update: Update, context: CallbackContext) -> int:
             
             formatted_entries = []
             for entry in entries:
-                chain_native = chains.chains[entry["chain"].lower()].token
-                chain_web3 = chains.chains[entry["chain"].lower()].w3
+                chain_native = chains.chains[entry["chain"]].token
+                chain_web3 = chains.chains[entry["chain"]].w3
                 web3 = Web3(Web3.HTTPProvider(chain_web3))
                 balance_wei = web3.eth.get_balance(entry["address"])
                 balance = web3.from_wei(balance_wei, 'ether')

@@ -18,6 +18,7 @@ class ChainInfo:
         scan_tx: str,
         dext: str,
         w3: str,
+        w3_fallback: str,
         api: str,
         key: str,
     ):
@@ -32,6 +33,7 @@ class ChainInfo:
         self.scan_tx = scan_tx
         self.dext = dext
         self.w3 = w3
+        self.w3_fallback = w3_fallback
         self.api = api
         self.key = key
 
@@ -49,6 +51,7 @@ chains = {
         urls.BASE_SEPOLIA_TX,
         "ether",
         urls.BASE_SEPOLIA_RPC,
+        urls.BASE_SEPOLIA_RPC_FALLBACK,
         urls.BASE_SEPOLIA_API,
         os.getenv('BASE'),
     ),
@@ -64,6 +67,7 @@ chains = {
         urls.ETHER_TX,
         "ether",
         urls.ETH_RPC,
+        urls.ETH_RPC_FALLBACK,
         urls.ETHER_API,
         os.getenv('ETHER'),
     ),
@@ -79,6 +83,7 @@ chains = {
         urls.BASE_TX,
         "base",
         urls.BASE_RPC,
+        urls.BASE_RPC_FALLBACK,
         urls.BASE_API,
         os.getenv('BASE')
     ),
@@ -94,6 +99,7 @@ chains = {
         urls.BSC_TX,
         "bsc",
         urls.BSC_RPC,
+        urls.BSC_RPC_FALLBACK,
         urls.BSC_API,
         os.getenv('BSC')
     ),
@@ -109,6 +115,7 @@ chains = {
         urls.ARB_TX,
         "arbitrum",
         urls.ARB_RPC,
+        urls.ARB_RPC_FALLBACK,
         urls.ARB_API,
         os.getenv('ARB')
     ),
@@ -124,6 +131,7 @@ chains = {
         urls.OP_TX,
         "optimism",
         urls.OP_RPC,
+        urls.OP_RPC_FALLBACK,
         urls.OP_API,
         os.getenv('OP')
     ),
@@ -139,6 +147,7 @@ chains = {
         urls.POLY_TX,
         "polygon",
         urls.POLY_RPC,
+        urls.POLY_RPC_FALLBACK,
         urls.POLY_API,
         os.getenv('POLY')
     )

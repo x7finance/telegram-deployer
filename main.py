@@ -62,7 +62,7 @@ if __name__ == "__main__":
             launch.STAGE_LOAN: [CallbackQueryHandler(launch.stage_loan, pattern='^loan_')],
             launch.STAGE_DURATION: [CallbackQueryHandler(launch.stage_duration, pattern='^duration_')],
             launch.STAGE_OWNER: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_owner)],
-            launch.STAGE_CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_confirm)],
+            launch.STAGE_CONFIRM: [CallbackQueryHandler(launch.stage_confirm, pattern='^confirm_')],
         },
         fallbacks=[CommandHandler('cancel', launch.cancel)],
     )

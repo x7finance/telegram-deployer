@@ -10,7 +10,7 @@ def deploy_token(chain, name, symbol, supply, percent, loan_amount, duration, ow
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
     
-    _, loan_contract = bot.ACTIVE_LOAN(chain, loan_amount)
+    _, loan_contract, _ = bot.ACTIVE_LOAN(chain, loan_amount)
 
     w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
     deployer_address = ca.DEPLOYER(chain)
@@ -138,7 +138,7 @@ def get_pool_funds(chain):
         function_call = getattr(contract.functions, function_name)
         result = function_call().call()
         
-        return result
+        return w3.from_wei(result, 'ether')
     
     except Exception as e:
         return f'Error reading contract: {e}'

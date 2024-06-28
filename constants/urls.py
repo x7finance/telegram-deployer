@@ -96,3 +96,11 @@ ARB_RPC = f"https://lb.drpc.org/ogrpc?network=arbitrum&dkey={os.getenv('DRPC_API
 OP_RPC = f"https://lb.drpc.org/ogrpc?network=optimism&dkey={os.getenv('DRPC_API_KEY')}"
 POLY_RPC = f"https://lb.drpc.org/ogrpc?network=polygon&dkey={os.getenv('DRPC_API_KEY')}"
 BASE_SEPOLIA_RPC = f"https://lb.drpc.org/ogrpc?network=base-sepolia&dkey={os.getenv('DRPC_API_KEY')}"
+
+ETH_RPC_FALLBACK = f"https://eth-mainnet.g.alchemy.com/v2/{os.getenv('ALCHEMY_API_KEY')}"
+BSC_RPC_FALLBACK = f"https://bnb-mainnet.g.alchemy.com/v2/{os.getenv('ALCHEMY_API_KEY')}"
+POLY_RPC_FALLBACK = f"https://polygon-mainnet.g.alchemy.com/v2/{os.getenv('ALCHEMY_API_KEY')}"
+OP_RPC_FALLBACK = f"https://opt-mainnet.g.alchemy.com/v2/{os.getenv('ALCHEMY_API_KEY')}"
+ARB_RPC_FALLBACK = f"https://arb-mainnet.g.alchemy.com/v2/{os.getenv('ALCHEMY_API_KEY')}"
+BASE_RPC_FALLBACK = f"https://base-mainnet.g.alchemy.com/v2/{os.getenv('ALCHEMY_API_KEY')}"
+BASE_SEPOLIA_RPC_FALLBACK = f"https://base-sepolia.g.alchemy.com/v2/{os.getenv('ALCHEMY_API_KEY')}"
