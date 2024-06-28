@@ -107,7 +107,7 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
         await context.bot.send_message(
             chat_id=query.message.chat_id,
             text=
-                f"Theres currently only {funds} {chain_native.upper()} in the {context.user_data['chain']} Chain lending pool\n\n"
+                f"There's currently only {funds} {chain_native.upper()} in the {context.user_data['chain']} Chain lending pool\n\n"
                 f"Pop back later once the pool is refilled, or check the link below to see how you can deposit your {chain_native.upper()} and earn yield!",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("X7D Lending Dashboard", url=urls.XCHANGE_FUND)]
@@ -119,8 +119,8 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
             chat_id=query.message.chat_id,
             text=
                 f"{context.user_data['chain'].upper()} Chain\n\nBrilliant!\n\n"
-                f"Theres currently {funds} {chain_native.upper()} in the lending pool ready to be deployed!\n\n"
-                "Lets get your project launched! Now, what's the project's token ticker?"
+                f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed!\n\n"
+                "Let's get your project launched! Now, what's the project's token ticker?"
             )
         return STAGE_TICKER
 
