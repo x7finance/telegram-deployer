@@ -376,7 +376,8 @@ async def function(update: Update, context: CallbackContext) -> int:
         )
         
         if isinstance(loan, str) and loan.startswith("Error"):
-            await query.edit_message_text(f"{loan}\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
+            await query.edit_message_text(f"Error initiating TX.\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
+            print(loan)
             return
         
         token_address, pair_address, loan_id = loan
@@ -389,7 +390,8 @@ async def function(update: Update, context: CallbackContext) -> int:
         )
         
         if isinstance(refund, str) and refund.startswith("Error"):
-            refund_text = f"{refund}\n\nUse /withdraw to claim any unused funds"
+            refund_text = f"Error retrieving funds\n\nUse /withdraw to claim any unused funds"
+            print(refund)
         else:
             refund_text = (
                 "Excess funds withdrawn\n\n"
