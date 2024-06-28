@@ -1,7 +1,7 @@
 # CHAINS
 
 import os
-from constants import ca, urls
+from constants import urls
 
 
 class ChainInfo:

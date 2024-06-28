@@ -61,7 +61,7 @@ BASE_SEPOLIA_ADDRESS = "https://sepolia.basescan.org/address/"
 BASE_SEPOLIA_TX = "https://sepolia.basescan.org/tx/"
 
 # DEXTOOLS
-def dex_tools(chain):
+def DEX_TOOLS(chain):
     return f"https://www.dextools.io/app/{chain}/pair-explorer/"
 
 
@@ -77,7 +77,12 @@ SNAPSHOT = "https://snapshot.org/#/x7finance.eth"
 TWITTER = "https://twitter.com/x7_finance/"
 WARPCAST = "https://warpcast.com/x7finance"
 WP_LINK = "https://x7.finance/wp/v1_1_0/X7FinanceWhitepaper.pdf"
+
+
+# XCHANGE
 XCHANGE = "https://x7finance.org/"
+XCHANGE_LOANS = "https://www.x7finance.org/loans?tab=open-positions"
+XCHANGE_FUND = "https://x7finance.org/fund"
 
 def XCHANGE_BUY(chain_id, token1):
     return f"https://x7finance.org/?chainId={chain_id}&token1={token1}"

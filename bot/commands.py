@@ -2,7 +2,7 @@ from telegram import *
 from telegram.ext import *
 from web3 import Web3
 
-from constants import ca, chains, bot
+from constants import chains, bot
 from hooks import api, db, deployments
 
 chainscan = api.ChainScan()

@@ -1,6 +1,5 @@
 import mysql.connector
 
-from datetime import datetime, timedelta
 import os
 
 

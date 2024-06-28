@@ -6,7 +6,7 @@ from eth_account import Account
 from datetime import datetime
 from web3 import Web3
 
-from constants import bot, chains
+from constants import bot, chains, urls
 from hooks import api, db, deployments
 
 chainscan = api.ChainScan()
@@ -109,7 +109,7 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
                 f"Theres currently only {funds} {chain_native.upper()} in the {context.user_data['chain']} Chain lending pool\n\n"
                 f"Pop back later once the pool is refilled, or check the link below to see how you can deposit your {chain_native.upper()} and earn yield!",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("X7D Lending Dashboard", url=f"x7finance.org/fund")]
+                [InlineKeyboardButton("X7D Lending Dashboard", url=urls.XCHANGE_FUND)]
             ])
         )
         return ConversationHandler.END
@@ -353,6 +353,7 @@ async def function(update: Update, context: CallbackContext) -> int:
     chain_id = chains.chains[chain].id
     chain_scan = chains.chains[chain].address
     chain_tx = chains.chains[chain].scan_tx
+    chain_dext = chains.chains[chain].dext
     fee, loan_contract = bot.ACTIVE_LOAN(chain, status_text["loan"])
 
     try:
@@ -418,8 +419,9 @@ async def function(update: Update, context: CallbackContext) -> int:
                 [
                     [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token_address}")],
                     [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair_address}")],
-                    [InlineKeyboardButton(text="Buy Link", url=f"https://x7finance.org/?chainId={chain_id}&token1={token_address}")],
-                    [InlineKeyboardButton(text="Loan Dashboard", url=f"https://www.x7finance.org/loans?tab=open-positions")],
+                    [InlineKeyboardButton(text="Buy Link", url=f"{urls.XCHANGE_BUY(chain_id, token_address)}")],
+                    [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{token_address}")],
+                    [InlineKeyboardButton(text="Loan Dashboard", url=urls.XCHANGE_LOANS)],
                     [InlineKeyboardButton(text="Loan Contract", url=f"{chain_scan}{loan_contract}#writeContract#F7")]
                 ]
             )
