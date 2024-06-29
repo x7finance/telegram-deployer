@@ -38,7 +38,7 @@ async def command(update: Update, context: CallbackContext) -> int:
                     was_will_be = "will be"
                 else:
                     message = (
-                        f"Fund `{status_text["address"]}` with {web3.from_wei(int(status_text["fee"]), 'ether')} {chain_native.upper()} + a little for gas\n\n"
+                        f"Fund `{status_text["address"]}` with {web3.from_wei(int(status_text["fee"]), 'ether')} {chain_native.upper()} + a little for gas.\n\n"
                         "Any fees not used will be returned to your account at deployment.\n\n"
                         "use /withdraw to retrieve any funds\n"
                         "use /reset to clear this launch"
@@ -89,8 +89,8 @@ async def command(update: Update, context: CallbackContext) -> int:
             ]
             keyboard = InlineKeyboardMarkup(buttons)
             await update.message.reply_text(
-                f"Lets get you launched by answering a few questions about your project...\n\n"
-                f"use /cancel at any time to end the conversation\n\n"
+                f"Let's get you launched by answering a few questions about your project...\n\n"
+                f"use /cancel at any time to end the conversation.\n\n"
                 f"First, select your chain:",
                 reply_markup=keyboard
             )
@@ -107,7 +107,7 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
         await context.bot.send_message(
             chat_id=query.message.chat_id,
             text=
-                f"There's currently only {funds} {chain_native.upper()} in the {context.user_data['chain']} Chain lending pool\n\n"
+                f"There's currently only {funds} {chain_native.upper()} in the {context.user_data['chain']} Chain lending pool.\n\n"
                 f"Pop back later once the pool is refilled, or check the link below to see how you can deposit your {chain_native.upper()} and earn yield!",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("X7D Lending Dashboard", url=urls.XCHANGE_FUND)]
@@ -118,9 +118,9 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
         await context.bot.send_message(
             chat_id=query.message.chat_id,
             text=
-                f"{context.user_data['chain'].upper()} Chain\n\nBrilliant!\n\n"
-                f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed!\n\n"
-                "Let's get your project launched! Now, what's the project's token ticker?"
+                f"{context.user_data['chain'].upper()} Chain Selected.\n\nBrilliant!\n\n"
+                f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed, so let's get your project launched!\n\n"
+                "Now, what's the project's token ticker?"
             )
         return STAGE_TICKER
 
@@ -205,7 +205,7 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
         chain_native = chains.chains[context.user_data['chain']].token
         await context.bot.send_message(
             chat_id=query.message.chat_id,
-            text=f"Error: There is only {pool} {chain_native} Available. Please try again."
+            text=f"Error: There is only {pool} {chain_native} available. Please try again."
             )
         return STAGE_LOAN
     chain_native = chains.chains[context.user_data['chain']].token
