@@ -162,8 +162,8 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     keyboard = InlineKeyboardMarkup(buttons)
     
     await update.message.reply_text(
-        f"{supply_float:,.0f} Total supply\n\nThanks! Now, What percentage of tokens (if any) do you want to keep back as 'team supply'?\n\n"
-        "These tokens will not be added to initial liquidity",
+        f"{supply_float:,.0f} Total Supply.\n\nThanks! Now, what percentage of tokens (if any) do you want to keep back as 'team supply'?\n\n"
+        "These tokens will not be added to initial liquidity.",
         reply_markup=keyboard
     )
     return STAGE_AMOUNT
@@ -184,13 +184,13 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     if percent == "0":
-        percent_str = 'No tokens will be held, 100% of tokens will go into the liquidity.'
+        percent_str = 'No tokens will be held, and 100% of tokens will go into the liquidity.'
     else:
         percent_str = f"{percent}% of tokens will be held as team supply."
     pool = deployments.get_pool_funds(context.user_data['chain'])
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{percent_str}\n\nThanks! Now, how much {chain_native.upper()} do you want in Initial Liquidity?\n\n"
+        text=f"{percent_str}\n\nThanks! Now, how much {chain_native.upper()} do you want in initial liquidity?\n\n"
         f"Currently Available: {pool} {chain_native.upper()}\n",
         reply_markup=keyboard
     )
@@ -236,8 +236,9 @@ async def stage_duration(update: Update, context: CallbackContext) -> int:
     context.user_data['duration'] = duration
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{duration} days, If the loan is not paid before then, the loan is eligible for liquidiation meaning the loaned amount will be withdrawn from the pair liquidity\n\n"
-        "Now Please provide the address you want ownership transferred to."
+        text=f"Loan duration will be {duration} days.\n\n"
+        "If the loan is not fully paid before then, it will become eligible for liquidation. This means the loan amount can be withdrawn from the pair liquidity, potentially resulting in a decrease to the token value.\n\n"
+        "Now, please provide the address you want ownership transferred to."
     )
     return STAGE_OWNER
 
@@ -284,7 +285,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         ])
 
         await update.message.reply_text(
-            f"Thank you, Please check the values below\n\n"
+            f"Thank you! Please check the values below:\n\n"
             f"Chain: {chain}\n"
             f"Ticker: {ticker}\n"
             f"Project Name: {name}\n"
@@ -342,23 +343,23 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
 
         await query.message.reply_text(
             
-            f"Please send {web3.from_wei(user_data.get('fee'), 'ether')} {chain_native} + a little for gas, to the following address:\n\n"
-            f"`{account.address}`.\n\n"
+            f"Please send {web3.from_wei(user_data.get('fee'), 'ether')} {chain_native} + a little for gas to the following address:\n\n"
+            f"`{account.address}`\n\n"
             "Any fees not used will be returned to your account at deployment.\n\n"
-            "*Make a note of this wallet address as your reference number*\n\n"
+            "*Make a note of this wallet address as your reference number.*\n\n"
             "To check the status of your launch use /status",
             parse_mode="Markdown"
         )
         return ConversationHandler.END
 
     elif confirm == "no":
-        await query.message.reply_text("Project cancelled. You can start over with /launch.")
+        await query.message.reply_text("Project canceled. You can start over with /launch.")
         return ConversationHandler.END
 
 
 
 async def cancel(update: Update, context: CallbackContext) -> int:
-    await update.message.reply_text("launch canceled.")
+    await update.message.reply_text("Launch canceled.")
     return ConversationHandler.END
 
 
