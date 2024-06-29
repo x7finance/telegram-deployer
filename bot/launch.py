@@ -106,7 +106,7 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
     context.user_data['chain'] = chain
     chain_native = chains.chains[chain.lower()].token
     funds = functions.get_pool_funds(chain.lower())
-    if funds < 0.01:
+    if funds < bot.MIN_LOAN_AMOUNT:
         await context.bot.send_message(
             chat_id=query.message.chat_id,
             text=
@@ -143,7 +143,7 @@ async def stage_ticker(update: Update, context: CallbackContext) -> int:
 async def stage_name(update: Update, context: CallbackContext) -> int:
     if len(update.message.text) > 20 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
-            "Error: The name must be 20 or standard characters fewer. Please enter a valid name."
+            "Error: The name must be 20 standard characters or fewer. Please enter a valid name."
         )
         return STAGE_NAME
     print(update.message.text)
