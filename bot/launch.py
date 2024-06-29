@@ -7,8 +7,8 @@ from datetime import datetime
 from web3 import Web3
 from decimal import Decimal
 
-from constants import bot, chains, urls
-from hooks import api, db, deployments
+from constants import ca, bot, chains, urls
+from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
 
@@ -102,7 +102,7 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
     chain = query.data.split('_')[1].lower()
     context.user_data['chain'] = chain
     chain_native = chains.chains[chain.lower()].token
-    funds = deployments.get_pool_funds(chain.lower())
+    funds = functions.get_pool_funds(chain.lower())
     if funds < bot.MIN_LOAN_AMOUNT:
         await context.bot.send_message(
             chat_id=query.message.chat_id,
@@ -176,18 +176,18 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     context.user_data['percent'] = percent
     buttons = [
         [InlineKeyboardButton(f"0.5 {chain_native.upper()}", callback_data=f'loan_0.5')],
-#        [InlineKeyboardButton(f"1 {chain_native.upper()}", callback_data=f'loan_1')],
-#        [InlineKeyboardButton(f"2 {chain_native.upper()}", callback_data=f'loan_2')],
-#        [InlineKeyboardButton(f"3 {chain_native.upper()}", callback_data=f'loan_3')],
-#        [InlineKeyboardButton(f"4 {chain_native.upper()}", callback_data=f'loan_4')],
-#        [InlineKeyboardButton(f"5 {chain_native.upper()}", callback_data=f'loan_5')]
+        [InlineKeyboardButton(f"1 {chain_native.upper()}", callback_data=f'loan_1')],
+        [InlineKeyboardButton(f"2 {chain_native.upper()}", callback_data=f'loan_2')],
+        [InlineKeyboardButton(f"3 {chain_native.upper()}", callback_data=f'loan_3')],
+        [InlineKeyboardButton(f"4 {chain_native.upper()}", callback_data=f'loan_4')],
+        [InlineKeyboardButton(f"5 {chain_native.upper()}", callback_data=f'loan_5')]
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     if percent == "0":
         percent_str = 'No tokens will be held, and 100% of tokens will go into the liquidity.'
     else:
         percent_str = f"{percent}% of tokens will be held as team supply."
-    pool = deployments.get_pool_funds(context.user_data['chain'])
+    pool = functions.get_pool_funds(context.user_data['chain'])
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=f"{percent_str}\n\nThanks! Now, how much {chain_native.upper()} do you want in initial liquidity?\n\n"
@@ -200,7 +200,7 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
     loan_amount = query.data.split('_')[1]
-    pool = deployments.get_pool_funds(context.user_data['chain'])
+    pool = functions.get_pool_funds(context.user_data['chain'])
     if Decimal(loan_amount) > pool:
         chain_native = chains.chains[context.user_data['chain']].token
         await context.bot.send_message(
@@ -211,12 +211,12 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     chain_native = chains.chains[context.user_data['chain']].token
     context.user_data['loan'] = loan_amount
     buttons = [
-#       [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
-#        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
-#        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
-#        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
-#        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
-#        [InlineKeyboardButton("6 Days", callback_data=f'duration_6')],
+        [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
+        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
+        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
+        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
+        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
+        [InlineKeyboardButton("6 Days", callback_data=f'duration_6')],
         [InlineKeyboardButton("7 Days", callback_data=f'duration_7')]
 
     ]
@@ -388,7 +388,7 @@ async def function(update: Update, context: CallbackContext) -> int:
         f"Deploying {status_text['ticker']} ({status_text['chain']})...."
     )
 
-    loan = deployments.deploy_token(
+    loan = functions.deploy_token(
         status_text["chain"],
         status_text["name"],
         status_text["ticker"],
@@ -409,7 +409,7 @@ async def function(update: Update, context: CallbackContext) -> int:
     
     token_address, pair_address, loan_id = loan
     
-    refund = deployments.transfer_balance(
+    refund = functions.transfer_balance(
         status_text["chain"],
         status_text["address"],
         status_text["owner"],
@@ -427,10 +427,10 @@ async def function(update: Update, context: CallbackContext) -> int:
 
     try:
         contract = web3.eth.contract(address=web3.to_checksum_address(loan_contract), 
-                                     abi=chainscan.get_abi(loan_contract, chain))
+                                    abi=chainscan.get_abi(loan_contract, chain))
         schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
         schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
-        schedule = api.format_schedule(schedule1, schedule2, "ETH")
+        schedule = tools.format_schedule(schedule1, schedule2, "ETH")
     except Exception:
         schedule = "Unavailable"
     
@@ -450,7 +450,7 @@ async def function(update: Update, context: CallbackContext) -> int:
                 [InlineKeyboardButton(text="Buy Link", url=f"{urls.XCHANGE_BUY(chain_id, token_address)}")],
                 [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{token_address}")],
                 [InlineKeyboardButton(text="Loan Dashboard", url=urls.XCHANGE_LOANS)],
-                [InlineKeyboardButton(text="Loan Contract", url=f"{chain_scan}{loan_contract}#writeContract#F7")]
+                [InlineKeyboardButton(text="Loan Contract", url=f"{chain_scan}{ca.LPOOL(chain)}#writeContract#F7")]
             ]
         )
     )

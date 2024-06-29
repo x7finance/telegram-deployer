@@ -3,7 +3,7 @@ from telegram.ext import *
 
 from constants import bot, ca, chains
 from web3 import Web3
-from hooks import api
+from hooks import api, tools
 
 
 def deploy_token(chain, name, symbol, supply, percent, loan_amount, duration, owner, address, key, loan_fee):
@@ -22,7 +22,7 @@ def deploy_token(chain, name, symbol, supply, percent, loan_amount, duration, ow
     deployer_contract = w3.eth.contract(address=w3.to_checksum_address(deployer_address), abi=deployer_abi)
     factory_contract = w3.eth.contract(address=w3.to_checksum_address(factory_address), abi=factory_abi)
 
-    deadline = api.timestamp_deadline()
+    deadline = tools.timestamp_deadline()
     gas_price = w3.eth.gas_price
     nonce = w3.eth.get_transaction_count(address)
 

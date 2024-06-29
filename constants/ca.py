@@ -2,7 +2,7 @@
 
 def DEPLOYER(chain):
     if chain == "base-sepolia":
-        return "0x8fAfb95dCCf43062c8C39f7A42E0491Aee032346"
+        return "0xf4C0124b9a862a281379374e3CCc564acC68a5af"
     if chain  == "base":
         return "0x47b95167B8cbe70Fffc1dCEE812e7C0388ACB81d"
     else:
@@ -44,6 +44,14 @@ def ROUTER(chain):
         return "0x7DE8063E9fB43321d2100e8Ddae5167F56A50060"
 
 def ILL004(chain):
+    if chain == "base-sepolia":
+        return "0xd95f799276A8373F7F234A7F211DE9E3a0ae6639"
+    if chain == "base":
+        return "0xF9832C813104a6256771dfBDd3a243D24B7D7941"
+    else:
+        return "0xF9832C813104a6256771dfBDd3a243D24B7D7941"
+    
+def ILL005(chain):
     if chain == "base-sepolia":
         return "0xd95f799276A8373F7F234A7F211DE9E3a0ae6639"
     if chain == "base":

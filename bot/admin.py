@@ -4,7 +4,7 @@ from telegram.ext import *
 from web3 import Web3
 
 from constants import bot, chains
-from hooks import api, db, deployments
+from hooks import api, db, functions, tools
 
 
 async def command(update: Update, context: CallbackContext) -> int:
@@ -27,7 +27,7 @@ async def refund(update: Update, context: CallbackContext) -> int:
             address = " ".join(context.args)
             search = db.search_entry_by_address(address)
             if search:
-                result = deployments.transfer_balance(search["chain"], address, search["owner"], search["secret_key"])
+                result = functions.transfer_balance(search["chain"], address, search["owner"], search["secret_key"])
                 if result.startswith("Error"):
                     await update.message.reply_text(result)
                 else:
@@ -57,7 +57,7 @@ async def search(update: Update, context: CallbackContext) -> int:
                     balance = web3.from_wei(balance_wei, 'ether')
 
                     await update.message.reply_text(
-                        f"User Name: {api.escape_markdown(entry['user_name'])}\n"
+                        f"User Name: {tools.escape_markdown(entry['user_name'])}\n"
                         f"User ID: {entry['user_id']}\n"
                         f"Submitted: {entry['timedate']}\n"
                         f"Current Balance: {int(balance)} {entry.upper()} ({entry['chain']})\n"
@@ -90,7 +90,7 @@ async def view(update: Update, context: CallbackContext) -> int:
                 balance_wei = web3.eth.get_balance(entry["address"])
                 balance = web3.from_wei(balance_wei, 'ether')
                 formatted_entry = (
-                    f"User Name: {api.escape_markdown(entry['user_name'])}\n"
+                    f"User Name: {tools.escape_markdown(entry['user_name'])}\n"
                     f"User ID: {entry['user_id']}\n"
                     f"Submitted: {entry['timedate']}\n"
                     f"Current Balance: {int(balance)} {chain_native.upper()} ({entry['chain']})\n"

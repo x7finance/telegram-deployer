@@ -246,7 +246,7 @@ def fetch_all_entries():
         return f"Error: {e}"
 
 
-def set_complete(user_id):
+def set_complete(address):
     try:
         connection = create_connection()
         cursor = connection.cursor()
@@ -254,9 +254,9 @@ def set_complete(user_id):
         update_query = """
         UPDATE wallets
         SET complete = %s
-        WHERE user_id = %s
+        WHERE addresss = %s
         """
-        cursor.execute(update_query, (True, user_id))
+        cursor.execute(update_query, (True, address))
         connection.commit()
 
         increment_query = "INSERT INTO log (count) VALUES (1)"

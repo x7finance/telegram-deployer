@@ -3,7 +3,7 @@ from telegram.ext import *
 from web3 import Web3
 
 from constants import chains, bot
-from hooks import api, db, deployments
+from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
 
@@ -20,7 +20,7 @@ async def start(update: Update, context: CallbackContext) -> int:
     if chat_type == "private":
         await update.message.reply_text(
             f"*THIS IS BETA BOT. DO NOT SEND ANY FUNDS TO MAINNET WALLETS. THEY WILL BE LOST.\n*\n"
-            f"Welcome {api.escape_markdown(user_name)} to {api.escape_markdown(bot.BOT_NAME)}!\n\n"
+            f"Welcome {tools.escape_markdown(user_name)} to {tools.escape_markdown(bot.BOT_NAME)}!\n\n"
             f"Create a token and launch on Xchange in minutes!\n\n"
             f"{loan_fees}\n\n"
             "Choose your loan duration, and if the loan is not repaid before expiry date, it will be repaid via pair liquidity!\n\n"
@@ -122,7 +122,7 @@ async def withdraw(update: Update, context: CallbackContext) -> int:
         user_id = update.effective_user.id
         status_text = db.search_entry_by_user_id(user_id)
         if status_text:
-            result = deployments.transfer_balance(
+            result = functions.transfer_balance(
                 status_text["chain"],
                 status_text["address"],
                 status_text["owner"],
