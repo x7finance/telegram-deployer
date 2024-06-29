@@ -19,6 +19,7 @@ async def command(update: Update, context: CallbackContext) -> int:
     if chat_type == "private":
         user_id = update.effective_user.id
         status_text = db.search_entry_by_user_id(user_id)
+        
         if status_text:
             chain_web3 = chains.chains[status_text["chain"]].w3
             chain_native = chains.chains[status_text["chain"]].token
@@ -26,7 +27,9 @@ async def command(update: Update, context: CallbackContext) -> int:
             balance_wei = web3.eth.get_balance(status_text["address"])
             balance = web3.from_wei(balance_wei, 'ether')
             balance_str = format(balance, '.18f')
+            
             if status_text["complete"] == 0:
+            
                 if balance_wei >= int(status_text["fee"]):
                     button = InlineKeyboardMarkup(
                             [
@@ -103,7 +106,7 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
     context.user_data['chain'] = chain
     chain_native = chains.chains[chain.lower()].token
     funds = functions.get_pool_funds(chain.lower())
-    if funds < bot.MIN_LOAN_AMOUNT:
+    if funds < 0.01:
         await context.bot.send_message(
             chat_id=query.message.chat_id,
             text=
@@ -125,18 +128,25 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
         return STAGE_TICKER
 
 async def stage_ticker(update: Update, context: CallbackContext) -> int:
-    context.user_data['ticker'] = update.message.text
-    if len(context.user_data['ticker']) > 5:
+    if len(update.message.text) > 6 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
-            "Error: The ticker must be 5 characters or fewer. Please enter a valid ticker."
+            "Error: The ticker must be 6 standard characters or fewer. Please enter a valid ticker."
         )
         return STAGE_TICKER 
+    
+    context.user_data['ticker'] = update.message.text
     await update.message.reply_text(
         f"{context.user_data['ticker']}\n\nGreat! Now, please reply with your project name."
     )
     return STAGE_NAME
 
 async def stage_name(update: Update, context: CallbackContext) -> int:
+    if len(update.message.text) > 20 or tools.detect_emojis(update.message.text):
+        await update.message.reply_text(
+            "Error: The name must be 20 or standard characters fewer. Please enter a valid name."
+        )
+        return STAGE_NAME
+    print(update.message.text)
     context.user_data['name'] = update.message.text
     await update.message.reply_text(
         f"{context.user_data['name']}\n\nGot it! Now, what do you want the total supply of your token to be?"
@@ -150,6 +160,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
             "Error: Total supply should be a whole number greater than zero, with no decimals. Please try again."
         )
         return STAGE_SUPPLY
+    
     context.user_data['supply'] = supply_input
     supply_float = float(supply_input)
     buttons = [
@@ -160,7 +171,6 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
 #        [InlineKeyboardButton("25%", callback_data=f'amount_25')]
     ]
     keyboard = InlineKeyboardMarkup(buttons)
-    
     await update.message.reply_text(
         f"{supply_float:,.0f} Total Supply.\n\nThanks! Now, what percentage of tokens (if any) do you want to keep back as 'team supply'?\n\n"
         "These tokens will not be added to initial liquidity.",
@@ -208,6 +218,7 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
             text=f"Error: There is only {pool} {chain_native} available. Please try again."
             )
         return STAGE_LOAN
+    
     chain_native = chains.chains[context.user_data['chain']].token
     context.user_data['loan'] = loan_amount
     buttons = [

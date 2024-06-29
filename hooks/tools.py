@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import unicodedata
 
 
 def datetime_to_timestamp(datetime_str):
@@ -90,3 +91,10 @@ def get_duration_days(duration):
     hours, remainder = divmod(duration.seconds, 3600)
     minutes = (remainder % 3600) // 60
     return days, hours, minutes
+
+
+def detect_emojis(text):
+    for char in text:
+        if unicodedata.category(char) in {'Ll', 'Lu', 'Nd'}:
+            return False
+    return True
