@@ -19,12 +19,12 @@ async def start(update: Update, context: CallbackContext) -> int:
     _, _, loan_fees = bot.ACTIVE_LOAN("base", 1)
     if chat_type == "private":
         await update.message.reply_text(
-            f"*THIS IS BETA BOT, DO NOT SEND ANY FUNDS TO MAINNET WALLETS, THEY WILL BE LOST\n*\n"
-            f"Welcome {api.escape_markdown(user_name)} to {api.escape_markdown(bot.BOT_NAME)}\n\n"
+            f"*THIS IS BETA BOT. DO NOT SEND ANY FUNDS TO MAINNET WALLETS. THEY WILL BE LOST.\n*\n"
+            f"Welcome {api.escape_markdown(user_name)} to {api.escape_markdown(bot.BOT_NAME)}!\n\n"
             f"Create a token and launch on Xchange in minutes!\n\n"
             f"{loan_fees}\n\n"
-            "Choose your loan duration and if the loan is not repaid before then it will be repaid via pair liquidity!\n\n"
-            f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion/liquidation\n\n"
+            "Choose your loan duration, and if the loan is not repaid before expiry date, it will be repaid via pair liquidity!\n\n"
+            f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion or liquidation.\n\n"
             f"Total {bot.BOT_NAME} launches: {count}\n\n" 
             "use /launch to start your project now!",
         parse_mode="Markdown"
@@ -38,7 +38,7 @@ async def reset(update: Update, context: CallbackContext) -> int:
         delete_text = db.delete_entry_by_user_id(user_id)
         if delete_text:
             await update.message.reply_text(
-                f"Project reset, use /launch to start"
+                f"Project reset, use /launch to start."
             )
         else:
             await update.message.reply_text("No projects waiting, please use /launch to start")
