@@ -445,29 +445,36 @@ async def function(update: Update, context: CallbackContext) -> int:
     except Exception:
         schedule = "Unavailable"
     
-    await query.edit_message_text(
-        f"Congrats {status_text['ticker']} has been launched and an Xchange ILL Created\n\n"
-        f"CA: `{token_address}`\n\n"
-        f"Loan ID: {loan_id}\n\n"
-        f"Ownership transferred to:\n"
-        f"`{status_text['owner']}`\n\n"
-        f"Payment Schedule:\n\n"
-        f"{schedule}",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token_address}")],
-                [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair_address}")],
-                [InlineKeyboardButton(text="Buy Link", url=f"{urls.XCHANGE_BUY(chain_id, token_address)}")],
-                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{token_address}")],
-                [InlineKeyboardButton(text="Loan Dashboard", url=urls.XCHANGE_LOANS)],
-                [InlineKeyboardButton(text="Loan Contract", url=f"{chain_scan}{ca.LPOOL(chain)}#writeContract#F7")]
-            ]
+    message = await query.edit_message_text(
+                f"Congrats {status_text['ticker']} has been launched and an Xchange ILL Created\n\n"
+                f"CA: `{token_address}`\n\n"
+                f"Loan ID: {loan_id}\n\n"
+                f"Ownership transferred to:\n"
+                f"`{status_text['owner']}`\n\n"
+                f"Payment Schedule:\n\n"
+                f"{schedule}",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token_address}")],
+                    [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair_address}")],
+                    [InlineKeyboardButton(text="Buy Link", url=f"{urls.XCHANGE_BUY(chain_id, token_address)}")],
+                    [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{token_address}")],
+                    [InlineKeyboardButton(text="Loan Dashboard", url=urls.XCHANGE_LOANS)],
+                    [InlineKeyboardButton(text="Loan Contract", url=f"{chain_scan}{ca.LPOOL(chain)}#writeContract#F7")]
+                ]
+            )
         )
-    )
-    
-    db.set_complete(status_text["address"])
+
+    try:
+        await context.bot.pin_chat_message(chat_id=update.effective_chat.id, message_id=message.message_id)
+    except Exception as e:
+        pass
+
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=refund_text
     )
+    
+    db.set_complete(status_text["address"])
+    
