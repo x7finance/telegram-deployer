@@ -26,37 +26,28 @@ def deploy_token(chain, name, symbol, supply, percent, loan_amount, duration, ow
     gas_price = w3.eth.gas_price
     nonce = w3.eth.get_transaction_count(address)
 
+    params = {
+        "name": name,
+        "symbol": symbol,
+        "supply": int(supply),
+        "teamTokens": int(percent),
+        "newOwner": owner,
+        "loanTermContract": loan_contract,
+        "loanAmount": int(loan_amount),
+        "loanDurationSeconds": int(duration),
+        "liquidityReceiver": owner,
+        "deadline": deadline
+    }
+
     try:
-        gas_estimate = deployer_contract.functions.deployToken(
-            name,
-            symbol,
-            int(supply),
-    #        int(percent),
-            owner,
-            loan_contract,
-            int(loan_amount),
-            int(duration),
-            owner,
-            deadline
-        ).estimate_gas({
+        gas_estimate = deployer_contract.functions.deployToken(params).estimate_gas({
             'from': address,
             'nonce': nonce,
             'gasPrice': gas_price,
             'value': loan_fee
         })
 
-        transaction = deployer_contract.functions.deployToken(
-            name,
-            symbol,
-            int(supply),
-    #        int(percent),
-            owner,
-            loan_contract,
-            int(loan_amount),
-            int(duration),
-            owner,
-            deadline
-        ).build_transaction({
+        transaction = deployer_contract.functions.deployToken(params).build_transaction({
             'from': address,
             'nonce': nonce,
             'gasPrice': gas_price,

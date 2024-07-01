@@ -146,7 +146,7 @@ async def stage_name(update: Update, context: CallbackContext) -> int:
             "Error: The name must be 20 standard characters or fewer. Please enter a valid name."
         )
         return STAGE_NAME
-    print(update.message.text)
+
     context.user_data['name'] = update.message.text
     await update.message.reply_text(
         f"{context.user_data['name']}\n\nGot it! Now, what do you want the total supply of your token to be?"
@@ -164,11 +164,10 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     context.user_data['supply'] = supply_input
     supply_float = float(supply_input)
     buttons = [
-        [InlineKeyboardButton("0%", callback_data=f'amount_0')]
-#        ,
-#        [InlineKeyboardButton("5%", callback_data=f'amount_5')],
-#        [InlineKeyboardButton("10%", callback_data=f'amount_10')],
-#        [InlineKeyboardButton("25%", callback_data=f'amount_25')]
+        [InlineKeyboardButton("0%", callback_data=f'amount_0')],
+        [InlineKeyboardButton("5%", callback_data=f'amount_5')],
+        [InlineKeyboardButton("10%", callback_data=f'amount_10')],
+        [InlineKeyboardButton("25%", callback_data=f'amount_25')]
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     await update.message.reply_text(
@@ -467,7 +466,7 @@ async def function(update: Update, context: CallbackContext) -> int:
         )
 
     try:
-        await context.bot.pin_chat_message(chat_id=update.effective_chat.id, message_id=message.message_id)
+        await context.bot.pin_chat_message(chat_id=update.effective_chat.id, message_id=message.id)
     except Exception as e:
         pass
 

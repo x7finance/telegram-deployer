@@ -82,9 +82,7 @@ WP_LINK = "https://x7.finance/wp/v1_1_0/X7FinanceWhitepaper.pdf"
 # XCHANGE
 XCHANGE = "https://x7finance.org/"
 
-def XCHANGE_LOANS(chain, loan, id):
-    return f"https:/https://www.x7finance.org/dashboard/loans/{chain}/{loan}/{id}"
-
+XCHANGE_LOANS = "https://www.x7finance.org/dashboard/loans/"
 XCHANGE_FUND = "https://x7finance.org/fund"
 
 def XCHANGE_BUY(chain_id, token1):
