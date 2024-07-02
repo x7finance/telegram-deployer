@@ -92,15 +92,17 @@ async def status(update: Update, context: CallbackContext) -> int:
             supply_float = float(status_text["supply"])
             amount_percentage = float(status_text["percent"]) / 100
             team_supply = supply_float * amount_percentage
+            team_supply = f'{team_supply:,.0f}' if float(team_supply).is_integer() else f'{team_supply:,.2f}'
             loan_supply = supply_float - team_supply
+            loan_supply = f'{loan_supply:,.0f}' if float(loan_supply).is_integer() else f'{loan_supply:,.2f}'
 
             await update.message.reply_text(
                 f"{header}\n\n"
                 f"{status_text["ticker"]} ({status_text["chain"].upper()})\n\n"
                 f"Project Name: {status_text["name"]}\n"
                 f"Total Supply: {supply_float:,.0f}\n"
-                f"Team Supply: {team_supply:,.0f} ({status_text["percent"]}%)\n"
-                f"Loan Supply: {loan_supply:,.0f}\n"
+                f"Team Supply: {team_supply} ({status_text["percent"]}%)\n"
+                f"Loan Supply: {loan_supply}\n"
                 f"Loan Amount: {status_text["loan"]} ETH\n"
                 f"Loan Duration {status_text["duration"]} Days\n"
                 f"Cost: {web3.from_wei(int(status_text["fee"]), 'ether')} {chain_native.upper()}\n\n"
