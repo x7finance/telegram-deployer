@@ -141,9 +141,9 @@ async def stage_ticker(update: Update, context: CallbackContext) -> int:
     return STAGE_NAME
 
 async def stage_name(update: Update, context: CallbackContext) -> int:
-    if len(update.message.text) > 20 or tools.detect_emojis(update.message.text):
+    if len(update.message.text) > 30 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
-            "Error: The name must be 20 standard characters or fewer. Please enter a valid name."
+            "Error: The name must be 30 standard characters or fewer. Please enter a valid name."
         )
         return STAGE_NAME
 
