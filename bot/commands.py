@@ -92,7 +92,9 @@ async def status(update: Update, context: CallbackContext) -> int:
             supply_float = float(status_text["supply"])
             amount_percentage = float(status_text["percent"]) / 100
             team_supply = supply_float * amount_percentage
+            #team_supply = f'{team_supply:,.0f}' if float(team_supply).is_integer() else f'{team_supply:,.2f}'
             loan_supply = supply_float - team_supply
+            #loan_supply = f'{loan_supply:,.0f}' if float(loan_supply).is_integer() else f'{loan_supply:,.2f}'
 
             await update.message.reply_text(
                 f"{header}\n\n"
