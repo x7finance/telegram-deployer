@@ -427,8 +427,7 @@ async def function(update: Update, context: CallbackContext) -> int:
     )
     
     if isinstance(refund, str) and refund.startswith("Error"):
-        refund_text = f"Error retrieving funds\n\nUse /withdraw to claim any unused funds"
-        print(refund)
+        refund_text = f"Error retrieving 'excess' funds, This is likely because you sent close to the perfect amount for gas.\n\nUse /withdraw to double check"
     else:
         refund_text = (
             "Excess funds withdrawn\n\n"

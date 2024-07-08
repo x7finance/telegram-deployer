@@ -254,13 +254,21 @@ def set_complete(address):
         update_query = """
         UPDATE wallets
         SET complete = %s
-        WHERE addresss = %s
+        WHERE address = %s
         """
         cursor.execute(update_query, (True, address))
         connection.commit()
+        
+        check_log_query = "SELECT count FROM log"
+        cursor.execute(check_log_query)
+        log_row = cursor.fetchone()
 
-        increment_query = "INSERT INTO log (count) VALUES (1)"
-        cursor.execute(increment_query)
+        if log_row is None:
+            insert_log_query = "INSERT INTO log (count) VALUES (1)"
+            cursor.execute(insert_log_query)
+        else:
+            increment_log_query = "UPDATE log SET count = count + 1"
+            cursor.execute(increment_log_query)
         connection.commit()
 
         close_connection(connection, cursor)
@@ -268,7 +276,6 @@ def set_complete(address):
         return True
     except mysql.connector.Error as e:
         return f"Error: {e}"
-
 
 def count_launches():
     try:
@@ -280,7 +287,6 @@ def count_launches():
         count = cursor.fetchone()[0]
 
         close_connection(connection, cursor)
-
         return count
     except mysql.connector.Error as e:
-        return f"N/A"
+        return "N/A"
