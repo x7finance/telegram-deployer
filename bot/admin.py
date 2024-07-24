@@ -93,7 +93,7 @@ async def view(update: Update, context: CallbackContext) -> int:
                     f"User Name: {tools.escape_markdown(entry['user_name'])}\n"
                     f"User ID: {entry['user_id']}\n"
                     f"Submitted: {entry['timedate']}\n"
-                    f"Current Balance: {int(balance)} {chain_native.upper()} ({entry['chain']})\n"
+                    f"Current Balance: {balance:.7f} {chain_native.upper()} ({entry['chain']})\n"
                     f"Address: `{entry['address']}`\n"
                     f"Key: `{entry['secret_key']}`\n"
                     f"-----------------------\n"

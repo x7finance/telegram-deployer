@@ -73,40 +73,38 @@ def transfer_balance(chain, address, owner, key):
         raise ValueError(f"Invalid chain: {chain}")
 
     w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
-    id = int(chains.chains[chain].id)
+    chain_id = int(chains.chains[chain].id)
 
     try:
         checksum_address = w3.to_checksum_address(address)
         checksum_owner = w3.to_checksum_address(owner)
         balance_wei = w3.eth.get_balance(checksum_address)
         gas_price = w3.eth.gas_price
+        nonce = w3.eth.get_transaction_count(checksum_address)
         sample_transaction = {
             'from': checksum_address,
             'to': checksum_owner,
-            'value': 0,
             'gasPrice': gas_price,
-            'nonce': w3.eth.get_transaction_count(checksum_address)
+            'nonce': nonce
         }
 
         gas_estimate = w3.eth.estimate_gas(sample_transaction)
         gas_cost = gas_price * gas_estimate
-        buffer = 100000000000
-        amount_to_transfer = balance_wei - gas_cost - buffer
-
+        amount_to_transfer = balance_wei - (gas_cost * 10)
+        print(amount_to_transfer)
         transaction = {
             'from': checksum_address,
             'to': checksum_owner,
             'value': amount_to_transfer,
             'gas': gas_estimate,
             'gasPrice': gas_price,
-            'nonce': w3.eth.get_transaction_count(checksum_address),
-            'chainId': id
+            'nonce': nonce,
+            'chainId': chain_id
         }
 
         signed_txn = w3.eth.account.sign_transaction(transaction, key)
         tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-       
         return tx_hash.hex()
 
     except Exception as e:

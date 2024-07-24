@@ -37,11 +37,11 @@ def LPOOL_RESERVE(chain):
     
 def ROUTER(chain):
     if chain == "base-sepolia":
-        return "0x3CE05D3e85B8e1486644Baf2cD890b8E4062BaCF"
+        return "0xC2defaD879dC426F5747F2A5b067De070928AA50"
     if chain == "base":
-        return "0x7DE8063E9fB43321d2100e8Ddae5167F56A50060"
+        return "0xC2defaD879dC426F5747F2A5b067De070928AA50"
     else:
-        return "0x7DE8063E9fB43321d2100e8Ddae5167F56A50060"
+        return "0xC2defaD879dC426F5747F2A5b067De070928AA50"
 
 def ILL004(chain):
     if chain == "base-sepolia":
