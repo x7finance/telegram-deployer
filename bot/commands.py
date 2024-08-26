@@ -49,6 +49,7 @@ async def status(update: Update, context: CallbackContext) -> int:
     if chat_type == "private":
         user_id = update.effective_user.id
         status_text = db.search_entry_by_user_id(user_id)
+        
         if status_text:
             chain_web3 = chains.chains[status_text["chain"]].w3
             chain_native = chains.chains[status_text["chain"]].token
@@ -56,23 +57,34 @@ async def status(update: Update, context: CallbackContext) -> int:
             balance_wei = web3.eth.get_balance(status_text["address"])
             balance = web3.from_wei(balance_wei, 'ether')
             balance_str = format(balance, '.18f')
+
+            if status_text.get("loan_amount", 0) == 0:
+                loan_deployment = False
+            else:
+                loan_deployment = True
+
             if status_text["complete"] == 0:
                 if balance_wei >= int(status_text["fee"]):
-                        button = InlineKeyboardMarkup(
-                                [
-                                    [InlineKeyboardButton(text="LAUNCH", callback_data="launch")],
-                                ]
-                            )
-                        message = "Ready to launch, hit the button below!"
-                        header = "*LAUNCH STATUS - READY*"
-                        was_will_be = "will be"
+                    if loan_deployment:
+                        callback_data = "launch_with_loan"
+                    else:
+                        callback_data = "launch_without_loan"
+
+                    button = InlineKeyboardMarkup(
+                        [
+                            [InlineKeyboardButton(text="LAUNCH", callback_data=callback_data)],
+                        ]
+                    )
+                    message = "Ready to launch, hit the button below!"
+                    header = "*LAUNCH STATUS - READY*"
+                    was_will_be = "will be"
                 else:
                     message = (
-                        f"Fund `{status_text["address"]}` with {web3.from_wei(int(status_text["fee"]), 'ether')} {chain_native.upper()} + a little for gas\n\n"
+                        f"Fund `{status_text['address']}` with {web3.from_wei(int(status_text['fee']), 'ether')} {chain_native.upper()} + a little for gas\n\n"
                         "Any fees not used will be returned to your account at deployment.\n\n"
                         "use /withdraw to retrieve any funds\n"
                         "use /reset to clear this launch"
-                        )
+                    )
                     header = "*LAUNCH STATUS - WAITING*"
                     was_will_be = "will be"
                     button = ""
@@ -81,38 +93,41 @@ async def status(update: Update, context: CallbackContext) -> int:
                 message = "use /withdraw to retrieve any funds\nuse /reset to clear this launch"
                 header = "*LAUNCH STATUS - CONFIRMED*"
                 was_will_be = "was"
-
+            
             team_tokens = int(status_text["supply"]) * (int(status_text["percent"]) / 100)
             liquidity_tokens = int(status_text["supply"]) - team_tokens
+            if loan_deployment:
+                price_eth = float(status_text["loan"]) / liquidity_tokens
+                price_usd = price_eth * chainscan.get_native_price(status_text["chain"]) * 2
+                market_cap_usd = price_usd * int(status_text["supply"]) * 2
 
-            price_eth = float(status_text["loan"]) / liquidity_tokens
-            price_usd = price_eth * chainscan.get_native_price(status_text["chain"]) * 2
-            market_cap_usd = price_usd * int(status_text["supply"]) * 2
-
-            supply_float = float(status_text["supply"])
-            amount_percentage = float(status_text["percent"]) / 100
-            team_supply = supply_float * amount_percentage
-            #team_supply = f'{team_supply:,.0f}' if float(team_supply).is_integer() else f'{team_supply:,.2f}'
-            loan_supply = supply_float - team_supply
-            #loan_supply = f'{loan_supply:,.0f}' if float(loan_supply).is_integer() else f'{loan_supply:,.2f}'
-
+                supply_float = float(status_text["supply"])
+                amount_percentage = float(status_text["percent"]) / 100
+                team_supply = supply_float * amount_percentage
+                loan_supply = supply_float - team_supply
+                loan_info = (
+                    f"Loan Supply: {loan_supply:,.0f}\n"
+                    f"Loan Amount: {status_text['loan']} ETH\n"
+                    f"Loan Duration: {status_text['duration']} Days\n"
+                )
+            else:
+                market_cap_usd = 0
+                loan_info = "No Loan, self-funded deployment.\n"
             await update.message.reply_text(
                 f"{header}\n\n"
-                f"{status_text["ticker"]} ({status_text["chain"].upper()})\n\n"
-                f"Project Name: {status_text["name"]}\n"
-                f"Total Supply: {supply_float:,.0f}\n"
-                f"Team Supply: {team_supply:,.0f} ({status_text["percent"]}%)\n"
-                f"Loan Supply: {loan_supply:,.0f}\n"
-                f"Loan Amount: {status_text["loan"]} ETH\n"
-                f"Loan Duration {status_text["duration"]} Days\n"
-                f"Cost: {web3.from_wei(int(status_text["fee"]), 'ether')} {chain_native.upper()}\n\n"
+                f"{status_text['ticker']} ({status_text['chain'].upper()})\n\n"
+                f"Project Name: {status_text['name']}\n"
+                f"Total Supply: {status_text['supply']}\n"
+                f"Team Supply: {team_tokens:,.0f} ({status_text['percent']}%)\n"
+                f"{loan_info}"
+                f"Cost: {web3.from_wei(int(status_text['fee']), 'ether')} {chain_native.upper()}\n\n"
                 f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
-                f"Ownership {was_will_be} transfered to:\n`{status_text["owner"]}`\n\n"
+                f"Ownership {was_will_be} transferred to:\n`{status_text['owner']}`\n\n"
                 f"Current Deployer Wallet Balance:\n"
                 f"{balance_str} {chain_native.upper()}\n\n"
                 f"{message}",
-            parse_mode="Markdown",
-            reply_markup=button
+                parse_mode="Markdown",
+                reply_markup=button
             )
         else:
             await update.message.reply_text("No projects waiting, please use /launch to start")

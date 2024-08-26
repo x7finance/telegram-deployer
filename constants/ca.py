@@ -2,7 +2,7 @@
 
 def DEPLOYER(chain):
     if chain == "base-sepolia":
-        return "0xF8BEdB23926b72338C4471E4916FA1e0925Bb6aB"
+        return "0xfD440554a157783746fC8DDD482aD1C839088D18"
     if chain  == "base":
         return "0x47b95167B8cbe70Fffc1dCEE812e7C0388ACB81d"
     else:

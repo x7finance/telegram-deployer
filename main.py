@@ -61,13 +61,15 @@ if __name__ == "__main__":
             launch.STAGE_AMOUNT: [CallbackQueryHandler(launch.stage_amount, pattern='^amount_')],
             launch.STAGE_LOAN: [CallbackQueryHandler(launch.stage_loan, pattern='^loan_')],
             launch.STAGE_DURATION: [CallbackQueryHandler(launch.stage_duration, pattern='^duration_')],
+            launch.STAGE_CONTRIBUTE_ETH: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_contribute_eth)],
             launch.STAGE_OWNER: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_owner)],
             launch.STAGE_CONFIRM: [CallbackQueryHandler(launch.stage_confirm, pattern='^confirm_')],
         },
         fallbacks=[CommandHandler('cancel', launch.cancel)],
     )
     application.add_handler(launch_handler)
-    application.add_handler(CallbackQueryHandler(launch.function, pattern='^launch$'))
+    application.add_handler(CallbackQueryHandler(launch.with_loan, pattern='^launch_with_loan$'))
+    application.add_handler(CallbackQueryHandler(launch.without_loan, pattern='^launch_without_loan$'))
 
     ## START ##
     application.run_polling(allowed_updates=Update.ALL_TYPES)

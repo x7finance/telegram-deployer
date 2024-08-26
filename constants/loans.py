@@ -108,7 +108,6 @@ def loans_list(chain):
 def OVERVIEW(chain):
     return (
     "*X7 Finance Loan Terms*\n\n"
-    f"Use /loans {loans_list(chain)} for more details on individual loan contracts\n\n"
     "Loan terms are defined by standalone smart contracts that provide the following:\n\n"
     "1. Loan origination fee\n"
     "2. Loan retention premium fee schedule\n"
