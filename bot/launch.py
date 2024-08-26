@@ -169,29 +169,42 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
     percent = query.data.split('_')[1]
-    chain_native = chains.chains[context.user_data['chain']].token
+    chain = context.user_data['chain'].lower()
+    chain_native = chains.chains[chain].token
     context.user_data['percent'] = percent
-    buttons = [
-        [InlineKeyboardButton(f"No Loan", callback_data=f'loan_0')],
-        [InlineKeyboardButton(f"0.5 {chain_native.upper()}", callback_data=f'loan_0.5')],
-        [InlineKeyboardButton(f"1 {chain_native.upper()}", callback_data=f'loan_1')],
-        [InlineKeyboardButton(f"2 {chain_native.upper()}", callback_data=f'loan_2')],
-        [InlineKeyboardButton(f"3 {chain_native.upper()}", callback_data=f'loan_3')],
-        [InlineKeyboardButton(f"4 {chain_native.upper()}", callback_data=f'loan_4')],
-        [InlineKeyboardButton(f"5 {chain_native.upper()}", callback_data=f'loan_5')]
+    pool = functions.get_pool_funds(chain)
+
+    loan_options = [
+        {"amount": 0, "label": "No Loan"},
+        {"amount": 0.5, "label": f"0.5 {chain_native.upper()}"},
+        {"amount": 1, "label": f"1 {chain_native.upper()}"},
+        {"amount": 2, "label": f"2 {chain_native.upper()}"},
+        {"amount": 3, "label": f"3 {chain_native.upper()}"},
+        {"amount": 4, "label": f"4 {chain_native.upper()}"},
+        {"amount": 5, "label": f"5 {chain_native.upper()}"}
     ]
-    keyboard = InlineKeyboardMarkup(buttons)
+
+    available_buttons = [
+        InlineKeyboardButton(option["label"], callback_data=f'loan_{option["amount"]}')
+        for option in loan_options if option["amount"] == 0 or Decimal(option["amount"]) <= pool
+    ]
+
+    keyboard = InlineKeyboardMarkup.from_column(available_buttons)
+    
     if percent == "0":
         percent_str = 'No tokens will be held, and 100% of tokens will go into the liquidity.'
     else:
         percent_str = f"{percent}% of tokens will be held as team supply."
-    pool = functions.get_pool_funds(context.user_data['chain'])
+    
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{percent_str}\n\nThanks! Now, how much {chain_native.upper()} do you want in initial liquidity?\n\n"
-        f"Currently Available: {pool} {chain_native.upper()}\n",
+        text=(
+            f"{percent_str}\n\nThanks! Now, how much {chain_native.upper()} do you want in initial liquidity?\n\n"
+            f"Currently Available: {pool} {chain_native.upper()}\n"
+        ),
         reply_markup=keyboard
     )
+    
     return STAGE_LOAN
 
 async def stage_loan(update: Update, context: CallbackContext) -> int:
