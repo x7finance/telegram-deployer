@@ -106,26 +106,14 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
     context.user_data['chain'] = chain
     chain_native = chains.chains[chain.lower()].token
     funds = functions.get_pool_funds(chain.lower())
-    if funds < bot.MIN_LOAN_AMOUNT:
-        await context.bot.send_message(
-            chat_id=query.message.chat_id,
-            text=
-                f"There's currently only {funds} {chain_native.upper()} in the {context.user_data['chain']} Chain lending pool.\n\n"
-                f"Pop back later once the pool is refilled, or check the link below to see how you can deposit your {chain_native.upper()} and earn yield!",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("X7D Lending Dashboard", url=urls.XCHANGE_FUND)]
-            ])
+    await context.bot.send_message(
+        chat_id=query.message.chat_id,
+        text=
+            f"{context.user_data['chain'].upper()} Chain Selected.\n\nBrilliant!\n\n"
+            f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed, so let's get your project launched!\n\n"
+            "Now, what's the project's token ticker?"
         )
-        return ConversationHandler.END
-    else:
-        await context.bot.send_message(
-            chat_id=query.message.chat_id,
-            text=
-                f"{context.user_data['chain'].upper()} Chain Selected.\n\nBrilliant!\n\n"
-                f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed, so let's get your project launched!\n\n"
-                "Now, what's the project's token ticker?"
-            )
-        return STAGE_TICKER
+    return STAGE_TICKER
 
 async def stage_ticker(update: Update, context: CallbackContext) -> int:
     if len(update.message.text) > 6 or tools.detect_emojis(update.message.text):
