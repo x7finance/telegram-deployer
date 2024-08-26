@@ -19,7 +19,7 @@ async def start(update: Update, context: CallbackContext) -> int:
     _, _, loan_fees = bot.ACTIVE_LOAN("base", 1)
     if chat_type == "private":
         await update.message.reply_text(
-            f"*THIS IS BETA BOT. DO NOT SEND ANY FUNDS TO MAINNET WALLETS. THEY WILL BE LOST.\n*\n"
+            f"*THIS IS A BETA BOT. PLEASE BE MINDFUL WHEN TRANSFERRING LARGE AMOUNTS OF FUNDS AND DO NOT USE /RESET UNTIL FUNDS ARE CLEARED*.\n\n"
             f"Welcome {tools.escape_markdown(user_name)} to {tools.escape_markdown(bot.BOT_NAME)}!\n\n"
             f"Create a token and launch on Xchange in minutes!\n\n"
             f"{loan_fees}\n\n"

@@ -200,7 +200,7 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
         chat_id=query.message.chat_id,
         text=(
             f"{percent_str}\n\nThanks! Now, how much {chain_native.upper()} do you want in initial liquidity?\n\n"
-            f"Currently Available: {pool} {chain_native.upper()}\n"
+            f"Currently Available to borrow: {pool} {chain_native.upper()}\n"
         ),
         reply_markup=keyboard
     )
