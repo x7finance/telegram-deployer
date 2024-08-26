@@ -58,7 +58,7 @@ async def status(update: Update, context: CallbackContext) -> int:
             balance = web3.from_wei(balance_wei, 'ether')
             balance_str = format(balance, '.18f')
 
-            if status_text.get("loan_amount", 0) == 0:
+            if status_text["loan"] == "0":
                 loan_deployment = False
             else:
                 loan_deployment = True
@@ -111,7 +111,9 @@ async def status(update: Update, context: CallbackContext) -> int:
                     f"Loan Duration: {status_text['duration']} Days\n"
                 )
             else:
-                market_cap_usd = 0
+                price_eth = (int(status_text["fee"]) / 10 ** 18) / liquidity_tokens
+                price_usd = price_eth * chainscan.get_native_price(status_text["chain"]) * 2
+                market_cap_usd = price_usd * int(status_text["supply"]) * 2
                 loan_info = "No Loan, self-funded deployment.\n"
             await update.message.reply_text(
                 f"{header}\n\n"
