@@ -72,7 +72,7 @@ chains = {
         os.getenv('ETHER'),
     ),
     "base": ChainInfo(
-        False,
+        True,
         "Base",
         "Basescan",
         "8453",
