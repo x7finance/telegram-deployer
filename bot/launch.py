@@ -5,7 +5,7 @@ from eth_utils import is_checksum_address
 from eth_account import Account
 from datetime import datetime
 from web3 import Web3
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from constants import ca, bot, chains, urls
 from hooks import api, db, functions, tools
@@ -273,10 +273,19 @@ async def stage_contribute_eth(update: Update, context: CallbackContext) -> int:
 
     try:
         eth_contribution = Decimal(eth_amount)
+
         if eth_contribution <= 0:
-            raise ValueError
-    except ValueError:
-        await update.message.reply_text("Error: Please enter a valid positive ETH amount.")
+            await update.message.reply_text("Error: The amount must be greater than 0.")
+            return STAGE_CONTRIBUTE_ETH
+
+        if eth_contribution.as_tuple().exponent < -18:
+            await update.message.reply_text(
+                "Error: ETH amount cannot have more than 18 decimal places."
+            )
+            return STAGE_CONTRIBUTE_ETH
+
+    except InvalidOperation:
+        await update.message.reply_text("Error: Please enter a valid numeric ETH amount.")
         return STAGE_CONTRIBUTE_ETH
 
     context.user_data['eth_contribution'] = eth_contribution
@@ -408,13 +417,16 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     user_data = context.user_data
     confirm = query.data.split('_')[1]
+    user = update.effective_user
+    user_name = user.username or f"{user.first_name} {user.last_name}"
+    user_id = user.id
     
     if confirm == "yes":
-        user = update.effective_user
-        user_name = user.username or f"{user.first_name} {user.last_name}"
-        user_id = user.id
         account = Account.create()
         now = datetime.now()
+        chain_web3 = chains.chains[user_data.get('chain')].w3
+        web3 = Web3(Web3.HTTPProvider(chain_web3))
+        chain_native = chains.chains[user_data.get('chain')].token
 
         if 'eth_contribution' in user_data:
             eth_contribution = user_data.get('eth_contribution') * 10 ** 18
@@ -461,11 +473,6 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 int(fee)
             )
 
-            chain_web3 = chains.chains[user_data.get('chain')].w3
-            web3 = Web3(Web3.HTTPProvider(chain_web3))
-
-            chain_native = chains.chains[user_data.get('chain')].token
-
             await query.message.reply_text(
                 f"Please send {web3.from_wei(fee, 'ether')} {chain_native} + a little for gas to the following address:\n\n"
                 f"`{account.address}`\n\n"
@@ -478,6 +485,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
 
     elif confirm == "no":
+        db.delete_entry_by_user_id(user_id)
         await query.message.reply_text("Project canceled. You can start over with /launch.")
         return ConversationHandler.END
 
