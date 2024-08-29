@@ -79,31 +79,6 @@ async def status(update: Update, context: CallbackContext) -> int:
                     header = "*LAUNCH STATUS - READY*"
                     was_will_be = "will be"
                 else:
-                    if loan_deployment:
-                        gas_estimate = functions.get_gas_with_loan(
-                            status_text["chain"],
-                            status_text["name"],
-                            status_text["ticker"],
-                            int(status_text["supply"]),
-                            int(status_text["percent"]),
-                            status_text["owner"],
-                            status_text["address"],
-                            int(status_text["fee"])
-                        )
-                    else:
-                        gas_estimate = functions.get_gas_without_loan(
-                            status_text["chain"],
-                            status_text["name"],
-                            status_text["ticker"],
-                            int(status_text["supply"]),
-                            int(status_text["percent"]),
-                            status_text["owner"],
-                            1,
-                            status_text["address"],
-                            int(status_text["fee"])
-                        )
-                    print(gas_estimate)
-                    
                     message = (
                         f"Fund `{status_text['address']}` with {web3.from_wei(int(status_text['fee']), 'ether')} {chain_native.upper()} + a little for gas\n\n"
                         "Any fees not used will be returned to your account at deployment.\n\n"
