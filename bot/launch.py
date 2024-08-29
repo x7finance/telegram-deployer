@@ -370,7 +370,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
             chain_web3 = chains.chains[chain].w3
             web3 = Web3(Web3.HTTPProvider(chain_web3))
 
-            fee, _, _ = bot.ACTIVE_LOAN(chain, loan)
+            fee, _, _ = functions.generate_loan_terms(chain, loan)
             context.user_data['fee'] = fee
 
             team_tokens = int(supply) * (int(percent) / 100)
@@ -526,7 +526,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     if with_loan:
         chain_web3 = chains.chains[chain].w3
         web3 = Web3(Web3.HTTPProvider(chain_web3))
-        _, loan_contract, _ = bot.ACTIVE_LOAN(chain, status_text["loan"])
+        _, loan_contract, _ = functions.generate_loan_terms(chain, status_text["loan"])
 
         loan = functions.deploy_token_with_loan(
             status_text["chain"],

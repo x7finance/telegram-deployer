@@ -66,7 +66,7 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, loan_amount, du
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
     
-    _, loan_contract, _ = bot.ACTIVE_LOAN(chain, loan_amount)
+    _, loan_contract, _ = generate_loan_terms(chain, loan_amount)
 
     w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
     deployer_address = ca.DEPLOYER(chain)
@@ -185,3 +185,15 @@ def get_pool_funds(chain):
     
     except Exception as e:
         return f'Error reading contract: {e}'
+    
+
+def generate_loan_terms(chain, loan_amount):
+    chain_native = chains.chains[chain].token
+    chain_web3 = chains.chains[chain].w3
+    web3 = Web3(Web3.HTTPProvider(chain_web3))
+    loan_in_wei = web3.to_wei(loan_amount, 'ether')
+    origination_fee = loan_in_wei * bot.ORIGINATION_PERCENT // 100
+    loan_deposit = web3.to_wei(bot.LIQUIDATION_DEPOSIT, 'ether')
+    fee = origination_fee + loan_deposit
+    text = f"Borrow upto {bot.MAX_LOAN_AMOUNT} {chain_native.upper()} liquidity for {bot.LIQUIDATION_DEPOSIT} {chain_native.upper()} + 2% of borrowed capital"
+    return fee, ca.ILL004(chain), text

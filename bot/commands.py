@@ -16,7 +16,7 @@ async def start(update: Update, context: CallbackContext) -> int:
     user_name = user.username or f"{user.first_name} {user.last_name}"
     chat_type = update.message.chat.type
     count = db.count_launches()
-    _, _, loan_fees = bot.ACTIVE_LOAN("base", 1)
+    _, _, loan_fees = functions.generate_loan_terms("base", 1)
     if chat_type == "private":
         await update.message.reply_text(
             f"*THIS IS A BETA BOT. PLEASE BE MINDFUL WHEN TRANSFERRING LARGE AMOUNTS OF FUNDS AND DO NOT USE /RESET UNTIL FUNDS ARE CLEARED*.\n\n"
@@ -24,7 +24,7 @@ async def start(update: Update, context: CallbackContext) -> int:
             f"Create a token and launch on Xchange in minutes!\n\n"
             f"{loan_fees}\n\n"
             "Choose your optional loan duration, and if the loan is not repaid before expiry date, it will be repaid via pair liquidity!\n\n"
-            f"{bot.LOAN_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion or liquidation.\n\n"
+            f"{bot.LIQUIDATION_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion or liquidation.\n\n"
             f"Total {bot.BOT_NAME} launches: {count}\n\n" 
             "use /launch to start your project now!",
         parse_mode="Markdown"
@@ -79,6 +79,31 @@ async def status(update: Update, context: CallbackContext) -> int:
                     header = "*LAUNCH STATUS - READY*"
                     was_will_be = "will be"
                 else:
+                    if loan_deployment:
+                        gas_estimate = functions.get_gas_with_loan(
+                            status_text["chain"],
+                            status_text["name"],
+                            status_text["ticker"],
+                            int(status_text["supply"]),
+                            int(status_text["percent"]),
+                            status_text["owner"],
+                            status_text["address"],
+                            int(status_text["fee"])
+                        )
+                    else:
+                        gas_estimate = functions.get_gas_without_loan(
+                            status_text["chain"],
+                            status_text["name"],
+                            status_text["ticker"],
+                            int(status_text["supply"]),
+                            int(status_text["percent"]),
+                            status_text["owner"],
+                            1,
+                            status_text["address"],
+                            int(status_text["fee"])
+                        )
+                    print(gas_estimate)
+                    
                     message = (
                         f"Fund `{status_text['address']}` with {web3.from_wei(int(status_text['fee']), 'ether')} {chain_native.upper()} + a little for gas\n\n"
                         "Any fees not used will be returned to your account at deployment.\n\n"
