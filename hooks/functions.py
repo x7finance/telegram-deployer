@@ -127,7 +127,7 @@ def transfer_balance(chain, address, owner, key):
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
 
-    w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
+    w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3_fallback))
     chain_id = int(chains.chains[chain].id)
 
     try:
@@ -140,12 +140,13 @@ def transfer_balance(chain, address, owner, key):
             'from': checksum_address,
             'to': checksum_owner,
             'gasPrice': gas_price,
-            'nonce': nonce
+            'value': balance_wei // 2,
         }
 
         gas_estimate = w3.eth.estimate_gas(sample_transaction)
         gas_cost = gas_price * gas_estimate
-        amount_to_transfer = balance_wei - (gas_cost * 10)
+        buffer_wei = 10**15
+        amount_to_transfer = balance_wei - gas_cost - buffer_wei
         transaction = {
             'from': checksum_address,
             'to': checksum_owner,

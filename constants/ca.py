@@ -39,7 +39,7 @@ def ROUTER(chain):
 
 def ILL004(chain):
     if chain == "base-sepolia":
-        return "0x4C932e393342FFd02f59CA1bEc864ADE760Af022"
+        return "0xd95f799276A8373F7F234A7F211DE9E3a0ae6639"
     if chain == "base":
         return "0x3c0E49D9b72FdDAeF36e2962368b073Bc5A76481"
     else:
