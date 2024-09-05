@@ -127,7 +127,7 @@ def transfer_balance(chain, address, owner, key):
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
 
-    w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3_fallback))
+    w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
     chain_id = int(chains.chains[chain].id)
 
     try:
