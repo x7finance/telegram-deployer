@@ -41,7 +41,7 @@ async def command(update: Update, context: CallbackContext) -> int:
                     was_will_be = "will be"
                 else:
                     message = (
-                        f"Fund `{status_text["address"]}` with {web3.from_wei(int(status_text["fee"]), 'ether')} {chain_native.upper()} + a little for gas.\n\n"
+                        f"Fund `{status_text["address"]}` with {web3.from_wei(int(status_text["fee"]), 'ether')} {chain_native.upper()} + enough to cover gas.\n\n"
                         "Any fees not used will be returned to your account at deployment.\n\n"
                         "use /withdraw to retrieve any funds\n"
                         "use /reset to clear this launch"
@@ -427,6 +427,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
         chain_web3 = chains.chains[user_data.get('chain')].w3
         web3 = Web3(Web3.HTTPProvider(chain_web3))
         chain_native = chains.chains[user_data.get('chain')].token
+        chain_name = chains.chains[user_data.get('chain')].name
 
         if 'eth_contribution' in user_data:
             eth_contribution = user_data.get('eth_contribution') * 10 ** 18
@@ -448,7 +449,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
             )
 
             await query.message.reply_text(
-                f"Please send {web3.from_wei(eth_contribution, 'ether')} {chain_native} + a little for gas to the following address:\n\n"
+                f"On {chain_name.upper()}. Please send {web3.from_wei(eth_contribution, 'ether')} {chain_native} + enough to cover gas to the following address:\n\n"
                 f"`{account.address}`\n\n"
                 "To check the status of your launch, use /status",
                 parse_mode="Markdown"
@@ -474,10 +475,11 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
             )
 
             await query.message.reply_text(
-                f"Please send {web3.from_wei(fee, 'ether')} {chain_native} + a little for gas to the following address:\n\n"
+                f"On {chain_name.upper()}. {web3.from_wei(fee, 'ether')} {chain_native} + enough to cover gas to the following address:\n\n"
                 f"`{account.address}`\n\n"
                 "Any fees not used will be returned to your account at deployment.\n\n"
-                "*Make a note of this wallet address as your reference number.*\n\n"
+                "*Ensure you are sending funds on the correct chain.\n\n"
+                "Make a note of this wallet address as your reference number.*\n\n"
                 "To check the status of your launch use /status",
                 parse_mode="Markdown"
             )

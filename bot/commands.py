@@ -80,7 +80,7 @@ async def status(update: Update, context: CallbackContext) -> int:
                     was_will_be = "will be"
                 else:
                     message = (
-                        f"Fund `{status_text['address']}` with {web3.from_wei(int(status_text['fee']), 'ether')} {chain_native.upper()} + a little for gas\n\n"
+                        f"Fund `{status_text['address']}` with {web3.from_wei(int(status_text['fee']), 'ether')} {chain_native.upper()} + enough to cover gas\n\n"
                         "Any fees not used will be returned to your account at deployment.\n\n"
                         "use /withdraw to retrieve any funds\n"
                         "use /reset to clear this launch"
