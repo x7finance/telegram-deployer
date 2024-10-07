@@ -5,7 +5,7 @@ def DEPLOYER(chain):
         "base": "0xfd392fc17fcce76b41d9ab4ea72943bc5e244f6e",
         "base-sepolia": "0xfD440554a157783746fC8DDD482aD1C839088D18",
         "eth": "",
-        "eth-sepolia": ""
+        "eth-sepolia": "0x7f36eB4a0C9279b2AcF88Bb1ED740b65c808F1bd"
     }
     return map.get(chain) 
 
@@ -41,4 +41,10 @@ def LPOOL_RESERVE(chain):
 
     
 def ROUTER(chain):
-    return "0xC2defaD879dC426F5747F2A5b067De070928AA50"
+    map = {
+        "base": "0xC2defaD879dC426F5747F2A5b067De070928AA50",
+        "base-sepolia": "0xde472CFDC852c45FA8AC082A07662cA4846bD9A2",
+        "eth": "0x6b5422D584943BC8Cd0E10e239d624c6fE90fbB8",
+        "eth-sepolia": "0x05B5034BfDbd930a93283aa52A10D700454A7a47"
+    }
+    return map.get(chain) 

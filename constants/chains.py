@@ -53,7 +53,7 @@ chains = {
         os.getenv('BASE'),
     ),
     "eth-sepolia": ChainInfo(
-        False,
+        True,
         "Eth Sepolia",
         "Eth Sepolia Scan",
         11155111,
