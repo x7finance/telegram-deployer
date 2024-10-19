@@ -68,7 +68,7 @@ chains = {
         os.getenv('ETHER'),
     ),
     "eth": ChainInfo(
-        False,
+        True,
         "ETH",
         "Etherscan",
         1,

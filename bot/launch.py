@@ -518,8 +518,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         )
 
         if isinstance(loan, str) and loan.startswith("Error"):
-            await query.edit_message_text(f"Error initiating TX.\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
-            print(loan)
+            await query.edit_message_text(f"Error initiating TX.\n\nIf you want to cancel the deployment and get your funds back use /withdraw\n\n{loan}")
             return
 
         token_address, pair_address, loan_id = loan
@@ -558,8 +557,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         )
 
         if isinstance(launched, str) and launched.startswith("Error"):
-            await query.edit_message_text(f"Error initiating TX.\n\nIf you want to cancel the deployment and get your funds back use /withdraw")
-            print(launched)
+            await query.edit_message_text(f"Error initiating TX.\n\nIf you want to cancel the deployment and get your funds back use /withdraw\n\n{launched}")
             return
 
         token_address, pair_address = launched

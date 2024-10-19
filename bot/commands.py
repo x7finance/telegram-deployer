@@ -173,8 +173,7 @@ async def withdraw(update: Update, context: CallbackContext) -> int:
                 status_text["secret_key"]
                 )
             if result.startswith("Error"):
-                print(result)
-                await update.message.reply_text("Error withdrawing, likely not enough to withdraw.")
+                await update.message.reply_text(f"Error withdrawing,\n\n{result}")
             else:
                 chain_link = chains.chains[status_text["chain"]].scan_tx
                 await update.message.reply_text(
