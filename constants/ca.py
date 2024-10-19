@@ -48,3 +48,6 @@ def ROUTER(chain):
         "eth-sepolia": "0x05B5034BfDbd930a93283aa52A10D700454A7a47"
     }
     return map.get(chain) 
+
+
+DEAD = "0x000000000000000000000000000000000000dEaD"

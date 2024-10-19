@@ -2,7 +2,7 @@ from telegram import *
 from telegram.ext import *
 from web3 import Web3
 
-from constants import chains, bot
+from constants import ca, chains, bot
 from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
@@ -60,11 +60,34 @@ async def status(update: Update, context: CallbackContext) -> int:
 
             if status_text["loan"] == "0":
                 loan_deployment = False
+                gas_estimate = functions.estimate_gas_without_loan(
+                    status_text["chain"],
+                    status_text["name"],
+                    status_text["ticker"],
+                    int(status_text["supply"]),
+                    int(status_text["percent"]),
+                    status_text["owner"],
+                    1,
+                    int(status_text["fee"])
+                    )
+
             else:
                 loan_deployment = True
+                gas_estimate = functions.estimate_gas_with_loan(
+                    status_text["chain"],
+                    status_text["name"],
+                    status_text["ticker"],
+                    int(status_text["supply"]),
+                    int(status_text["percent"]),
+                    web3.to_wei(status_text["loan"], 'ether'),
+                    86400,
+                    status_text["owner"],
+                    int(status_text["fee"])
+                    )
 
             if status_text["complete"] == 0:
-                if balance_wei >= int(status_text["fee"]):
+                total_cost = int(status_text["fee"]) + web3.to_wei(gas_estimate, 'ether')
+                if balance_wei >= total_cost:
                     if loan_deployment:
                         callback_data = "launch_with_loan"
                     else:
@@ -79,18 +102,20 @@ async def status(update: Update, context: CallbackContext) -> int:
                     header = "*LAUNCH STATUS - READY*"
                     was_will_be = "will be"
                 else:
+
+
                     message = (
-                        f"Fund `{status_text['address']}` with {web3.from_wei(int(status_text['fee']), 'ether')} {chain_native.upper()} + enough to cover gas\n\n"
-                        "Any fees not used will be returned to your account at deployment.\n\n"
+                        f"Fund `{status_text['address']}` with {web3.from_wei(int(total_cost), 'ether')} {chain_native.upper()}\n\n"
+                        "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
                         "use /withdraw to retrieve any funds\n"
-                        "use /reset to clear this launch"
+                        "use `/reset` to clear this launch - make sure all funds are retrieved."
                     )
                     header = "*LAUNCH STATUS - WAITING*"
                     was_will_be = "will be"
                     button = ""
             else:
                 button = ""
-                message = "use /withdraw to retrieve any funds\nuse /reset to clear this launch"
+                message = "use /withdraw to retrieve any funds\nuse `/reset` to clear this launch"
                 header = "*LAUNCH STATUS - CONFIRMED*"
                 was_will_be = "was"
             
@@ -125,9 +150,9 @@ async def status(update: Update, context: CallbackContext) -> int:
                 f"Cost: {web3.from_wei(int(status_text['fee']), 'ether')} {chain_native.upper()}\n\n"
                 f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
                 f"Ownership {was_will_be} transferred to:\n`{status_text['owner']}`\n\n"
+                f"{message}\n\n"
                 f"Current Deployer Wallet Balance:\n"
-                f"{balance_str} {chain_native.upper()}\n\n"
-                f"{message}",
+                f"{balance_str} {chain_native.upper()}\n\n",
                 parse_mode="Markdown",
                 reply_markup=button
             )

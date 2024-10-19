@@ -21,69 +21,9 @@ async def command(update: Update, context: CallbackContext) -> int:
         status_text = db.search_entry_by_user_id(user_id)
         
         if status_text:
-            chain_web3 = chains.chains[status_text["chain"]].w3
-            chain_native = chains.chains[status_text["chain"]].token
-            web3 = Web3(Web3.HTTPProvider(chain_web3))
-            balance_wei = web3.eth.get_balance(status_text["address"])
-            balance = web3.from_wei(balance_wei, 'ether')
-            balance_str = format(balance, '.18f')
-            
-            if status_text["complete"] == 0:
-            
-                if balance_wei >= int(status_text["fee"]):
-                    button = InlineKeyboardMarkup(
-                            [
-                                [InlineKeyboardButton(text="LAUNCH", callback_data="launch")],
-                            ]
-                        )
-                    message = "Ready to launch, hit the button below!"
-                    header = "*LAUNCH STATUS - READY*"
-                    was_will_be = "will be"
-                else:
-                    message = (
-                        f"Fund `{status_text["address"]}` with {web3.from_wei(int(status_text["fee"]), 'ether')} {chain_native.upper()} + enough to cover gas.\n\n"
-                        "Any fees not used will be returned to your account at deployment.\n\n"
-                        "use /withdraw to retrieve any funds\n"
-                        "use /reset to clear this launch"
-                        )
-                    header = "*LAUNCH STATUS - WAITING*"
-                    was_will_be = "will be"
-                    button = ""
-            else:
-                button = ""
-                message = "use /withdraw to retrieve any funds\nuse /reset to clear this launch"
-                header = "*LAUNCH STATUS - CONFIRMED*"
-                was_will_be = "was"
-
-            team_tokens = int(status_text["supply"]) * (int(status_text["percent"]) / 100)
-            liquidity_tokens = int(status_text["supply"]) - team_tokens
-
-            price_eth = float(status_text["loan"]) / liquidity_tokens
-            price_usd = price_eth * chainscan.get_native_price(status_text["chain"]) * 2
-            market_cap_usd = price_usd * int(status_text["supply"]) * 2
-
-            supply_float = float(status_text["supply"])
-            amount_percentage = float(status_text["percent"]) / 100
-            team_supply = supply_float * amount_percentage
-            loan_supply = supply_float - team_supply
-
             await update.message.reply_text(
-                f"{header}\n\n"
-                f"{status_text["ticker"]} ({status_text["chain"]})\n\n"
-                f"Project Name: {status_text["name"]}\n"
-                f"Total Supply: {supply_float:,.0f}\n"
-                f"Team Supply: {team_supply:,.0f} ({status_text["percent"]}%)\n"
-                f"Loan Supply: {loan_supply:,.0f}\n"
-                f"Loan Amount: {status_text["loan"]} {chain_native.upper()}\n"
-                f"Loan Duration {status_text["duration"]} Days\n"
-                f"Cost: {web3.from_wei(int(status_text["fee"]), 'ether')} {chain_native.upper()}\n\n"
-                f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
-                f"Ownership {was_will_be} transfered to:\n`{status_text["owner"]}`\n\n"
-                f"Current Deployer Wallet Balance:\n"
-                f"{balance_str} {chain_native.upper()}\n\n"
-                f"{message}",
-            parse_mode="Markdown",
-            reply_markup=button
+                f"You already have a token launch pending, use /status to see it.",
+            parse_mode="Markdown"
             )
         else:
             buttons = [
@@ -429,6 +369,9 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
         chain_native = chains.chains[user_data.get('chain')].token
         chain_name = chains.chains[user_data.get('chain')].name
 
+        gas_price = web3.eth.gas_price
+        gas_price_gwei = gas_price / 10**9
+
         if 'eth_contribution' in user_data:
             eth_contribution = user_data.get('eth_contribution') * 10 ** 18
             db.add_entry(
@@ -448,8 +391,22 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 int(eth_contribution)
             )
 
+            gas_estimate = functions.estimate_gas_without_loan(
+                    user_data.get('chain'),
+                    user_data.get('name'),
+                    user_data.get('ticker'),
+                    user_data.get('supply'),
+                    user_data.get('percent'),
+                    user_data.get('owner'),
+                    1,
+                    int(eth_contribution)
+                    )
+
+            gas_cost_eth = gas_estimate * gas_price_gwei * 10**-9
+            total_cost = int(eth_contribution) + web3.to_wei(gas_cost_eth, 'ether')
+            
             await query.message.reply_text(
-                f"On {chain_name.upper()}. Please send {web3.from_wei(eth_contribution, 'ether')} {chain_native} + enough to cover gas to the following address:\n\n"
+                f"On {chain_name.upper()}. Please send {web3.from_wei(total_cost, 'ether')} {chain_native.upper()} to the following address:\n\n"
                 f"`{account.address}`\n\n"
                 "To check the status of your launch, use /status",
                 parse_mode="Markdown"
@@ -474,10 +431,25 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 int(fee)
             )
 
+            gas_estimate = functions.estimate_gas_with_loan(
+                user_data.get('chain'),
+                user_data.get('name'),
+                user_data.get('ticker'),
+                user_data.get('supply'),
+                user_data.get('percent'),
+                web3.to_wei(user_data.get('loan'), 'ether'),
+                86400,
+                user_data.get('owner'),
+                int(fee)
+                )
+
+            gas_cost_eth = gas_estimate * gas_price_gwei * 10**-9
+            total_cost = int(fee) + web3.to_wei(gas_cost_eth, 'ether')
+
             await query.message.reply_text(
-                f"On {chain_name.upper()}. {web3.from_wei(fee, 'ether')} {chain_native} + enough to cover gas to the following address:\n\n"
+                f"On {chain_name.upper()}. Transfer {web3.from_wei(total_cost, 'ether')} {chain_native.upper()} to the following address:\n\n"
                 f"`{account.address}`\n\n"
-                "Any fees not used will be returned to your account at deployment.\n\n"
+                "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
                 "*Ensure you are sending funds on the correct chain.\n\n"
                 "Make a note of this wallet address as your reference number.*\n\n"
                 "To check the status of your launch use /status",
@@ -520,6 +492,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     chain_tx = chains.chains[chain].scan_tx
     chain_dext = chains.chains[chain].dext
     chain_id = chains.chains[chain].id
+    chain_name = chains.chains[chain].name
     
     await query.edit_message_text(
         f"Deploying {status_text['ticker']} ({status_text['chain']})...."
@@ -561,7 +534,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             schedule = "Unavailable"
 
         message_text = (
-            f"Congrats {status_text['ticker']} has been launched and an Xchange ILL Created\n\n"
+            f"Congrats {status_text['ticker']} has been launched and an Xchange ILL Created on {chain_name}\n\n"
             f"CA: `{token_address}`\n\n"
             f"Loan ID: {loan_id}\n\n"
             f"Ownership transferred to:\n"
