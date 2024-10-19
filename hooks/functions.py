@@ -170,7 +170,7 @@ def estimate_gas_with_loan(chain, name, symbol, supply, percent, loan_amount, du
         "teamTokens": int(percent),
         "newOwner": owner,
         "loanTermContract": loan_contract,
-        "loanAmount": web3.to_wei(loan_amount, 'ether'),
+        "loanAmount": loan_amount,
         "loanDurationSeconds": duration,
         "liquidityReceiver": owner,
         "deadline": deadline
