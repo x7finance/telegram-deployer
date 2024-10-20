@@ -148,8 +148,8 @@ def estimate_gas_without_loan(chain, name, symbol, supply, percent, owner, slipp
         'value': int(loan_fee)
     })
 
-    gas_cost_eth = web3.from_wei(gas_estimate * gas_price, 'ether')
-    return gas_cost_eth
+    gas_cost = gas_estimate * gas_price
+    return gas_cost
 
 
 def estimate_gas_with_loan(chain, name, symbol, supply, percent, loan_amount, duration, owner, loan_fee):
@@ -183,8 +183,8 @@ def estimate_gas_with_loan(chain, name, symbol, supply, percent, loan_amount, du
         'value': int(loan_fee)
     })
 
-    gas_cost_eth = web3.from_wei(gas_estimate * gas_price, 'ether')
-    return gas_cost_eth
+    gas_cost = gas_estimate * gas_price
+    return gas_cost
 
 
 def transfer_balance(chain, address, owner, key):

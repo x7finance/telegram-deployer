@@ -32,7 +32,7 @@ async def command(update: Update, context: CallbackContext) -> int:
             ]
             keyboard = InlineKeyboardMarkup(buttons)
             await update.message.reply_text(
-                f"Let's get you launched by answering a few questions about your project...\n\n"
+                f"Let's get your project launched by answering a few questions...\n\n"
                 f"use /cancel at any time to end the conversation.\n\n"
                 f"First, select your chain:",
                 reply_markup=keyboard
@@ -49,9 +49,9 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=
-            f"{context.user_data['chain'].upper()} Chain Selected.\n\nBrilliant!\n\n"
+            f"{context.user_data['chain'].upper()} Chain Selected.\n\n"
             f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed, so let's get your project launched!\n\n"
-            "Now, what's the project's token ticker?"
+            "What's the project's token ticker?"
         )
     return STAGE_TICKER
 
@@ -64,7 +64,7 @@ async def stage_ticker(update: Update, context: CallbackContext) -> int:
     
     context.user_data['ticker'] = update.message.text
     await update.message.reply_text(
-        f"{context.user_data['ticker']}\n\nGreat! Now, please reply with your project name."
+        f"Ticker: {context.user_data['ticker']}\n\nWhat is your project's name."
     )
     return STAGE_NAME
 
@@ -77,7 +77,7 @@ async def stage_name(update: Update, context: CallbackContext) -> int:
 
     context.user_data['name'] = update.message.text
     await update.message.reply_text(
-        f"{context.user_data['name']}\n\nGot it! Now, what do you want the total supply of your token to be?"
+        f"Name: {context.user_data['name']}\n\nWhat do you want the total supply of your token to be?"
     )
     return STAGE_SUPPLY
 
@@ -99,7 +99,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     await update.message.reply_text(
-        f"{supply_float:,.0f} Total Supply.\n\nThanks! Now, what percentage of tokens (if any) do you want to keep back as 'team supply'?\n\n"
+        f"{supply_float:,.0f} Total Supply.\n\nWhat percentage of tokens (if any) do you want to keep back as 'team supply'?\n\n"
         "These tokens will not be added to initial liquidity.",
         reply_markup=keyboard
     )
@@ -139,8 +139,8 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=(
-            f"{percent_str}\n\nThanks! Now, how much {chain_native.upper()} do you want in initial liquidity?\n\n"
-            f"Currently Available to borrow: {pool} {chain_native.upper()}\n"
+            f"{percent_str}\n\nHow much {chain_native.upper()} do you want to borrow in initial liquidity?\n\n"
+            f"Currently available to borrow: {pool} {chain_native.upper()}\n"
         ),
         reply_markup=keyboard
     )
@@ -156,7 +156,7 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     if loan_amount == "0":
         await context.bot.send_message(
             chat_id=query.message.chat_id,
-            text=f"No Loan OK, you'll front the ETH yourself. Please enter the amount of ETH you want to contribute to liquidity:",
+            text=f"No Loan OK, You'll front the ETH yourself. Please enter the amount of ETH you want to contribute to liquidity:",
         )
         return STAGE_CONTRIBUTE_ETH
     
@@ -184,7 +184,7 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{loan_amount} {chain_native.upper()} will be allocated for initial liquidity.\n\n"
+        text=f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity.\n\n"
              "How long do you want the loan for?",
         reply_markup=keyboard
     )
@@ -203,7 +203,7 @@ async def stage_duration(update: Update, context: CallbackContext) -> int:
              "If the loan is not fully paid before then, it will become eligible for liquidation. "
              "This means the loan amount can be withdrawn from the pair liquidity, potentially resulting "
              "in a decrease to the token value.\n\n"
-             "Now, please provide the address you want ownership transferred to."
+             "Please provide the address you want ownership transferred to."
     )
     return STAGE_OWNER
 
@@ -232,7 +232,7 @@ async def stage_contribute_eth(update: Update, context: CallbackContext) -> int:
 
     await update.message.reply_text(
         f"{eth_contribution} ETH will be allocated for initial liquidity.\n\n"
-        "Now, please provide the address you want ownership transferred to."
+        "Please provide the address you want ownership transferred to."
     )
     return STAGE_OWNER
 
@@ -278,7 +278,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
 
             await update.message.reply_text(
                 f"Thank you! Please check the values below:\n\n"
-                f"Chain: {chain}\n"
+                f"Chain: {chain.upper()}\n"
                 f"Ticker: {ticker}\n"
                 f"Project Name: {name}\n"
                 f"Total Supply: {supply_float:,.0f}\n"
@@ -332,7 +332,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
 
             await update.message.reply_text(
                 f"Thank you! Please check the values below:\n\n"
-                f"Chain: {chain}\n"
+                f"Chain: {chain.upper()}\n"
                 f"Ticker: {ticker}\n"
                 f"Project Name: {name}\n"
                 f"Total Supply: {supply_float:,.0f}\n"
@@ -369,9 +369,6 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
         chain_native = chains.chains[user_data.get('chain')].token
         chain_name = chains.chains[user_data.get('chain')].name
 
-        gas_price = web3.eth.gas_price
-        gas_price_gwei = gas_price / 10**9
-
         if 'eth_contribution' in user_data:
             eth_contribution = user_data.get('eth_contribution') * 10 ** 18
             db.add_entry(
@@ -402,11 +399,10 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                     int(eth_contribution)
                     )
 
-            gas_cost_eth = gas_estimate * gas_price_gwei * 10**-9
-            total_cost = int(eth_contribution) + web3.to_wei(gas_cost_eth, 'ether')
+            total_cost = int(eth_contribution) + gas_estimate
             
             await query.message.reply_text(
-                f"On {chain_name.upper()}. Please send {web3.from_wei(total_cost, 'ether')} {chain_native.upper()} to the following address:\n\n"
+                f"On {chain_name.upper()}. Send {round(web3.from_wei(total_cost, 'ether'), 4)} {chain_native.upper()} (This includes gas fees) to the following address:\n\n"
                 f"`{account.address}`\n\n"
                 "To check the status of your launch, use /status",
                 parse_mode="Markdown"
@@ -443,11 +439,10 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 int(fee)
                 )
 
-            gas_cost_eth = gas_estimate * gas_price_gwei * 10**-9
-            total_cost = int(fee) + web3.to_wei(gas_cost_eth, 'ether')
+            total_cost = (int(fee) + gas_estimate)
 
             await query.message.reply_text(
-                f"On {chain_name.upper()}. Transfer {web3.from_wei(total_cost, 'ether')} {chain_native.upper()} to the following address:\n\n"
+                f"On {chain_name.upper()}. Send {round(web3.from_wei(total_cost, "ether"), 4)} {chain_native.upper()} (This includes gas fees) to the following address:\n\n"
                 f"`{account.address}`\n\n"
                 "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
                 "*Ensure you are sending funds on the correct chain.\n\n"

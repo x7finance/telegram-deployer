@@ -86,7 +86,7 @@ async def status(update: Update, context: CallbackContext) -> int:
                     )
 
             if status_text["complete"] == 0:
-                total_cost = int(status_text["fee"]) + web3.to_wei(gas_estimate, 'ether')
+                total_cost = int(status_text["fee"]) + gas_estimate
                 if balance_wei >= total_cost:
                     if loan_deployment:
                         callback_data = "launch_with_loan"
@@ -105,7 +105,7 @@ async def status(update: Update, context: CallbackContext) -> int:
 
 
                     message = (
-                        f"Fund `{status_text['address']}` with {web3.from_wei(int(total_cost), 'ether')} {chain_native.upper()}\n\n"
+                        f"Send `{status_text['address']}` with {round(web3.from_wei(total_cost, "ether"), 4)} {chain_native.upper()} (This includes gas fees)\n\n"
                         "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
                         "use /withdraw to retrieve any funds\n"
                         "use `/reset` to clear this launch - make sure all funds are retrieved."
