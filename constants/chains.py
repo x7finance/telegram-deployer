@@ -9,6 +9,7 @@ class ChainInfo:
         self,
         live: bool,
         name: str,
+        short_name: str,
         scan_name: str,
         id: int,
         token: str,
@@ -23,6 +24,7 @@ class ChainInfo:
     ):
         self.live = live
         self.name = name
+        self.short_name = short_name
         self.scan_name = scan_name
         self.id = id
         self.token = token
@@ -40,6 +42,7 @@ chains = {
     "base-sepolia": ChainInfo(
         True,
         "Base Sepolia",
+        "base-testnet",
         "Base Sepolia Scan",
         84532,
         "eth",
@@ -55,6 +58,7 @@ chains = {
     "eth-sepolia": ChainInfo(
         True,
         "Eth Sepolia",
+        "eth-testnet",
         "Eth Sepolia Scan",
         11155111,
         "eth",
@@ -70,6 +74,7 @@ chains = {
     "eth": ChainInfo(
         True,
         "ETH",
+        "eth",
         "Etherscan",
         1,
         "eth",
@@ -85,6 +90,7 @@ chains = {
     "base": ChainInfo(
         True,
         "Base",
+        "base",
         "Basescan",
         8453,
         "eth",

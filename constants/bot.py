@@ -1,8 +1,5 @@
-from web3 import Web3
-
-from constants import ca, chains
-
 BOT_NAME = "Xchange Create"
+LIVE_LOAN = "004"
 LIQUIDATION_DEPOSIT = 0.1
 MAX_LOAN_AMOUNT = 5
 MIN_LOAN_AMOUNT = 0.5

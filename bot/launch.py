@@ -493,10 +493,13 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     chain_dext = chains.chains[chain].dext
     chain_id = chains.chains[chain].id
     chain_name = chains.chains[chain].name
+    chain_short_name = chains.chains[chain].short_name
     
     await query.edit_message_text(
         f"Deploying {status_text['ticker']} ({status_text['chain']})...."
     )
+
+    loan_button = None
 
     if with_loan:
         chain_web3 = chains.chains[chain].w3
@@ -532,6 +535,24 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         except Exception:
             schedule = "Unavailable"
 
+        try:
+            token_by_id = None
+            index = 0
+            
+            while True:
+                try:
+                    token_id = loan_contract.functions.tokenByIndex(index).call()
+                    if token_id == int(loan_id):
+                        token_by_id = index
+                        break
+                    index += 1
+
+                except Exception:
+                    break
+
+        except Exception:
+            token_by_id = "0"
+
         message_text = (
             f"Congrats {status_text['ticker']} has been launched and an Xchange ILL Created on {chain_name}\n\n"
             f"CA: `{token_address}`\n\n"
@@ -541,6 +562,8 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             f"Payment Schedule:\n\n"
             f"{schedule}"
         )
+
+        loan_button = InlineKeyboardButton(text="Loan Dashboard", url=f"{urls.XCHANGE}/lending/{chain_short_name}/{bot.LIVE_LOAN}/{token_by_id}")
 
     else:
         launched = functions.deploy_token_without_loan(
@@ -584,17 +607,20 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             f"{chain_tx}{refund}"
         )
 
+    buttons = [
+        [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token_address}")],
+        [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair_address}")],
+        [InlineKeyboardButton(text="Buy Link", url=f"{urls.XCHANGE_BUY(chain_id, token_address)}")],
+        [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{token_address}")]
+    ]
+
+    if loan:
+        buttons.append([loan_button])
+
     message = await query.edit_message_text(
         message_text,
         parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token_address}")],
-                [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair_address}")],
-                [InlineKeyboardButton(text="Buy Link", url=f"{urls.XCHANGE_BUY(chain_id, token_address)}")],
-                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{token_address}")],
-            ]
-        )
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
     try:
