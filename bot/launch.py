@@ -14,6 +14,7 @@ chainscan = api.ChainScan()
 
 STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE_ETH = range(10)
 
+
 async def command(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
@@ -39,6 +40,7 @@ async def command(update: Update, context: CallbackContext) -> int:
             )
             return STAGE_CHAIN
 
+
 async def stage_chain(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
@@ -55,6 +57,7 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
         )
     return STAGE_TICKER
 
+
 async def stage_ticker(update: Update, context: CallbackContext) -> int:
     if len(update.message.text) > 6 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
@@ -68,6 +71,7 @@ async def stage_ticker(update: Update, context: CallbackContext) -> int:
     )
     return STAGE_NAME
 
+
 async def stage_name(update: Update, context: CallbackContext) -> int:
     if len(update.message.text) > 30 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
@@ -80,6 +84,7 @@ async def stage_name(update: Update, context: CallbackContext) -> int:
         f"Name: {context.user_data['name']}\n\nWhat do you want the total supply of your token to be?"
     )
     return STAGE_SUPPLY
+
 
 async def stage_supply(update: Update, context: CallbackContext) -> int:
     supply_input = update.message.text.strip()
@@ -104,6 +109,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
         reply_markup=keyboard
     )
     return STAGE_AMOUNT
+
 
 async def stage_amount(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
@@ -146,6 +152,7 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     )
     
     return STAGE_LOAN
+
 
 async def stage_loan(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
@@ -239,8 +246,10 @@ async def stage_contribute_eth(update: Update, context: CallbackContext) -> int:
 
 async def stage_owner(update: Update, context: CallbackContext) -> int:
     context.user_data['owner'] = update.message.text
-    if not is_checksum_address(context.user_data['owner']):
-        await update.message.reply_text("Error: Invalid address. Please enter a valid checksum address.")
+    if not is_checksum_address(context.user_data['owner']) \
+        or context.user_data['owner'] == ca.DEAD or  context.user_data['owner'] == ca.ZERO:
+        
+        await update.message.reply_text("Error: Invalid address. Please enter a valid checksum address.\n\n(NOTE: you can renounce contract after deployment.)")
         return STAGE_OWNER
     
     user_data = context.user_data
@@ -353,6 +362,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
             await update.message.reply_text("Error: Incomplete information provided.")
             return ConversationHandler.END
         
+
 async def stage_confirm(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     user_data = context.user_data

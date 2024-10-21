@@ -14,10 +14,32 @@ async def command(update: Update, context: CallbackContext) -> int:
         if user_id in bot.ADMINS:
             await update.message.reply_text(
                 "/refund [generated wallet]\n"
-                "/search [generated wallet]\n"
+                "/delete [generated wallet]\n"
+                "/search [username]\n"
                 "/view\n",
             parse_mode="Markdown"
             )
+
+
+async def delete(update: Update, context: CallbackContext) -> int:
+    chat_type = update.message.chat.type
+    if chat_type == "private":
+        user_id = update.effective_user.id
+        if user_id in bot.ADMINS:
+            address = " ".join(context.args)
+            delete_result = db.delete_entry_by_wallet(address)
+
+            if delete_result:
+                await update.message.reply_text(
+                    f"Wallet `{address}` has been deleted.",
+                    parse_mode="Markdown"
+                )
+            else:
+                await update.message.reply_text(
+                    f"Wallet `{address}` not found.",
+                    parse_mode="Markdown"
+                )
+
 
 async def refund(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
@@ -45,28 +67,29 @@ async def search(update: Update, context: CallbackContext) -> int:
     if chat_type == "private":
         user_id = update.effective_user.id
         if user_id in bot.ADMINS:
-            address = " ".join(context.args)
-            if address == "":
-                await update.message.reply_text("Provide address")
+            name = " ".join(context.args)
+            if name == "":
+                await update.message.reply_text("Provide username")
             else:
-                entry = db.search_entry_by_address(address)
+                entry = db.search_entry_by_user_name(name)
                 if entry:
                     chain_web3 = chains.chains[entry["chain"]].w3
                     web3 = Web3(Web3.HTTPProvider(chain_web3))
-                    balance_wei = web3.eth.get_balance(address)
+                    balance_wei = web3.eth.get_balance(entry['address'])
                     balance = web3.from_wei(balance_wei, 'ether')
 
                     await update.message.reply_text(
                         f"User Name: {tools.escape_markdown(entry['user_name'])}\n"
                         f"User ID: {entry['user_id']}\n"
+                        f"Owner: `{entry['owner']}`\n"
                         f"Submitted: {entry['timedate']}\n"
-                        f"Current Balance: {int(balance)} {entry.upper()} ({entry['chain']})\n"
+                        f"Current Balance: {balance} {entry['chain'].upper()} ({entry['chain'].upper()})\n"
                         f"Address: `{entry['address']}`\n"
-                        f"Key: `{entry['secret_key']}`\n",
+                        f"Key: `{entry['secret_key']}`\n\n",
                     parse_mode="Markdown",
                     )
                 else:
-                    await update.message.reply_text(f"Nothing found for `{address}`",
+                    await update.message.reply_text(f"Nothing found for `{name}`",
                 parse_mode="Markdown"
                 )
                  
@@ -92,6 +115,7 @@ async def view(update: Update, context: CallbackContext) -> int:
                 formatted_entry = (
                     f"User Name: {tools.escape_markdown(entry['user_name'])}\n"
                     f"User ID: {entry['user_id']}\n"
+                    f"Owner: {entry['owner']}\n"
                     f"Submitted: {entry['timedate']}\n"
                     f"Chain: {entry['chain'].upper()}\n"
                     f"Current Balance: {balance:.7f} {chain_native.upper()}\n"
@@ -102,8 +126,9 @@ async def view(update: Update, context: CallbackContext) -> int:
                 formatted_entries.append(formatted_entry)
 
             message = "".join(formatted_entries)
-            
-            await update.message.reply_text(
-                message,
-                parse_mode="Markdown"
-            )
+            message_chunks = tools.split_message(message, max_length=4096)
+            for chunk in message_chunks:
+                await update.message.reply_text(
+                    chunk,
+                    parse_mode="Markdown"
+                )

@@ -82,54 +82,6 @@ def add_entry(
     except mysql.connector.Error as e:
         return f"Error: {e}"
 
- 
-def search_entry_by_user_id(user_id):
-    try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        search_query = """
-        SELECT
-            complete, 
-            address,
-            secret_key,
-            chain, 
-            ticker, 
-            name, 
-            supply,
-            percent,
-            loan,
-            duration,
-            owner,
-            fee
-        FROM wallets
-        WHERE user_id = %s
-        """
-        cursor.execute(search_query, (user_id,))
-        result = cursor.fetchone()
-
-        close_connection(connection, cursor)
-
-        if result:
-            return {
-                "complete": result["complete"],
-                "address": result["address"],
-                "secret_key": result["secret_key"],
-                "chain": result["chain"],
-                "ticker": result["ticker"],
-                "name": result["name"],
-                "supply": result["supply"],
-                "percent": result["percent"],
-                "loan": result["loan"],
-                "duration": result["duration"],
-                "owner": result["owner"],
-                "fee": result["fee"]
-            }
-        else:
-            return False
-    except mysql.connector.Error as e:
-        return f"Error: {e}"
-
 
 def search_entry_by_address(address):
     try:
@@ -181,6 +133,108 @@ def search_entry_by_address(address):
             return False
     except mysql.connector.Error as e:
         return f"Error: {e}"
+    
+
+def search_entry_by_user_id(user_id):
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        search_query = """
+        SELECT
+            complete, 
+            address,
+            secret_key,
+            chain, 
+            ticker, 
+            name, 
+            supply,
+            percent,
+            loan,
+            duration,
+            owner,
+            fee
+        FROM wallets
+        WHERE user_id = %s
+        """
+        cursor.execute(search_query, (user_id,))
+        result = cursor.fetchone()
+
+        close_connection(connection, cursor)
+
+        if result:
+            return {
+                "complete": result["complete"],
+                "address": result["address"],
+                "secret_key": result["secret_key"],
+                "chain": result["chain"],
+                "ticker": result["ticker"],
+                "name": result["name"],
+                "supply": result["supply"],
+                "percent": result["percent"],
+                "loan": result["loan"],
+                "duration": result["duration"],
+                "owner": result["owner"],
+                "fee": result["fee"]
+            }
+        else:
+            return False
+    except mysql.connector.Error as e:
+        return f"Error: {e}"
+
+
+def search_entry_by_user_name(name):
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        search_query = """
+        SELECT
+            complete,
+            address,
+            timedate,
+            user_name, 
+            user_id, 
+            secret_key,
+            chain, 
+            ticker, 
+            name, 
+            supply,
+            percent,
+            loan,
+            duration,
+            owner,
+            fee
+        FROM wallets
+        WHERE user_name = %s
+        """
+        cursor.execute(search_query, (name,))
+        result = cursor.fetchone()
+
+        close_connection(connection, cursor)
+
+        if result:
+            return {
+                "complete": result["complete"],
+                "address": result["address"],
+                "timedate": result["timedate"],
+                "user_name": result["user_name"],
+                "user_id": result["user_id"],
+                "secret_key": result["secret_key"],
+                "chain": result["chain"],
+                "ticker": result["ticker"],
+                "name": result["name"],
+                "supply": result["supply"],
+                "percent": result["percent"],
+                "loan": result["loan"],
+                "duration": result["duration"],
+                "owner": result["owner"],
+                "fee": result["fee"]
+            }
+        else:
+            return False
+    except mysql.connector.Error as e:
+        return f"Error: {e}"
 
 
 def delete_entry_by_user_id(user_id):
@@ -193,6 +247,28 @@ def delete_entry_by_user_id(user_id):
         WHERE user_id = %s
         """
         cursor.execute(delete_query, (user_id,))
+        connection.commit()
+
+        close_connection(connection, cursor)
+
+        if cursor.rowcount > 0:
+            return True
+        else:
+            return False
+    except mysql.connector.Error as e:
+        return f"Error: {e}"
+    
+
+def delete_entry_by_wallet(address):
+    try:
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        delete_query = """
+        DELETE FROM wallets
+        WHERE address = %s
+        """
+        cursor.execute(delete_query, (address,))
         connection.commit()
 
         close_connection(connection, cursor)

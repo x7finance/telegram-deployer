@@ -42,6 +42,7 @@ if __name__ == "__main__":
 
     ## ADMIN ##
     application.add_handler(CommandHandler("admin", admin.command))
+    application.add_handler(CommandHandler("delete", admin.delete))
     application.add_handler(CommandHandler("refund", admin.refund))
     application.add_handler(CommandHandler("search", admin.search))
     application.add_handler(CommandHandler("view", admin.view))

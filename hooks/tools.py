@@ -98,3 +98,19 @@ def detect_emojis(text):
         if unicodedata.category(char) in {'Ll', 'Lu', 'Nd'}:
             return False
     return True
+
+
+def split_message(message: str, max_length: int = 4096) -> list:
+    parts = []
+    while len(message) > max_length:
+        split_at = message.rfind('\n', 0, max_length)
+        if split_at == -1:
+            split_at = message.rfind(' ', 0, max_length)
+        if split_at == -1:
+            split_at = max_length
+
+        parts.append(message[:split_at])
+        message = message[split_at:].lstrip()
+
+    parts.append(message)
+    return parts
