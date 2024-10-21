@@ -379,6 +379,15 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
         chain_native = chains.chains[user_data.get('chain')].token
         chain_name = chains.chains[user_data.get('chain')].name
 
+        def message(total_cost):
+            return (f"On {chain_name.upper()}. Send {round(web3.from_wei(total_cost, "ether"), 4)} {chain_native.upper()} (This includes gas fees) to the following address:\n\n"
+                    f"`{account.address}`\n\n"
+                    "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
+                    "*Ensure you are sending funds on the correct chain.\n\n"
+                    "Make a note of the wallet address above and private key below.*\n\n"
+                    f"`{account.key.hex()}`\n\n"
+                    "To check the status of your launch use /status")
+
         if 'eth_contribution' in user_data:
             eth_contribution = user_data.get('eth_contribution') * 10 ** 18
             db.add_entry(
@@ -410,11 +419,8 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                     )
 
             total_cost = int(eth_contribution) + gas_estimate
-            
-            await query.message.reply_text(
-                f"On {chain_name.upper()}. Send {round(web3.from_wei(total_cost, 'ether'), 4)} {chain_native.upper()} (This includes gas fees) to the following address:\n\n"
-                f"`{account.address}`\n\n"
-                "To check the status of your launch, use /status",
+
+            await query.message.reply_text(message(total_cost),
                 parse_mode="Markdown"
             )
 
@@ -452,12 +458,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
             total_cost = (int(fee) + gas_estimate)
 
             await query.message.reply_text(
-                f"On {chain_name.upper()}. Send {round(web3.from_wei(total_cost, "ether"), 4)} {chain_native.upper()} (This includes gas fees) to the following address:\n\n"
-                f"`{account.address}`\n\n"
-                "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
-                "*Ensure you are sending funds on the correct chain.\n\n"
-                "Make a note of this wallet address as your reference number.*\n\n"
-                "To check the status of your launch use /status",
+                message(total_cost),
                 parse_mode="Markdown"
             )
         
@@ -499,6 +500,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     chain_id = chains.chains[chain].id
     chain_name = chains.chains[chain].name
     chain_short_name = chains.chains[chain].short_name
+    chain_token = chains.chains[chain].token
     
     await query.edit_message_text(
         f"Deploying {status_text['ticker']} ({status_text['chain']})...."
@@ -526,7 +528,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         )
 
         if isinstance(loan, str) and loan.startswith("Error"):
-            await query.edit_message_text(f"Error initiating TX.\n\nIf you want to cancel the deployment and get your funds back use /withdraw\n\n{loan}")
+            await query.edit_message_text(f"Error initiating TX\n\nIf you want to cancel the deployment and return your funds back use /withdraw\n\n{loan}")
             return
 
         token_address, pair_address, loan_id = loan
@@ -536,7 +538,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
                                          abi=chainscan.get_abi(loan_contract, chain))
             schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
             schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
-            schedule = tools.format_schedule(schedule1, schedule2, "ETH")
+            schedule = tools.format_schedule(schedule1, schedule2, chain_token.upper())
         except Exception:
             schedule = "Unavailable"
 
@@ -546,7 +548,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             
             while True:
                 try:
-                    token_id = loan_contract.functions.tokenByIndex(index).call()
+                    token_id = contract.functions.tokenByIndex(index).call()
                     if token_id == int(loan_id):
                         token_by_id = index
                         break
@@ -556,7 +558,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
                     break
 
         except Exception:
-            token_by_id = "0"
+            token_by_id = None
 
         message_text = (
             f"Congrats {status_text['ticker']} has been launched and an Xchange ILL Created on {chain_name}\n\n"
@@ -585,7 +587,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         )
 
         if isinstance(launched, str) and launched.startswith("Error"):
-            await query.edit_message_text(f"Error initiating TX.\n\nIf you want to cancel the deployment and get your funds back use /withdraw\n\n{launched}")
+            await query.edit_message_text(f"Error initiating TX.\n\nIf you want to cancel the deployment and return your funds back use /withdraw\n\n{launched}")
             return
 
         token_address, pair_address = launched
@@ -605,10 +607,10 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     )
 
     if isinstance(refund, str) and refund.startswith("Error"):
-        refund_text = f"Error retrieving 'excess' funds, This is likely because you sent close to the perfect amount for gas.\n\nUse /withdraw to double check"
+        refund_text = f"Error returning funds\n\nThis is likely because you sent close to the perfect amount for gas.\n\nUse /withdraw to double check"
     else:
         refund_text = (
-            "Excess funds withdrawn\n\n"
+            "Funds returned\n\n"
             f"{chain_tx}{refund}"
         )
 

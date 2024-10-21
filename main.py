@@ -69,6 +69,7 @@ if __name__ == "__main__":
         fallbacks=[CommandHandler('cancel', launch.cancel)],
     )
     application.add_handler(launch_handler)
+    application.add_handler(CallbackQueryHandler(commands.reset_callback, pattern='^reset_'))
     application.add_handler(CallbackQueryHandler(launch.with_loan, pattern='^launch_with_loan$'))
     application.add_handler(CallbackQueryHandler(launch.without_loan, pattern='^launch_without_loan$'))
 

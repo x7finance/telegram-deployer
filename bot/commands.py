@@ -35,13 +35,48 @@ async def reset(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
+        status_text = db.search_entry_by_user_id(user_id)
+        
+        if not status_text:
+            await update.message.reply_text(
+                "No projects waiting, please use /launch to start"
+            )
+            return
+    keyboard = [
+        [
+            InlineKeyboardButton("Yes", callback_data='reset_yes'),
+            InlineKeyboardButton("No", callback_data='reset_no')
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(
+        "Are you sure you want to reset your project?\n\nPlease ensure you have no remaining "
+        "funds in the designated deployer address or you have saved the address and private "
+        "key\n\n*This action cannot be undone*",
+        reply_markup=reply_markup
+    )
+    return
+
+
+async def reset_callback(update: Update, context: CallbackContext) -> int:
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    
+    if query.data == 'reset_yes':
         delete_text = db.delete_entry_by_user_id(user_id)
         if delete_text:
-            await update.message.reply_text(
-                f"Project reset, use /launch to start."
+            await query.edit_message_text(
+                "Project reset. Use /launch to start a new project"
             )
         else:
-            await update.message.reply_text("No projects waiting, please use /launch to start")
+            await query.edit_message_text(
+                "No projects waiting, please use /launch to start"
+            )
+    elif query.data == 'reset_no':
+        await query.edit_message_text("Reset canceled.")
 
 
 async def status(update: Update, context: CallbackContext) -> int:
@@ -107,15 +142,15 @@ async def status(update: Update, context: CallbackContext) -> int:
                     message = (
                         f"Send `{status_text['address']}` with {round(web3.from_wei(total_cost, "ether"), 4)} {chain_native.upper()} (This includes gas fees)\n\n"
                         "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
-                        "use /withdraw to retrieve any funds\n"
-                        "use `/reset` to clear this launch - make sure all funds are retrieved."
+                        "use /withdraw to return any un-used funds\n"
+                        "use /reset to clear this launch"
                     )
                     header = "*LAUNCH STATUS - WAITING*"
                     was_will_be = "will be"
                     button = ""
             else:
                 button = ""
-                message = "use /withdraw to retrieve any funds\nuse `/reset` to clear this launch"
+                message = "use /withdraw to return any un-used funds\nuse /reset to clear this launch"
                 header = "*LAUNCH STATUS - CONFIRMED*"
                 was_will_be = "was"
             
@@ -153,8 +188,8 @@ async def status(update: Update, context: CallbackContext) -> int:
                 f"{message}\n\n"
                 f"Current Deployer Wallet Balance:\n"
                 f"{balance_str} {chain_native.upper()}\n\n",
-                parse_mode="Markdown",
-                reply_markup=button
+            parse_mode="Markdown",
+            reply_markup=button
             )
         else:
             await update.message.reply_text("No projects waiting, please use /launch to start")
@@ -173,12 +208,15 @@ async def withdraw(update: Update, context: CallbackContext) -> int:
                 status_text["secret_key"]
                 )
             if result.startswith("Error"):
-                await update.message.reply_text(f"Error withdrawing,\n\n{result}")
+                await update.message.reply_text(
+                    f"Error\n\n{result}\n\n"
+                    "If this is unexpected use your saved private key from setup to withdraw funds",
+        )
             else:
                 chain_link = chains.chains[status_text["chain"]].scan_tx
                 await update.message.reply_text(
                     f"Balance withdrawn\n\n{chain_link}{result}\n\n"
-                    "You can now safely use /reset to clear your project")
+                    "You can now safely use /reset to reset your project")
 
         else:
             await update.message.reply_text("No projects waiting, please use /launch to start")
