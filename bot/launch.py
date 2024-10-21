@@ -12,7 +12,7 @@ from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
 
-STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE_ETH = range(10)
+STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE = range(10)
 
 
 async def command(update: Update, context: CallbackContext) -> int:
@@ -23,7 +23,7 @@ async def command(update: Update, context: CallbackContext) -> int:
         
         if status_text:
             await update.message.reply_text(
-                f"You already have a token launch pending, use /status to see it.",
+                f"You already have a token launch pending, use /status to see it",
             parse_mode="Markdown"
             )
         else:
@@ -34,7 +34,7 @@ async def command(update: Update, context: CallbackContext) -> int:
             keyboard = InlineKeyboardMarkup(buttons)
             await update.message.reply_text(
                 f"Let's get your project launched by answering a few questions...\n\n"
-                f"use /cancel at any time to end the conversation.\n\n"
+                f"use /cancel at any time to end the conversation\n\n"
                 f"First, select your chain:",
                 reply_markup=keyboard
             )
@@ -61,13 +61,13 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
 async def stage_ticker(update: Update, context: CallbackContext) -> int:
     if len(update.message.text) > 6 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
-            "Error: The ticker must be 6 standard characters or fewer. Please enter a valid ticker."
+            "Error: The ticker must be 6 standard characters or fewer. Please enter a valid ticker"
         )
         return STAGE_TICKER 
     
     context.user_data['ticker'] = update.message.text
     await update.message.reply_text(
-        f"Ticker: {context.user_data['ticker']}\n\nWhat is your project's name."
+        f"Ticker: {context.user_data['ticker']}\n\nWhat is your project's name"
     )
     return STAGE_NAME
 
@@ -75,7 +75,7 @@ async def stage_ticker(update: Update, context: CallbackContext) -> int:
 async def stage_name(update: Update, context: CallbackContext) -> int:
     if len(update.message.text) > 30 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
-            "Error: The name must be 30 standard characters or fewer. Please enter a valid name."
+            "Error: The name must be 30 standard characters or fewer. Please enter a valid name"
         )
         return STAGE_NAME
 
@@ -90,7 +90,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     supply_input = update.message.text.strip()
     if not (supply_input.isdigit() and int(supply_input) > 0):
         await update.message.reply_text(
-            "Error: Total supply should be a whole number greater than zero, with no decimals. Please try again."
+            "Error: Total supply should be a whole number greater than zero, with no decimals. Please try again"
         )
         return STAGE_SUPPLY
     
@@ -104,8 +104,8 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     await update.message.reply_text(
-        f"{supply_float:,.0f} Total Supply.\n\nWhat percentage of tokens (if any) do you want to keep back as 'team supply'?\n\n"
-        "These tokens will not be added to initial liquidity.",
+        f"{supply_float:,.0f} Total Supply\n\nWhat percentage of tokens (if any) do you want to keep back?\n\n"
+        "These tokens will not be added to initial liquidity",
         reply_markup=keyboard
     )
     return STAGE_AMOUNT
@@ -138,9 +138,9 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     keyboard = InlineKeyboardMarkup.from_column(available_buttons)
     
     if percent == "0":
-        percent_str = 'No tokens will be held, and 100% of tokens will go into the liquidity.'
+        percent_str = 'No tokens will be held, and 100% of tokens will go into the liquidity'
     else:
-        percent_str = f"{percent}% of tokens will be held as team supply."
+        percent_str = f"{percent}% of tokens will be held as team supply"
     
     await context.bot.send_message(
         chat_id=query.message.chat_id,
@@ -161,17 +161,18 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     pool = functions.get_pool_funds(context.user_data['chain'])
     
     if loan_amount == "0":
+        chain_native = chains.chains[context.user_data['chain']].token
         await context.bot.send_message(
             chat_id=query.message.chat_id,
-            text=f"No Loan OK, You'll front the ETH yourself. Please enter the amount of ETH you want to contribute to liquidity:",
+            text=f"No Loan, You'll front the liquidity yourself\n\nPlease enter the amount of {chain_native.upper()} you want to contribute to liquidity:",
         )
-        return STAGE_CONTRIBUTE_ETH
+        return STAGE_CONTRIBUTE
     
     if Decimal(loan_amount) > pool:
         chain_native = chains.chains[context.user_data['chain']].token
         await context.bot.send_message(
             chat_id=query.message.chat_id,
-            text=f"Error: There is only {pool} {chain_native} available. Please try again."
+            text=f"Error: There is only {pool} {chain_native} available. Please try again"
         )
         return STAGE_LOAN
     
@@ -191,7 +192,7 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity.\n\n"
+        text=f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity\n\n"
              "How long do you want the loan for?",
         reply_markup=keyboard
     )
@@ -208,38 +209,39 @@ async def stage_duration(update: Update, context: CallbackContext) -> int:
         chat_id=query.message.chat_id,
         text=f"Loan duration will be {duration} days.\n\n"
              "If the loan is not fully paid before then, it will become eligible for liquidation. "
-             "This means the loan amount can be withdrawn from the pair liquidity, potentially resulting "
-             "in a decrease to the token value.\n\n"
-             "Please provide the address you want ownership transferred to."
+             "This means the loan amount can be withdrawn from the pair liquidity\n\n"
+             "Please provide the address you want ownership transferred to"
     )
     return STAGE_OWNER
 
 
-async def stage_contribute_eth(update: Update, context: CallbackContext) -> int:
-    eth_amount = update.message.text.strip()
+async def stage_contribute(update: Update, context: CallbackContext) -> int:
+    native_amount = update.message.text.strip()
 
     try:
-        eth_contribution = Decimal(eth_amount)
+        contribution = Decimal(native_amount)
 
-        if eth_contribution <= 0:
-            await update.message.reply_text("Error: The amount must be greater than 0.")
-            return STAGE_CONTRIBUTE_ETH
+        if contribution <= 0:
+            await update.message.reply_text("Error: The amount must be greater than 0")
+            return STAGE_CONTRIBUTE
 
-        if eth_contribution.as_tuple().exponent < -18:
+        if contribution.as_tuple().exponent < -18:
             await update.message.reply_text(
-                "Error: ETH amount cannot have more than 18 decimal places."
+                "Error: Amount cannot have more than 18 decimal places"
             )
-            return STAGE_CONTRIBUTE_ETH
+            return STAGE_CONTRIBUTE
 
     except InvalidOperation:
-        await update.message.reply_text("Error: Please enter a valid numeric ETH amount.")
-        return STAGE_CONTRIBUTE_ETH
+        await update.message.reply_text("Error: Please enter a valid numeric amount")
+        return STAGE_CONTRIBUTE
 
-    context.user_data['eth_contribution'] = eth_contribution
+    context.user_data['contribution'] = contribution
+    chain_native = chains.chains[context.user_data["chain"]].token
 
     await update.message.reply_text(
-        f"{eth_contribution} ETH will be allocated for initial liquidity.\n\n"
-        "Please provide the address you want ownership transferred to."
+        f"{contribution} {chain_native.upper()} will be allocated for initial liquidity\n\n"
+        "Please provide the address you want ownership transferred to\n\n"
+        "This address will be the owner of the token and liquidity tokens\n\n(NOTE: you can renounce contract after deployment)"
     )
     return STAGE_OWNER
 
@@ -247,15 +249,14 @@ async def stage_contribute_eth(update: Update, context: CallbackContext) -> int:
 async def stage_owner(update: Update, context: CallbackContext) -> int:
     context.user_data['owner'] = update.message.text
     if not is_checksum_address(context.user_data['owner']) \
-        or context.user_data['owner'] == ca.DEAD or  context.user_data['owner'] == ca.ZERO:
-        
-        await update.message.reply_text("Error: Invalid address. Please enter a valid checksum address.\n\n(NOTE: you can renounce contract after deployment.)")
+        or context.user_data['owner'] == ca.DEAD or context.user_data['owner'] == ca.ZERO:
+        await update.message.reply_text("Error: Invalid address - Please enter a valid checksum address")
         return STAGE_OWNER
     
     user_data = context.user_data
     
-    if 'eth_contribution' in user_data:
-        eth_contribution = user_data['eth_contribution']
+    if 'contribution' in user_data:
+        contribution = user_data['contribution']
         ticker = user_data.get('ticker')
         name = user_data.get('name')
         chain = user_data.get('chain')
@@ -263,7 +264,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         percent = user_data.get('percent')
         address = user_data.get('owner')
 
-        if all([ticker, name, chain, supply, percent, eth_contribution, address]):
+        if all([ticker, name, chain, supply, percent, contribution, address]):
             chain_web3 = chains.chains[chain].w3
             web3 = Web3(Web3.HTTPProvider(chain_web3))
             chain_native = chains.chains[chain].token
@@ -271,8 +272,8 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
             team_tokens = int(supply) * (int(percent) / 100)
             liquidity_tokens = int(supply) - team_tokens
 
-            price_eth = float(eth_contribution) / liquidity_tokens
-            price_usd = price_eth * chainscan.get_native_price(chain.lower()) * 2
+            price_native = float(contribution) / liquidity_tokens
+            price_usd = price_native * chainscan.get_native_price(chain.lower()) * 2
             market_cap_usd = price_usd * int(supply) * 2
 
             supply_float = float(supply)
@@ -293,16 +294,16 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                 f"Total Supply: {supply_float:,.0f}\n"
                 f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
                 f"Liquidity Supply: {liquidity_supply:,.0f}\n"
-                f"ETH Contribution: {eth_contribution} ETH\n\n"
+                f"Contribution: {contribution} {chain_native.upper()}\n\n"
                 f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
                 f"Ownership of the project will be transferred to:\n`{address}`\n\n"
                 "Do you want to proceed with the launch?",
-                parse_mode="Markdown",
-                reply_markup=buttons
+            parse_mode="Markdown",
+            reply_markup=buttons
             )
             return STAGE_CONFIRM
         else:
-            await update.message.reply_text("Error: Incomplete information provided.")
+            await update.message.reply_text("Error: Incomplete information provided")
             return ConversationHandler.END
     
     else:
@@ -317,6 +318,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
 
         if all([ticker, name, chain, supply, percent, loan, duration, address]):
             chain_web3 = chains.chains[chain].w3
+            chain_native = chains.chains[chain].token
             web3 = Web3(Web3.HTTPProvider(chain_web3))
 
             fee, _, _ = functions.generate_loan_terms(chain, loan)
@@ -325,8 +327,8 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
             team_tokens = int(supply) * (int(percent) / 100)
             liquidity_tokens = int(supply) - team_tokens
 
-            price_eth = float(loan) / liquidity_tokens
-            price_usd = price_eth * chainscan.get_native_price(chain.lower()) * 2
+            price_native = float(loan) / liquidity_tokens
+            price_usd = price_native * chainscan.get_native_price(chain.lower()) * 2
             market_cap_usd = price_usd * int(supply) * 2
 
             supply_float = float(supply)
@@ -347,19 +349,18 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                 f"Total Supply: {supply_float:,.0f}\n"
                 f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
                 f"Loan Supply: {loan_supply:,.0f}\n"
-                f"Loan Amount: {loan} ETH\n"
+                f"Loan Amount: {loan} {chain_native.upper()}\n"
                 f"Loan Duration: {duration} Days\n"
-                f"Cost: {web3.from_wei(fee, 'ether')} ETH\n\n"
+                f"Cost: {web3.from_wei(fee, 'ether')} {chain_native.upper()}\n\n"
                 f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
                 f"Ownership of the project will be transferred to:\n`{address}`\n\n"
                 "Do you want to proceed with the launch?",
-                parse_mode="Markdown",
-                reply_markup=buttons
+            parse_mode="Markdown",
+            reply_markup=buttons
             )
-            
             return STAGE_CONFIRM
         else:
-            await update.message.reply_text("Error: Incomplete information provided.")
+            await update.message.reply_text("Error: Incomplete information provided")
             return ConversationHandler.END
         
 
@@ -382,14 +383,14 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
         def message(total_cost):
             return (f"On {chain_name.upper()}. Send {round(web3.from_wei(total_cost, "ether"), 4)} {chain_native.upper()} (This includes gas fees) to the following address:\n\n"
                     f"`{account.address}`\n\n"
-                    "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
-                    "*Ensure you are sending funds on the correct chain.\n\n"
-                    "Make a note of the wallet address above and private key below.*\n\n"
+                    "Any fees not used will be returned to the wallet you designated as owner at deployment\n\n"
+                    "*Ensure you are sending funds on the correct chain\n\n"
+                    "Make a note of the wallet address above and private key below*\n\n"
                     f"`{account.key.hex()}`\n\n"
                     "To check the status of your launch use /status")
 
-        if 'eth_contribution' in user_data:
-            eth_contribution = user_data.get('eth_contribution') * 10 ** 18
+        if 'contribution' in user_data:
+            contribution = user_data.get('contribution') * 10 ** 18
             db.add_entry(
                 now, 
                 user_name, 
@@ -404,7 +405,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 0,
                 0,
                 user_data.get('owner'),
-                int(eth_contribution)
+                int(contribution)
             )
 
             gas_estimate = functions.estimate_gas_without_loan(
@@ -415,13 +416,14 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                     user_data.get('percent'),
                     user_data.get('owner'),
                     1,
-                    int(eth_contribution)
+                    int(contribution)
                     )
 
-            total_cost = int(eth_contribution) + gas_estimate
+            total_cost = int(contribution) + gas_estimate
 
-            await query.message.reply_text(message(total_cost),
-                parse_mode="Markdown"
+            await query.message.reply_text(
+                message(total_cost),
+            parse_mode="Markdown"
             )
 
         else:
@@ -459,14 +461,13 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
 
             await query.message.reply_text(
                 message(total_cost),
-                parse_mode="Markdown"
+            parse_mode="Markdown"
             )
-        
         return ConversationHandler.END
 
     elif confirm == "no":
         db.delete_entry_by_user_id(user_id)
-        await query.message.reply_text("Project canceled. You can start over with /launch.")
+        await query.message.reply_text("Project canceled. You can start over with /launch")
         return ConversationHandler.END
 
 
@@ -528,7 +529,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         )
 
         if isinstance(loan, str) and loan.startswith("Error"):
-            await query.edit_message_text(f"Error initiating TX\n\nIf you want to cancel the deployment and return your funds back use /withdraw\n\n{loan}")
+            await query.edit_message_text(f"Error initiating TX\n\nuse /withdraw if you want to cancel the deployment and return your funds\n\n{loan}")
             return
 
         token_address, pair_address, loan_id = loan
@@ -561,7 +562,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             token_by_id = None
 
         message_text = (
-            f"Congrats {status_text['ticker']} has been launched and an Xchange ILL Created on {chain_name}\n\n"
+            f"Congratulations {status_text['ticker']} has been launched and an Xchange ILL Created on {chain_name}\n\n"
             f"CA: `{token_address}`\n\n"
             f"Loan ID: {loan_id}\n\n"
             f"Ownership transferred to:\n"
@@ -587,7 +588,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         )
 
         if isinstance(launched, str) and launched.startswith("Error"):
-            await query.edit_message_text(f"Error initiating TX.\n\nIf you want to cancel the deployment and return your funds back use /withdraw\n\n{launched}")
+            await query.edit_message_text(f"Error initiating TX\n\nUse /withdraw if you want to cancel the deployment and return your funds\n\n{launched}")
             return
 
         token_address, pair_address = launched
@@ -607,7 +608,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     )
 
     if isinstance(refund, str) and refund.startswith("Error"):
-        refund_text = f"Error returning funds\n\nThis is likely because you sent close to the perfect amount for gas.\n\nUse /withdraw to double check"
+        refund_text = f"Error returning funds\n\nThis is likely because you sent close to the perfect amount for gas\n\nUse /withdraw to double check"
     else:
         refund_text = (
             "Funds returned\n\n"

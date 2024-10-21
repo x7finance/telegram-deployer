@@ -32,12 +32,12 @@ async def delete(update: Update, context: CallbackContext) -> int:
             if delete_result:
                 await update.message.reply_text(
                     f"Wallet `{address}` has been deleted.",
-                    parse_mode="Markdown"
+                parse_mode="Markdown"
                 )
             else:
                 await update.message.reply_text(
                     f"Wallet `{address}` not found.",
-                    parse_mode="Markdown"
+                parse_mode="Markdown"
                 )
 
 
@@ -89,9 +89,10 @@ async def search(update: Update, context: CallbackContext) -> int:
                     parse_mode="Markdown",
                     )
                 else:
-                    await update.message.reply_text(f"Nothing found for `{name}`",
-                parse_mode="Markdown"
-                )
+                    await update.message.reply_text(
+                        f"Nothing found for `{name}`",
+                    parse_mode="Markdown"
+                    )
                  
 
 async def view(update: Update, context: CallbackContext) -> int:

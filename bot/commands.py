@@ -19,12 +19,11 @@ async def start(update: Update, context: CallbackContext) -> int:
     _, _, loan_fees = functions.generate_loan_terms("base", 1)
     if chat_type == "private":
         await update.message.reply_text(
-            f"*THIS IS A BETA BOT. PLEASE BE MINDFUL WHEN TRANSFERRING LARGE AMOUNTS OF FUNDS AND DO NOT USE /RESET UNTIL FUNDS ARE CLEARED*.\n\n"
             f"Welcome {tools.escape_markdown(user_name)} to {tools.escape_markdown(bot.BOT_NAME)}!\n\n"
             f"Create a token and launch on Xchange in minutes!\n\n"
             f"{loan_fees}\n\n"
             "Choose your optional loan duration, and if the loan is not repaid before expiry date, it will be repaid via pair liquidity!\n\n"
-            f"{bot.LIQUIDATION_DEPOSIT} ETH liquidation deposit will be returned to liquidator upon loan completion or liquidation.\n\n"
+            f"{bot.LIQUIDATION_DEPOSIT} ETH liquidation deposit will be returned upon loan completion\n\n"
             f"Total {bot.BOT_NAME} launches: {count}\n\n" 
             "use /launch to start your project now!",
         parse_mode="Markdown"
@@ -54,7 +53,8 @@ async def reset(update: Update, context: CallbackContext) -> int:
         "Are you sure you want to reset your project?\n\nPlease ensure you have no remaining "
         "funds in the designated deployer address or you have saved the address and private "
         "key\n\n*This action cannot be undone*",
-        reply_markup=reply_markup
+    parse_mode="Markdown",
+    reply_markup=reply_markup
     )
     return
 
@@ -157,8 +157,8 @@ async def status(update: Update, context: CallbackContext) -> int:
             team_tokens = int(status_text["supply"]) * (int(status_text["percent"]) / 100)
             liquidity_tokens = int(status_text["supply"]) - team_tokens
             if loan_deployment:
-                price_eth = float(status_text["loan"]) / liquidity_tokens
-                price_usd = price_eth * chainscan.get_native_price(status_text["chain"]) * 2
+                price_native = float(status_text["loan"]) / liquidity_tokens
+                price_usd = price_native * chainscan.get_native_price(status_text["chain"]) * 2
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
 
                 supply_float = float(status_text["supply"])
@@ -167,12 +167,12 @@ async def status(update: Update, context: CallbackContext) -> int:
                 loan_supply = supply_float - team_supply
                 loan_info = (
                     f"Loan Supply: {loan_supply:,.0f}\n"
-                    f"Loan Amount: {status_text['loan']} ETH\n"
+                    f"Loan Amount: {status_text['loan']} {chain_native.upper()}\n"
                     f"Loan Duration: {status_text['duration']} Days\n"
                 )
             else:
-                price_eth = (int(status_text["fee"]) / 10 ** 18) / liquidity_tokens
-                price_usd = price_eth * chainscan.get_native_price(status_text["chain"]) * 2
+                price_native = (int(status_text["fee"]) / 10 ** 18) / liquidity_tokens
+                price_usd = price_native * chainscan.get_native_price(status_text["chain"]) * 2
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
                 loan_info = "No Loan, self-funded deployment.\n"
             await update.message.reply_text(
