@@ -19,7 +19,7 @@ async def command(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        status_text = db.search_entry_by_user_id(user_id)
+        status_text = db.search_entry(user_id)
         
         if status_text:
             await update.message.reply_text(
@@ -466,7 +466,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
 
     elif confirm == "no":
-        db.delete_entry_by_user_id(user_id)
+        db.delete_entry(user_id)
         await query.message.reply_text("Project canceled. You can start over with /launch")
         return ConversationHandler.END
 
@@ -488,7 +488,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     query = update.callback_query
     await query.answer()
     user_id = update.effective_user.id
-    status_text = db.search_entry_by_user_id(user_id)
+    status_text = db.search_entry(user_id)
     
     if not status_text:
         await query.edit_message_text("No deployment status found")

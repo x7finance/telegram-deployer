@@ -43,11 +43,11 @@ if __name__ == "__main__":
     ## ADMIN ##
     application.add_handler(CommandHandler("admin", admin.command))
     application.add_handler(CommandHandler("delete", admin.delete))
-    application.add_handler(CommandHandler("refund", admin.refund))
     application.add_handler(CommandHandler("search", admin.search))
     application.add_handler(CommandHandler("view", admin.view))
 
     ## COMANDS ##
+    application.add_handler(CommandHandler("id", commands.id))
     application.add_handler(CommandHandler("reset", commands.reset))
     application.add_handler(CommandHandler("start", commands.start))
     application.add_handler(CommandHandler("status", commands.status))

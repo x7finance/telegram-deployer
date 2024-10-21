@@ -11,30 +11,21 @@ async def test(update: Update, context: CallbackContext) -> int:
     return
 
 
-async def start(update: Update, context: CallbackContext) -> int:
-    user = update.effective_user
-    user_name = user.username or f"{user.first_name} {user.last_name}"
+async def id(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
-    count = db.count_launches()
-    _, _, loan_fees = functions.generate_loan_terms("base", 1)
     if chat_type == "private":
+        user_id = update.effective_user.id
         await update.message.reply_text(
-            f"Welcome {tools.escape_markdown(user_name)} to {tools.escape_markdown(bot.BOT_NAME)}!\n\n"
-            f"Create a token and launch on Xchange in minutes!\n\n"
-            f"{loan_fees}\n\n"
-            "Choose your optional loan duration, and if the loan is not repaid before expiry date, it will be repaid via pair liquidity!\n\n"
-            f"{bot.LIQUIDATION_DEPOSIT} ETH liquidation deposit will be returned upon loan completion\n\n"
-            f"Total {bot.BOT_NAME} launches: {count}\n\n" 
-            "use /launch to start your project now!",
+            f"{update.effective_user.username}, Your user ID is: `{update.effective_user.id}`",
         parse_mode="Markdown"
-        )
+    )
 
 
 async def reset(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        status_text = db.search_entry_by_user_id(user_id)
+        status_text = db.search_entry(user_id)
         
         if not status_text:
             await update.message.reply_text(
@@ -56,7 +47,6 @@ async def reset(update: Update, context: CallbackContext) -> int:
     parse_mode="Markdown",
     reply_markup=reply_markup
     )
-    return
 
 
 async def reset_callback(update: Update, context: CallbackContext) -> int:
@@ -66,7 +56,7 @@ async def reset_callback(update: Update, context: CallbackContext) -> int:
     user_id = update.effective_user.id
     
     if query.data == 'reset_yes':
-        delete_text = db.delete_entry_by_user_id(user_id)
+        delete_text = db.delete_entry(user_id)
         if delete_text:
             await query.edit_message_text(
                 "Project reset. Use /launch to start a new project"
@@ -79,11 +69,30 @@ async def reset_callback(update: Update, context: CallbackContext) -> int:
         await query.edit_message_text("Reset canceled.")
 
 
+async def start(update: Update, context: CallbackContext) -> int:
+    user = update.effective_user
+    user_name = user.username or f"{user.first_name} {user.last_name}"
+    chat_type = update.message.chat.type
+    count = db.count_launches()
+    _, _, loan_fees = functions.generate_loan_terms("base", 1)
+    if chat_type == "private":
+        await update.message.reply_text(
+            f"Welcome {tools.escape_markdown(user_name)} to {tools.escape_markdown(bot.BOT_NAME)}!\n\n"
+            f"Create a token and launch on Xchange in minutes!\n\n"
+            f"{loan_fees}\n\n"
+            "Choose your optional loan duration, and if the loan is not repaid before expiry date, it will be repaid via pair liquidity!\n\n"
+            f"{bot.LIQUIDATION_DEPOSIT} ETH liquidation deposit will be returned upon loan completion\n\n"
+            f"Total {bot.BOT_NAME} launches: {count}\n\n" 
+            "use /launch to start your project now!",
+        parse_mode="Markdown"
+        )
+
+
 async def status(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        status_text = db.search_entry_by_user_id(user_id)
+        status_text = db.search_entry(user_id)
         
         if status_text:
             chain_web3 = chains.chains[status_text["chain"]].w3
@@ -199,7 +208,7 @@ async def withdraw(update: Update, context: CallbackContext) -> int:
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        status_text = db.search_entry_by_user_id(user_id)
+        status_text = db.search_entry(user_id)
         if status_text:
             result = functions.transfer_balance(
                 status_text["chain"],
