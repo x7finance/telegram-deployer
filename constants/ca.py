@@ -23,7 +23,7 @@ def ILL004(chain):
 
 def LPOOL(chain):
     map = {
-        "base": "0x740015c39da5D148fcA25A467399D00bcE10c001",
+        "base": "0x4eE199B7DFED6B96402623BdEcf2B1ae2f3750Dd",
         "base-sepolia": "0x0E2F369Fdc070521ae23A8BcB4Bad0310044a1e8",
         "eth": "0x74001DcFf64643B76cE4919af4DcD83da6Fe1E02",
         "eth-sepolia": "0xcad129C25D092a48bAC897CfbA887F16762E139f"
