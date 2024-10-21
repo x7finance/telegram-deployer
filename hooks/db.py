@@ -127,6 +127,7 @@ def get_all_entries():
 
         fetch_query = """
         SELECT
+            complete,
             timedate,
             address,
             user_name, 
@@ -145,6 +146,7 @@ def get_all_entries():
         if results:
             return [
                 {
+                    "complete": result["complete"],
                     "user_name": result["user_name"],
                     "user_id": result["user_id"],
                     "timedate": result["timedate"],
@@ -215,7 +217,7 @@ def search_entry(user_id):
         return f"Error: {e}"
 
 
-def set_complete(address):
+def set_complete(user_id):
     try:
         connection = create_connection()
         cursor = connection.cursor()
@@ -223,9 +225,9 @@ def set_complete(address):
         update_query = """
         UPDATE wallets
         SET complete = %s
-        WHERE address = %s
+        WHERE user_id = %s
         """
-        cursor.execute(update_query, (True, address))
+        cursor.execute(update_query, (True, user_id))
         connection.commit()
         
         check_log_query = "SELECT count FROM log"
@@ -245,5 +247,3 @@ def set_complete(address):
         return True
     except mysql.connector.Error as e:
         return f"Error: {e}"
-
-

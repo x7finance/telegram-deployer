@@ -641,4 +641,4 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         text=refund_text
     )
 
-    db.set_complete(status_text["address"])
+    db.set_complete(status_text["user_id"])
