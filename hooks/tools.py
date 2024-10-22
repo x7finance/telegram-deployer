@@ -1,4 +1,7 @@
+from constants import bot, chains
+
 from datetime import datetime, timedelta
+from web3 import Web3
 import unicodedata
 
 
@@ -9,23 +12,13 @@ def datetime_to_timestamp(datetime_str):
         return timestamp
     except ValueError:
         return "Invalid datetime format. Please use YYYY-MM-DD HH:MM."
-
-
-def timestamp_to_datetime(timestamp):
-    try:
-        datetime_obj = datetime.fromtimestamp(timestamp)
-        datetime_str = datetime_obj.strftime('%Y-%m-%d %H:%M')
-        return datetime_str
-    except ValueError:
-        return "Invalid timestamp."
     
 
-def timestamp_deadline():
-    current_time = datetime.now()
-    future_time = current_time + timedelta(minutes=10)
-    future_timestamp = int(future_time.timestamp())
-
-    return future_timestamp
+def escape_markdown(text):
+    characters_to_escape = ['*', '_', '`']
+    for char in characters_to_escape:
+        text = text.replace(char, '\\' + char)
+    return text
 
 
 def format_schedule(schedule1, schedule2, native_token):
@@ -71,11 +64,22 @@ def format_schedule(schedule1, schedule2, native_token):
     return "\n".join(schedule_list)
 
 
-def escape_markdown(text):
-    characters_to_escape = ['*', '_', '`']
-    for char in characters_to_escape:
-        text = text.replace(char, '\\' + char)
-    return text
+def generate_loan_terms(chain, loan_amount):
+    chain_native = chains.chains[chain].token
+    chain_web3 = chains.chains[chain].w3
+    web3 = Web3(Web3.HTTPProvider(chain_web3))
+    loan_in_wei = web3.to_wei(loan_amount, 'ether')
+    current_loan_version = bot.LOANS.get(bot.LIVE_LOAN)
+    origination_fee = current_loan_version['origination_fee'](loan_in_wei)
+    cost_string = current_loan_version['cost_string']
+    if callable(cost_string):
+        cost_string = cost_string(chain_native)
+    loan_ca = current_loan_version['contract'](chain)
+    loan_deposit = web3.to_wei(bot.LIQUIDATION_DEPOSIT, 'ether')
+    fee = origination_fee + loan_deposit
+    text = f"Borrow up to {bot.MAX_LOAN_AMOUNT} {chain_native.upper()} liquidity for {bot.LIQUIDATION_DEPOSIT} {chain_native.upper()} + {cost_string}"
+
+    return fee, loan_ca, text
 
 
 def get_duration_years(duration):
@@ -114,3 +118,20 @@ def split_message(message: str, max_length: int = 4096) -> list:
 
     parts.append(message)
     return parts
+
+
+def timestamp_deadline():
+    current_time = datetime.now()
+    future_time = current_time + timedelta(minutes=10)
+    future_timestamp = int(future_time.timestamp())
+
+    return future_timestamp
+
+
+def timestamp_to_datetime(timestamp):
+    try:
+        datetime_obj = datetime.fromtimestamp(timestamp)
+        datetime_str = datetime_obj.strftime('%Y-%m-%d %H:%M')
+        return datetime_str
+    except ValueError:
+        return "Invalid timestamp."

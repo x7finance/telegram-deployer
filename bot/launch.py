@@ -178,18 +178,14 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     
     chain_native = chains.chains[context.user_data['chain']].token
     context.user_data['loan'] = loan_amount
-    
-    buttons = [
-        [InlineKeyboardButton("1 Day", callback_data=f'duration_1')],
-        [InlineKeyboardButton("2 Days", callback_data=f'duration_2')],
-        [InlineKeyboardButton("3 Days", callback_data=f'duration_3')],
-        [InlineKeyboardButton("4 Days", callback_data=f'duration_4')],
-        [InlineKeyboardButton("5 Days", callback_data=f'duration_5')],
-        [InlineKeyboardButton("6 Days", callback_data=f'duration_6')],
-        [InlineKeyboardButton("7 Days", callback_data=f'duration_7')]
-    ]
+
+    if bot.MAX_LOAN_LENGTH == 7:
+        buttons = [[InlineKeyboardButton(f"{i} Day{'s' if i > 1 else ''}", callback_data=f'duration_{i}')] for i in range(1, bot.MAX_LOAN_LENGTH + 1)]
+    if bot.MAX_LOAN_LENGTH == 28:
+
+        buttons = [[InlineKeyboardButton(f"{i} Days", callback_data=f'duration_{i}')] for i in range(7, bot.MAX_LOAN_LENGTH + 1, 7)]
     keyboard = InlineKeyboardMarkup(buttons)
-    
+
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity\n\n"
@@ -324,7 +320,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
             chain_native = chains.chains[chain].token
             web3 = Web3(Web3.HTTPProvider(chain_web3))
 
-            fee, _, _ = functions.generate_loan_terms(chain, loan)
+            fee, _, _ = tools.generate_loan_terms(chain, loan)
             context.user_data['fee'] = fee
 
             team_tokens = int(supply) * (int(percent) / 100)
@@ -514,7 +510,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     if with_loan:
         chain_web3 = chains.chains[chain].w3
         web3 = Web3(Web3.HTTPProvider(chain_web3))
-        _, loan_contract, _ = functions.generate_loan_terms(chain, status_text["loan"])
+        _, loan_contract, _ = tools.generate_loan_terms(chain, status_text["loan"])
 
         loan = functions.deploy_token_with_loan(
             status_text["chain"],

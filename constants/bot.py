@@ -1,10 +1,23 @@
+from constants import ca
+
+ADMINS = [1667971437]
 BOT_NAME = "Xchange Create"
-LIVE_LOAN = "004"
+
 LIQUIDATION_DEPOSIT = 0.1
+LIVE_LOAN = "004"
 MAX_LOAN_AMOUNT = 5
 MIN_LOAN_AMOUNT = 0.5
-ORIGINATION_PERCENT = 2
-ADMINS = [1667971437]
+MAX_LOAN_LENGTH = 5
 
-
-
+LOANS = {
+    "004": {
+        "origination_fee": lambda loan_in_wei: loan_in_wei * 2 // 100,
+        "cost_string": "2% of borrowed capital",
+        "contract": lambda chain: ca.ILL004(chain)
+    },
+    "005": {
+        "origination_fee": lambda loan_in_wei: loan_in_wei + 10000000000000000,
+        "cost_string": lambda chain_native: f"0.01 {chain_native.upper()}",
+        "contract": lambda chain: ca.ILL005(chain)
+    }
+}

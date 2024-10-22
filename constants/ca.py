@@ -21,6 +21,15 @@ def ILL004(chain):
     }
     return map.get(chain) 
 
+def ILL005(chain):
+    map = {
+        "base": "0x90482AD3aa56675ba313dAC14C3a7717bAD5B24D",
+        "base-sepolia": "0xA78949b5f46aC0D92DCD6355745f2B9f9984a5b3",
+        "eth": "0x90482AD3aa56675ba313dAC14C3a7717bAD5B24D",
+        "eth-sepolia": "0xA78949b5f46aC0D92DCD6355745f2B9f9984a5b3"
+    }
+    return map.get(chain) 
+
 def LPOOL(chain):
     map = {
         "base": "0x4eE199B7DFED6B96402623BdEcf2B1ae2f3750Dd",
@@ -28,26 +37,7 @@ def LPOOL(chain):
         "eth": "0x74001DcFf64643B76cE4919af4DcD83da6Fe1E02",
         "eth-sepolia": "0xcad129C25D092a48bAC897CfbA887F16762E139f"
     }
-    return map.get(chain) 
-
-def LPOOL_RESERVE(chain):
-    map = {
-        "base": "0x7Ca54e9Aa3128bF15f764fa0f0f93e72b5267000",
-        "base-sepolia": "0xeEa4C68B1424cF566c2Ce7F4479fB6dbE79f53Fe",
-        "eth": "0x7Ca54e9Aa3128bF15f764fa0f0f93e72b5267000",
-        "eth-sepolia": "0xeEa4C68B1424cF566c2Ce7F4479fB6dbE79f53Fe"
-    }
-    return map.get(chain) 
-
-    
-def ROUTER(chain):
-    map = {
-        "base": "0xC2defaD879dC426F5747F2A5b067De070928AA50",
-        "base-sepolia": "0xde472CFDC852c45FA8AC082A07662cA4846bD9A2",
-        "eth": "0x6b5422D584943BC8Cd0E10e239d624c6fE90fbB8",
-        "eth-sepolia": "0x05B5034BfDbd930a93283aa52A10D700454A7a47"
-    }
-    return map.get(chain) 
+    return map.get(chain)
 
 
 DEAD = "0x000000000000000000000000000000000000dEaD"
