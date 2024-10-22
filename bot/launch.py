@@ -182,8 +182,8 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     if bot.MAX_LOAN_LENGTH == 7:
         buttons = [[InlineKeyboardButton(f"{i} Day{'s' if i > 1 else ''}", callback_data=f'duration_{i}')] for i in range(1, bot.MAX_LOAN_LENGTH + 1)]
     if bot.MAX_LOAN_LENGTH == 28:
-
         buttons = [[InlineKeyboardButton(f"{i} Days", callback_data=f'duration_{i}')] for i in range(7, bot.MAX_LOAN_LENGTH + 1, 7)]
+
     keyboard = InlineKeyboardMarkup(buttons)
 
     await context.bot.send_message(
