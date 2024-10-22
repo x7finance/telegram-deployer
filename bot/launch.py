@@ -210,7 +210,9 @@ async def stage_duration(update: Update, context: CallbackContext) -> int:
         text=f"Loan duration will be {duration} days.\n\n"
              "If the loan is not fully paid before then, it will become eligible for liquidation. "
              "This means the loan amount can be withdrawn from the pair liquidity\n\n"
-             "Please provide the address you want ownership transferred to"
+             "Please provide the address you want ownership transferred to\n\n"
+             "This address will be the owner of the token and liquidity tokens\n\n"
+             "You can renounce the contract after deployment"
     )
     return STAGE_OWNER
 
@@ -241,7 +243,8 @@ async def stage_contribute(update: Update, context: CallbackContext) -> int:
     await update.message.reply_text(
         f"{contribution} {chain_native.upper()} will be allocated for initial liquidity\n\n"
         "Please provide the address you want ownership transferred to\n\n"
-        "This address will be the owner of the token and liquidity tokens\n\n(NOTE: you can renounce contract after deployment)"
+        "This address will be the owner of the token and liquidity tokens\n\n"
+        "You can renounce the contract after deployment"
     )
     return STAGE_OWNER
 
@@ -390,7 +393,21 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                     "To check the status of your launch use /status")
 
         if 'contribution' in user_data:
-            contribution = user_data.get('contribution') * 10 ** 18
+            fee = user_data.get('contribution') * 10 ** 18
+            gas_estimate = functions.estimate_gas_without_loan(
+                    user_data.get('chain'),
+                    user_data.get('name'),
+                    user_data.get('ticker'),
+                    user_data.get('supply'),
+                    user_data.get('percent'),
+                    user_data.get('owner'),
+                    1,
+                    int(fee)
+                    )
+            if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
+                await query.message.reply_text(f"{gas_estimate}")
+                return
+
             db.add_entry(
                 now, 
                 user_name, 
@@ -405,29 +422,26 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 0,
                 0,
                 user_data.get('owner'),
-                int(contribution)
-            )
-
-            gas_estimate = functions.estimate_gas_without_loan(
-                    user_data.get('chain'),
-                    user_data.get('name'),
-                    user_data.get('ticker'),
-                    user_data.get('supply'),
-                    user_data.get('percent'),
-                    user_data.get('owner'),
-                    1,
-                    int(contribution)
-                    )
-
-            total_cost = int(contribution) + gas_estimate
-
-            await query.message.reply_text(
-                message(total_cost),
-            parse_mode="Markdown"
+                int(fee)
             )
 
         else:
             fee = user_data.get('fee')
+            gas_estimate = functions.estimate_gas_with_loan(
+                user_data.get('chain'),
+                user_data.get('name'),
+                user_data.get('ticker'),
+                user_data.get('supply'),
+                user_data.get('percent'),
+                web3.to_wei(user_data.get('loan'), 'ether'),
+                86400,
+                user_data.get('owner'),
+                int(fee)
+                )
+            if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
+                await query.message.reply_text(f"{gas_estimate}")
+                return
+             
             db.add_entry(
                 now, 
                 user_name, 
@@ -445,24 +459,12 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 int(fee)
             )
 
-            gas_estimate = functions.estimate_gas_with_loan(
-                user_data.get('chain'),
-                user_data.get('name'),
-                user_data.get('ticker'),
-                user_data.get('supply'),
-                user_data.get('percent'),
-                web3.to_wei(user_data.get('loan'), 'ether'),
-                86400,
-                user_data.get('owner'),
-                int(fee)
-                )
+        total_cost = (int(fee) + gas_estimate)
 
-            total_cost = (int(fee) + gas_estimate)
-
-            await query.message.reply_text(
-                message(total_cost),
-            parse_mode="Markdown"
-            )
+        await query.message.reply_text(
+            message(total_cost),
+        parse_mode="Markdown"
+        )
         return ConversationHandler.END
 
     elif confirm == "no":

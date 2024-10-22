@@ -124,68 +124,76 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, loan_amount, du
 
 
 def estimate_gas_without_loan(chain, name, symbol, supply, percent, owner, slippage, loan_fee):
-    chain_web3 = chains.chains[chain].w3
-    web3 = Web3(Web3.HTTPProvider(chain_web3))
-    deployer_address = ca.DEPLOYER(chain)
-    deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
-    deployer_contract = web3.eth.contract(address=web3.to_checksum_address(deployer_address), abi=deployer_abi)
-    deadline = tools.timestamp_deadline()
-    gas_price = web3.eth.gas_price
-    nonce = web3.eth.get_transaction_count(ca.DEAD)
-    params = {
-        "name": name,
-        "symbol": symbol,
-        "supply": int(supply),
-        "teamTokens": int(percent),
-        "newOwner": owner,
-        "slippageTolerance": slippage,
-        "deadline": deadline
-    }
-    gas_estimate = deployer_contract.functions.deployTokenWithoutLoan(params).estimate_gas({
-        'from': ca.DEAD,
-        'nonce': nonce,
-        'gasPrice': gas_price,
-        'value': int(loan_fee)
-    })
+    try:
+        chain_web3 = chains.chains[chain].w3
+        web3 = Web3(Web3.HTTPProvider(chain_web3))
+        deployer_address = ca.DEPLOYER(chain)
+        deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
+        deployer_contract = web3.eth.contract(address=web3.to_checksum_address(deployer_address), abi=deployer_abi)
+        deadline = tools.timestamp_deadline()
+        gas_price = web3.eth.gas_price
+        nonce = web3.eth.get_transaction_count(ca.DEAD)
 
-    gas_cost = gas_estimate * gas_price
-    return gas_cost
+        params = {
+            "name": name,
+            "symbol": symbol,
+            "supply": int(supply),
+            "teamTokens": int(percent),
+            "newOwner": owner,
+            "slippageTolerance": slippage,
+            "deadline": deadline
+        }
+
+        gas_estimate = deployer_contract.functions.deployTokenWithoutLoan(params).estimate_gas({
+            'from': ca.DEAD,
+            'nonce': nonce,
+            'gasPrice': gas_price,
+            'value': int(loan_fee)
+        })
+
+        gas_cost = gas_estimate * gas_price
+        return gas_cost
+    except Exception as e:
+            return f"Error estimating gas: {str(e)}"
 
 
 def estimate_gas_with_loan(chain, name, symbol, supply, percent, loan_amount, duration, owner, loan_fee):
-    chain_web3 = chains.chains[chain].w3
-    web3 = Web3(Web3.HTTPProvider(chain_web3))
-    deployer_address = ca.DEPLOYER(chain)
-    deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
-    deployer_contract = web3.eth.contract(address=web3.to_checksum_address(deployer_address), abi=deployer_abi)
-    deadline = tools.timestamp_deadline()
-    gas_price = web3.eth.gas_price
-    nonce = web3.eth.get_transaction_count(ca.DEAD)
-    _, loan_contract, _ = generate_loan_terms(chain, web3.to_wei(loan_amount, 'ether'))
+    try:
+        chain_web3 = chains.chains[chain].w3
+        web3 = Web3(Web3.HTTPProvider(chain_web3))
+        deployer_address = ca.DEPLOYER(chain)
+        deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
+        deployer_contract = web3.eth.contract(address=web3.to_checksum_address(deployer_address), abi=deployer_abi)
+        deadline = tools.timestamp_deadline()
+        gas_price = web3.eth.gas_price
+        nonce = web3.eth.get_transaction_count(ca.DEAD)
+        _, loan_contract, _ = generate_loan_terms(chain, web3.to_wei(loan_amount, 'ether'))
 
-    params = {
-        "name": name,
-        "symbol": symbol,
-        "supply": int(supply),
-        "teamTokens": int(percent),
-        "newOwner": owner,
-        "loanTermContract": loan_contract,
-        "loanAmount": loan_amount,
-        "loanDurationSeconds": duration,
-        "liquidityReceiver": owner,
-        "deadline": deadline
-    }
+        params = {
+            "name": name,
+            "symbol": symbol,
+            "supply": int(supply),
+            "teamTokens": int(percent),
+            "newOwner": owner,
+            "loanTermContract": loan_contract,
+            "loanAmount": loan_amount,
+            "loanDurationSeconds": duration,
+            "liquidityReceiver": owner,
+            "deadline": deadline
+        }
+        
+        gas_estimate = deployer_contract.functions.deployTokenWithLoan(params).estimate_gas({
+            'from': ca.DEAD,
+            'nonce': nonce,
+            'gasPrice': gas_price,
+            'value': int(loan_fee)
+        })
 
-    gas_estimate = deployer_contract.functions.deployTokenWithLoan(params).estimate_gas({
-        'from': ca.DEAD,
-        'nonce': nonce,
-        'gasPrice': gas_price,
-        'value': int(loan_fee)
-    })
+        gas_cost = gas_estimate * gas_price
+        return gas_cost
 
-    gas_cost = gas_estimate * gas_price
-    return gas_cost
-
+    except Exception as e:
+        return f"Error estimating gas: {str(e)}"
 
 def transfer_balance(chain, address, owner, key):
     if chain not in chains.chains:
