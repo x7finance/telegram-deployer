@@ -179,30 +179,30 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     chain_native = chains.chains[context.user_data['chain']].token
     context.user_data['loan'] = loan_amount
 
-    if bot.MAX_LOAN_LENGTH == 7:
-        buttons = [[InlineKeyboardButton(f"{i} Day{'s' if i > 1 else ''}", callback_data=f'duration_{i}')] for i in range(1, bot.MAX_LOAN_LENGTH + 1)]
-    if bot.MAX_LOAN_LENGTH == 28:
-        buttons = [[InlineKeyboardButton(f"{i} Days", callback_data=f'duration_{i}')] for i in range(7, bot.MAX_LOAN_LENGTH + 1, 7)]
-
-    keyboard = InlineKeyboardMarkup(buttons)
-
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity\n\n"
-             "How long do you want the loan for?",
-        reply_markup=keyboard
+        text=f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity.\n\n"
+             f"Please enter the loan duration (in days) as a number no higher than {bot.MAX_LOAN_LENGTH} days:"
     )
     return STAGE_DURATION
 
 
 async def stage_duration(update: Update, context: CallbackContext) -> int:
-    query = update.callback_query
-    await query.answer()
-    duration = query.data.split('_')[1]
+    duration_input = update.message.text.strip()
+
+    if not update.message.text.isdigit():
+        await update.message.reply_text("Invalid input. Please enter a valid number for the duration")
+        return STAGE_DURATION
+
+    duration = int(duration_input)
+    if duration <= 0 or duration > bot.MAX_LOAN_LENGTH:
+        await update.message.reply_text(
+            f"Invalid duration. Please enter a number between 1 and {bot.MAX_LOAN_LENGTH} days"
+        )
+        return STAGE_DURATION
+
     context.user_data['duration'] = duration
-    
-    await context.bot.send_message(
-        chat_id=query.message.chat_id,
+    await update.message.reply_text(
         text=f"Loan duration will be {duration} days.\n\n"
              "If the loan is not fully paid before then, it will become eligible for liquidation. "
              "This means the loan amount can be withdrawn from the pair liquidity\n\n"
