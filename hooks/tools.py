@@ -77,7 +77,7 @@ def generate_loan_terms(chain, loan_amount):
     loan_ca = current_loan_version['contract'](chain)
     loan_deposit = web3.to_wei(bot.LIQUIDATION_DEPOSIT, 'ether')
     fee = origination_fee + loan_deposit
-    text = f"Borrow up to {bot.MAX_LOAN_AMOUNT} {chain_native.upper()} liquidity for {bot.LIQUIDATION_DEPOSIT} {chain_native.upper()} + {cost_string}"
+    text = f"Borrow up to {bot.MAX_LOAN_AMOUNT} {chain_native.upper()} liquidity for {cost_string} + {bot.LIQUIDATION_DEPOSIT} {chain_native.upper()} deposit"
 
     return fee, loan_ca, text
 

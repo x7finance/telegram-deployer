@@ -77,12 +77,18 @@ async def start(update: Update, context: CallbackContext) -> int:
     _, _, loan_fees = tools.generate_loan_terms("base", 1)
     if chat_type == "private":
         await update.message.reply_text(
-            f"Welcome {tools.escape_markdown(user_name)} to {tools.escape_markdown(bot.BOT_NAME)}!\n\n"
-            f"Create a token and launch on Xchange in minutes!\n\n"
-            f"{loan_fees}\n\n"
-            "Choose your optional loan duration, and if the loan is not repaid before expiry date, it will be repaid via pair liquidity!\n\n"
-            f"{bot.LIQUIDATION_DEPOSIT} ETH liquidation deposit will be returned upon loan completion\n\n"
-            f"Total {bot.BOT_NAME} launches: {count}\n\n" 
+            f"Welcome to {tools.escape_markdown(bot.BOT_NAME)}, {tools.escape_markdown(user_name)}!\n"
+            f"Your gateway to creating and launching tokens in just minutes.\n\n"
+            f"*Here's what you can do:*\n"
+            "- Launch a Token: Seamlessly create and deploy your token.\n"
+            f"- Borrow Liquidity: {loan_fees}\n\n"
+            "*Key Features:*\n"
+            "- Flexible Loan Terms: Choose your preferred loan duration. If unpaid by the expiry date, "
+            "repayment will occur through pair liquidity.\n"
+            f"- Refundable Deposit: The {bot.LIQUIDATION_DEPOSIT} ETH liquidation deposit is fully "
+            "returned once your loan is settled.\n\n"
+            f"Join the innovators—{count} tokens launched and counting!\n\n"
+            "*Ready to launch your project?\n*"
             "use /launch to start your project now!",
         parse_mode="Markdown"
         )
