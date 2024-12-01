@@ -182,7 +182,7 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity.\n\n"
-             f"Please enter the loan duration (in days) as a number no higher than {bot.MAX_LOAN_LENGTH} days:"
+             f"Please enter the loan duration (in days) as a number no higher than {bot.MAX_LOAN_LENGTH}:"
     )
     return STAGE_DURATION
 
@@ -190,20 +190,16 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
 async def stage_duration(update: Update, context: CallbackContext) -> int:
     duration_input = update.message.text.strip()
 
-    if not update.message.text.isdigit():
-        await update.message.reply_text("Invalid input. Please enter a valid number for the duration")
-        return STAGE_DURATION
-
-    duration = int(duration_input)
-    if duration <= 0 or duration > bot.MAX_LOAN_LENGTH:
+    if not (duration_input.isdigit() and 1 <= int(duration_input) <= bot.MAX_LOAN_LENGTH):
         await update.message.reply_text(
-            f"Invalid duration. Please enter a number between 1 and {bot.MAX_LOAN_LENGTH} days"
+            f"Error: Loan duration must be a whole number between 1 and {bot.MAX_LOAN_LENGTH}. Please try again."
         )
         return STAGE_DURATION
 
-    context.user_data['duration'] = duration
+    context.user_data['duration'] = int(duration_input)
+
     await update.message.reply_text(
-        text=f"Loan duration will be {duration} days.\n\n"
+        text=f"Loan duration will be {context.user_data['duration']} days.\n\n"
              "If the loan is not fully paid before then, it will become eligible for liquidation. "
              "This means the loan amount can be withdrawn from the pair liquidity\n\n"
              "Please provide the address you want ownership transferred to\n\n"

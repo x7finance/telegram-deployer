@@ -61,7 +61,7 @@ if __name__ == "__main__":
             launch.STAGE_SUPPLY: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_supply)],
             launch.STAGE_AMOUNT: [CallbackQueryHandler(launch.stage_amount, pattern='^amount_')],
             launch.STAGE_LOAN: [CallbackQueryHandler(launch.stage_loan, pattern='^loan_')],
-            launch.STAGE_DURATION: [CallbackQueryHandler(launch.stage_duration, pattern='^duration_')],
+            launch.STAGE_DURATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_duration)],
             launch.STAGE_CONTRIBUTE: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_contribute)],
             launch.STAGE_OWNER: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_owner)],
             launch.STAGE_CONFIRM: [CallbackQueryHandler(launch.stage_confirm, pattern='^confirm_')],
