@@ -60,7 +60,7 @@ def RPC(chain):
 
 
 def XCHANGE_BUY(chain_id, token1):
-    return f"https://x7finance.org/?chainId={chain_id}&token1={token1}"
+    return f"https://x7finance.org/swap?chainId={chain_id}&token1={token1}"
 
 
 # TG
