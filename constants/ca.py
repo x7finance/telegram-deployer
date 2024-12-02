@@ -24,9 +24,9 @@ def ILL004(chain):
 def ILL005(chain):
     map = {
         "base": "0x90482AD3aa56675ba313dAC14C3a7717bAD5B24D",
-        "base-sepolia": "0xA78949b5f46aC0D92DCD6355745f2B9f9984a5b3",
+        "base-sepolia": "0x97dD34dF320CC490A071b794756423e2bE7D4B3b",
         "eth": "0x90482AD3aa56675ba313dAC14C3a7717bAD5B24D",
-        "eth-sepolia": "0xA78949b5f46aC0D92DCD6355745f2B9f9984a5b3"
+        "eth-sepolia": "0x97dD34dF320CC490A071b794756423e2bE7D4B3b"
     }
     return map.get(chain) 
 
