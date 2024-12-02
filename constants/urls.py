@@ -64,7 +64,7 @@ def XCHANGE_BUY(chain_id, token1):
 
 
 # TG
-TG_MAIN = "t.me/x7m105portal"
+TG_MAIN = "t.me/x7portal"
 TG_ALERTS = "t.me/xchange_alerts"
 TG_ANNOUNCEMENTS = "t.me/x7announcements"
 TG_DAO = "https://telegram.me/collablandbot?start=VFBDI1RFTCNDT01NIy0xMDAyMTM5MTc4NTQx"
