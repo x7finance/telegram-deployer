@@ -120,69 +120,65 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     context.user_data['percent'] = percent
     pool = functions.get_pool_funds(chain)
 
-    loan_options = [
-        {"amount": 0, "label": "No Loan"},
-        {"amount": 0.5, "label": f"0.5 {chain_native.upper()}"},
-        {"amount": 1, "label": f"1 {chain_native.upper()}"},
-        {"amount": 2, "label": f"2 {chain_native.upper()}"},
-        {"amount": 3, "label": f"3 {chain_native.upper()}"},
-        {"amount": 4, "label": f"4 {chain_native.upper()}"},
-        {"amount": 5, "label": f"5 {chain_native.upper()}"}
-    ]
-
-    available_buttons = [
-        InlineKeyboardButton(option["label"], callback_data=f'loan_{option["amount"]}')
-        for option in loan_options if option["amount"] == 0 or Decimal(option["amount"]) <= pool
-    ]
-
-    keyboard = InlineKeyboardMarkup.from_column(available_buttons)
-    
     if percent == "0":
-        percent_str = 'No tokens will be held, and 100% of tokens will go into the liquidity'
+        percent_str = "No tokens will be held, and 100% of tokens will go into the liquidity"
     else:
         percent_str = f"{percent}% of tokens will be held as team supply"
     
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=(
-            f"{percent_str}\n\nHow much {chain_native.upper()} do you want to borrow in initial liquidity?\n\n"
-            f"Currently available to borrow: {pool} {chain_native.upper()}\n"
-        ),
-        reply_markup=keyboard
+            f"{percent_str}\n\n"
+            f"How much {chain_native.upper()} (if any) do you want to borrow in initial liquidity?\n\n"
+            f"Currently available to borrow: {pool} {chain_native.upper()}.\n\n"
+            f"You can launch without a loan and supply the {chain_native.upper()} yourself by typing 0\n\n"
+            "Please enter the amount as a number (e.g., 0, 1, 2.5):"
+        )
     )
-    
     return STAGE_LOAN
 
 
 async def stage_loan(update: Update, context: CallbackContext) -> int:
-    query = update.callback_query
-    await query.answer()
-    loan_amount = query.data.split('_')[1]
-    pool = functions.get_pool_funds(context.user_data['chain'])
-    
-    if loan_amount == "0":
-        chain_native = chains.chains[context.user_data['chain']].token
-        await context.bot.send_message(
-            chat_id=query.message.chat_id,
-            text=f"No Loan, You'll front the liquidity yourself\n\nPlease enter the amount of {chain_native.upper()} you want to contribute to liquidity:",
+    loan_input = update.message.text.strip()
+    chain = context.user_data['chain'].lower()
+    chain_native = chains.chains[chain].token
+    pool = functions.get_pool_funds(chain)
+
+    try:
+        loan_amount = Decimal(loan_input)
+    except InvalidOperation:
+        await update.message.reply_text(
+            f"Error: Please enter a valid number for the loan amount in {chain_native.upper()}. Try again."
+        )
+        return STAGE_LOAN
+
+    if loan_amount < 0 or loan_amount > pool:
+        await update.message.reply_text(
+            f"Error: Loan amount must be between 0 and {pool} {chain_native.upper()}. Please try again."
+        )
+        return STAGE_LOAN
+
+    if loan_amount > bot.MAX_LOAN_AMOUNT:
+        await update.message.reply_text(
+            f"Error: Maximum loan amount is {bot.MAX_LOAN_AMOUNT} {chain_native.upper()}. "
+            f"Please enter an amount less than or equal to {bot.MAX_LOAN_AMOUNT}."
+        )
+        return STAGE_LOAN 
+
+    if loan_amount == 0:
+        await update.message.reply_text(
+            text=f"No Loan. You'll front the liquidity yourself.\n\n"
+                 f"Please enter the amount of {chain_native.upper()} you want to contribute to liquidity:"
         )
         return STAGE_CONTRIBUTE
     
-    if Decimal(loan_amount) > pool:
-        chain_native = chains.chains[context.user_data['chain']].token
-        await context.bot.send_message(
-            chat_id=query.message.chat_id,
-            text=f"Error: There is only {pool} {chain_native} available. Please try again"
-        )
-        return STAGE_LOAN
-    
-    chain_native = chains.chains[context.user_data['chain']].token
-    context.user_data['loan'] = loan_amount
+    context.user_data['loan'] = float(loan_amount)
 
-    await context.bot.send_message(
-        chat_id=query.message.chat_id,
-        text=f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity.\n\n"
-             f"Please enter the loan duration (in days) as a number no higher than {bot.MAX_LOAN_LENGTH}:"
+    await update.message.reply_text(
+        text=(
+            f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity.\n\n"
+            f"Please enter the loan duration (in days) as a number no higher than {bot.MAX_LOAN_LENGTH}:"
+        )
     )
     return STAGE_DURATION
 
@@ -316,7 +312,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
             chain_native = chains.chains[chain].token
             web3 = Web3(Web3.HTTPProvider(chain_web3))
 
-            fee, _, _ = tools.generate_loan_terms(chain, loan)
+            fee, _ = tools.generate_loan_terms(chain, loan)
             context.user_data['fee'] = fee
 
             team_tokens = int(supply) * (int(percent) / 100)
@@ -506,7 +502,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     if with_loan:
         chain_web3 = chains.chains[chain].w3
         web3 = Web3(Web3.HTTPProvider(chain_web3))
-        _, loan_contract, _ = tools.generate_loan_terms(chain, status_text["loan"])
+        loan_contract = bot.LIVE_LOAN
 
         loan = functions.deploy_token_with_loan(
             status_text["chain"],

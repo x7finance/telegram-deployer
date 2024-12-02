@@ -1,7 +1,7 @@
 from telegram import *
 from telegram.ext import *
 
-from constants import ca, chains
+from constants import bot, ca, chains
 from web3 import Web3
 from hooks import api, tools
 
@@ -66,7 +66,7 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, loan_amount, du
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
     
-    _, loan_contract, _ = tools.generate_loan_terms(chain, loan_amount)
+    loan_contract = bot.LIVE_LOAN
 
     w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
     deployer_address = ca.DEPLOYER(chain)
@@ -167,7 +167,7 @@ def estimate_gas_with_loan(chain, name, symbol, supply, percent, loan_amount, du
         deadline = tools.timestamp_deadline()
         gas_price = web3.eth.gas_price
         nonce = web3.eth.get_transaction_count(ca.DEAD)
-        _, loan_contract, _ = tools.generate_loan_terms(chain, web3.to_wei(loan_amount, 'ether'))
+        loan_contract = bot.LIVE_LOAN
 
         params = {
             "name": name,

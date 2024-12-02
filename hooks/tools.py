@@ -1,9 +1,11 @@
 from constants import bot, chains
+from hooks import api
 
 from datetime import datetime, timedelta
 from web3 import Web3
 import unicodedata
 
+chainscan = api.ChainScan()
 
 def datetime_to_timestamp(datetime_str):
     try:
@@ -68,18 +70,28 @@ def generate_loan_terms(chain, loan_amount):
     chain_native = chains.chains[chain].token
     chain_web3 = chains.chains[chain].w3
     web3 = Web3(Web3.HTTPProvider(chain_web3))
+    
     loan_in_wei = web3.to_wei(loan_amount, 'ether')
-    current_loan_version = bot.LOANS.get(bot.LIVE_LOAN)
-    origination_fee = current_loan_version['origination_fee'](loan_in_wei)
-    cost_string = current_loan_version['cost_string']
-    if callable(cost_string):
-        cost_string = cost_string(chain_native)
-    loan_ca = current_loan_version['contract'](chain)
+    
+    loan_contract_address = bot.LIVE_LOAN(chain)
+    
+    contract = web3.eth.contract(
+        address=web3.to_checksum_address(loan_contract_address),
+        abi=chainscan.get_abi(loan_contract_address, chain)
+    )
+    
+    quote = contract.functions.getQuote(loan_in_wei).call()
+    origination_fee = quote[1]
+    
     loan_deposit = web3.to_wei(bot.LIQUIDATION_DEPOSIT, 'ether')
-    fee = origination_fee + loan_deposit
-    text = f"Borrow up to {bot.MAX_LOAN_AMOUNT} {chain_native.upper()} liquidity for {cost_string} + {bot.LIQUIDATION_DEPOSIT} {chain_native.upper()} deposit"
+    total_fee = origination_fee + loan_deposit
+    
+    text = (
+        f"Borrow up to {bot.MAX_LOAN_AMOUNT} {chain_native.upper()} liquidity for "
+        f"{web3.from_wei(origination_fee, 'ether')} + {bot.LIQUIDATION_DEPOSIT} {chain_native.upper()} deposit"
+    )
 
-    return fee, loan_ca, text
+    return total_fee, text
 
 
 def get_duration_years(duration):

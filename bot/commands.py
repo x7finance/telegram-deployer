@@ -2,7 +2,7 @@ from telegram import *
 from telegram.ext import *
 from web3 import Web3
 
-from constants import ca, chains, bot
+from constants import chains, bot
 from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
@@ -74,7 +74,7 @@ async def start(update: Update, context: CallbackContext) -> int:
     user_name = user.username or f"{user.first_name} {user.last_name}"
     chat_type = update.message.chat.type
     count = db.count_launches()
-    _, _, loan_fees = tools.generate_loan_terms("base", 1)
+    _, loan_fees = tools.generate_loan_terms("base", 1)
     if chat_type == "private":
         await update.message.reply_text(
             f"Welcome to {tools.escape_markdown(bot.BOT_NAME)}, {tools.escape_markdown(user_name)}!\n"
