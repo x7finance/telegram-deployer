@@ -16,7 +16,7 @@ LOANS = {
         "contract": lambda chain: ca.ILL004(chain)
     },
     "005": {
-        "origination_fee": lambda loan_in_wei: 10000000000000000,
+        "origination_fee": lambda loan_in_wei: 2100000000000000,
         "cost_string": lambda chain_native: f"0.01 {chain_native.upper()}",
         "contract": lambda chain: ca.ILL005(chain)
     }
