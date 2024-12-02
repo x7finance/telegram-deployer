@@ -565,7 +565,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             f"{schedule}"
         )
 
-        loan_button = InlineKeyboardButton(text="Loan Dashboard", url=f"{urls.XCHANGE}/lending/{chain_short_name}/{bot.LIVE_LOAN}/{token_by_id}")
+        loan_button = InlineKeyboardButton(text="View Loan", url=f"{urls.XCHANGE}lending/{chain_short_name}/{bot.LIVE_LOAN}/{token_by_id}")
 
     else:
         launched = functions.deploy_token_without_loan(
