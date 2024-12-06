@@ -39,7 +39,7 @@ def deploy_token_without_loan(chain, name, symbol, supply, percent, owner, slipp
             'from': address,
             'nonce': nonce,
             'gasPrice': gas_price,
-            'value': loan_fee
+            'value': int(loan_fee)
         })
 
         transaction = deployer_contract.functions.deployTokenWithoutLoan(params).build_transaction({
@@ -47,7 +47,7 @@ def deploy_token_without_loan(chain, name, symbol, supply, percent, owner, slipp
             'nonce': nonce,
             'gasPrice': gas_price,
             'gas': gas_estimate,
-            'value': loan_fee
+            'value': int(loan_fee)
         })
 
         signed_txn = w3.eth.account.sign_transaction(transaction, key)
@@ -100,7 +100,7 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, loan_amount, du
             'from': address,
             'nonce': nonce,
             'gasPrice': gas_price,
-            'value': loan_fee
+            'value': int(loan_fee)
         })
 
         transaction = deployer_contract.functions.deployTokenWithLoan(params).build_transaction({
@@ -108,7 +108,7 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, loan_amount, du
             'nonce': nonce,
             'gasPrice': gas_price,
             'gas': gas_estimate,
-            'value': loan_fee
+            'value': int(loan_fee)
         })
 
         signed_txn = w3.eth.account.sign_transaction(transaction, key)
