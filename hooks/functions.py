@@ -66,7 +66,7 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, loan_amount, du
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
     
-    loan_contract = bot.LIVE_LOAN
+    loan_contract = bot.LIVE_LOAN(chain, "address")
 
     w3 = Web3(Web3.HTTPProvider(chains.chains[chain].w3))
     deployer_address = ca.DEPLOYER(chain)
@@ -167,7 +167,7 @@ def estimate_gas_with_loan(chain, name, symbol, supply, percent, loan_amount, du
         deadline = tools.timestamp_deadline()
         gas_price = web3.eth.gas_price
         nonce = web3.eth.get_transaction_count(ca.DEAD)
-        loan_contract = bot.LIVE_LOAN
+        loan_contract = bot.LIVE_LOAN(chain, "address")
 
         params = {
             "name": name,

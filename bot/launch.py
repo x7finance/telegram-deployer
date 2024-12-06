@@ -502,7 +502,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     if with_loan:
         chain_web3 = chains.chains[chain].w3
         web3 = Web3(Web3.HTTPProvider(chain_web3))
-        loan_contract = bot.LIVE_LOAN
+        loan_contract = bot.LIVE_LOAN(chain, "address")
 
         loan = functions.deploy_token_with_loan(
             status_text["chain"],
@@ -561,7 +561,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             f"{schedule}"
         )
 
-        loan_button = InlineKeyboardButton(text="View Loan", url=f"{urls.XCHANGE}lending/{chain_short_name}/{bot.LIVE_LOAN}/{token_by_id}")
+        loan_button = InlineKeyboardButton(text="View Loan", url=f"{urls.XCHANGE}lending/{chain_short_name}/{bot.LIVE_LOAN(chain, "name")}/{token_by_id}")
 
     else:
         launched = functions.deploy_token_without_loan(

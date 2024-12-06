@@ -73,7 +73,7 @@ def generate_loan_terms(chain, loan_amount):
     
     loan_in_wei = web3.to_wei(loan_amount, 'ether')
     
-    loan_contract_address = bot.LIVE_LOAN(chain)
+    loan_contract_address = bot.LIVE_LOAN(chain, "address")
     
     contract = web3.eth.contract(
         address=web3.to_checksum_address(loan_contract_address),
