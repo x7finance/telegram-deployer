@@ -6,7 +6,7 @@ from web3 import Web3
 from hooks import api, tools
 
 
-def deploy_token_without_loan(chain, name, symbol, supply, percent, owner, slippage, address, key, loan_fee):
+def deploy_token_without_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, owner, address, key, loan_fee):
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
 
@@ -30,8 +30,13 @@ def deploy_token_without_loan(chain, name, symbol, supply, percent, owner, slipp
         "supply": int(supply),
         "teamTokens": int(percent),
         "newOwner": owner,
-        "slippageTolerance": slippage,
-        "deadline": deadline
+        "slippageTolerance": 1,
+        "deadline": deadline,
+        "description": description,
+        "twitterLink": twitter,
+        "telegramLink": telegram,
+        "websiteLink": website,
+        "tokenURI": ""
     }
 
     try:
@@ -62,7 +67,7 @@ def deploy_token_without_loan(chain, name, symbol, supply, percent, owner, slipp
         return f'Error deploying token: {str(e)}'
 
 
-def deploy_token_with_loan(chain, name, symbol, supply, percent, loan_amount, duration, owner, address, key, loan_fee):
+def deploy_token_with_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, loan_amount, duration, owner, address, key, loan_fee):
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
     
@@ -92,7 +97,12 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, loan_amount, du
         "loanAmount": int(loan_amount),
         "loanDurationSeconds": int(duration),
         "liquidityReceiver": owner,
-        "deadline": deadline
+        "deadline": deadline,
+        "description": description,
+        "twitterLink": twitter,
+        "telegramLink": telegram,
+        "websiteLink": website,
+        "tokenURI": ""
     }
 
     try:
@@ -123,7 +133,7 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, loan_amount, du
         return f'Error deploying token: {str(e)}'
 
 
-def estimate_gas_without_loan(chain, name, symbol, supply, percent, owner, slippage, loan_fee):
+def estimate_gas_without_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, owner, loan_fee):
     try:
         chain_web3 = chains.chains[chain].w3
         web3 = Web3(Web3.HTTPProvider(chain_web3))
@@ -140,8 +150,13 @@ def estimate_gas_without_loan(chain, name, symbol, supply, percent, owner, slipp
             "supply": int(supply),
             "teamTokens": int(percent),
             "newOwner": owner,
-            "slippageTolerance": slippage,
-            "deadline": deadline
+            "slippageTolerance": 1,
+            "deadline": deadline,
+            "description": description,
+            "twitterLink": twitter,
+            "telegramLink": telegram,
+            "websiteLink": website,
+            "tokenURI": ""
         }
 
         gas_estimate = deployer_contract.functions.deployTokenWithoutLoan(params).estimate_gas({
@@ -157,7 +172,7 @@ def estimate_gas_without_loan(chain, name, symbol, supply, percent, owner, slipp
             return f"Error estimating gas: {str(e)}"
 
 
-def estimate_gas_with_loan(chain, name, symbol, supply, percent, loan_amount, duration, owner, loan_fee):
+def estimate_gas_with_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, loan_amount, duration, owner, loan_fee):
     try:
         chain_web3 = chains.chains[chain].w3
         web3 = Web3(Web3.HTTPProvider(chain_web3))
@@ -179,7 +194,12 @@ def estimate_gas_with_loan(chain, name, symbol, supply, percent, loan_amount, du
             "loanAmount": loan_amount,
             "loanDurationSeconds": duration,
             "liquidityReceiver": owner,
-            "deadline": deadline
+            "deadline": deadline,
+            "description": description,
+            "twitterLink": twitter,
+            "telegramLink": telegram,
+            "websiteLink": website,
+            "tokenURI": ""
         }
         
         gas_estimate = deployer_contract.functions.deployTokenWithLoan(params).estimate_gas({

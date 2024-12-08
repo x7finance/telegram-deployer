@@ -12,7 +12,7 @@ from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
 
-STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE = range(10)
+STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_DESCRIPTION, STAGE_TWITTER, STAGE_TELEGRAM, STAGE_WEBSITE, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE = range(14)
 
 
 async def command(update: Update, context: CallbackContext) -> int:
@@ -81,7 +81,85 @@ async def stage_name(update: Update, context: CallbackContext) -> int:
 
     context.user_data['name'] = update.message.text
     await update.message.reply_text(
-        f"Name: {context.user_data['name']}\n\nWhat do you want the total supply of your token to be?"
+        f"Name: {context.user_data['name']}\n\nPlease write a short description of your project (in 200 characters or less)"
+    )
+    return STAGE_DESCRIPTION
+
+
+async def stage_description(update: Update, context: CallbackContext) -> int:
+    if len(update.message.text) > 200:
+        await update.message.reply_text(
+            "Error: The description must be 200 characters or fewer. Please try again"
+        )
+        return STAGE_DESCRIPTION 
+    
+    context.user_data['description'] = update.message.text
+    await update.message.reply_text(
+        f"Recieved!\n\nNow, if you have one please provide the twitter link or type 'None'"
+    )
+    return STAGE_TWITTER
+
+
+async def stage_twitter(update: Update, context: CallbackContext) -> int:
+    user_input = update.message.text.strip()
+    if user_input.lower() == "none":
+        context.user_data['twitter'] = ""
+        await update.message.reply_text(
+            "No Twitter link.\n\nThank you! Now Please provide a Telegram Link, or 'none'."
+        )
+        return STAGE_TELEGRAM
+    
+    if not user_input.startswith("http://") and not user_input.startswith("https://"):
+        await update.message.reply_text(
+            "Error: The Twitter link must start with http:// or https://, or type 'None' if not applicable. Please try again."
+        )
+        return STAGE_TWITTER
+    
+    context.user_data['twitter'] = user_input
+    await update.message.reply_text(
+        f"{context.user_data['twitter']}\n\nThank you! Now Please provide a Telegram Link, or 'none'."
+    )
+    return STAGE_TELEGRAM
+
+
+async def stage_telegram(update: Update, context: CallbackContext) -> int:
+    user_input = update.message.text.strip()
+    if user_input.lower() == "none":
+        context.user_data['telegram'] = ""
+        await update.message.reply_text(
+            "Telegram link set as empty.\n\nNow, please provide the website link starting with http:// or https:// or type 'None' if not applicable."
+        )
+        return STAGE_WEBSITE
+    
+    if not user_input.startswith("http://") and not user_input.startswith("https://"):
+        await update.message.reply_text(
+            "Error: The Telegram link must start with http:// or https://, or type 'None' if not applicable. Please try again."
+        )
+        return STAGE_TELEGRAM
+    
+    context.user_data['telegram'] = user_input
+    await update.message.reply_text(
+        f"{context.user_data['telegram']}\n\nNow, please provide the Website link starting with http:// or https:// or type 'None' if not applicable."
+    )
+    return STAGE_WEBSITE
+
+async def stage_website(update: Update, context: CallbackContext) -> int:
+    user_input = update.message.text.strip()
+    if user_input.lower() == "none":
+        context.user_data['website'] = ""
+        await update.message.reply_text(
+            "Website link set as empty.\n\nWhat do you want the total supply of your token to be?")
+        return STAGE_SUPPLY
+    
+    if not user_input.startswith("http://") and not user_input.startswith("https://"):
+        await update.message.reply_text(
+            "Error: The Website link must start with http:// or https://, or type 'None' if not applicable. Please try again."
+        )
+        return STAGE_WEBSITE
+    
+    context.user_data['website'] = user_input
+    await update.message.reply_text(
+        f"{context.user_data['website']}\n\nWhat do you want the total supply of your token to be?"
     )
     return STAGE_SUPPLY
 
@@ -254,8 +332,12 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         supply = user_data.get('supply')
         percent = user_data.get('percent')
         address = user_data.get('owner')
+        description = user_data.get('description')
+        twitter = user_data.get('twitter')
+        telegram = user_data.get('telegram')
+        website = user_data.get('website')
 
-        if all([ticker, name, chain, supply, percent, contribution, address]):
+        if all([ticker, name, chain, supply, percent, contribution, address, description, twitter, telegram, website]):
             chain_web3 = chains.chains[chain].w3
             web3 = Web3(Web3.HTTPProvider(chain_web3))
             chain_native = chains.chains[chain].token
@@ -282,6 +364,10 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                 f"Chain: {chain.upper()}\n"
                 f"Ticker: {ticker}\n"
                 f"Project Name: {name}\n"
+                f"Description: {description}\n"
+                f"Twitter: {twitter}\n"
+                f"Telegram: {telegram}\n"
+                f"Website: {website}\n"
                 f"Total Supply: {supply_float:,.0f}\n"
                 f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
                 f"Liquidity Supply: {liquidity_supply:,.0f}\n"
@@ -306,6 +392,10 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         loan = user_data.get('loan')
         duration = user_data.get('duration')
         address = user_data.get('owner')
+        description = user_data.get('description')
+        twitter = user_data.get('twitter')
+        telegram = user_data.get('telegram')
+        website = user_data.get('website')
 
         if all([ticker, name, chain, supply, percent, loan, duration, address]):
             chain_web3 = chains.chains[chain].w3
@@ -337,6 +427,10 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                 f"Chain: {chain.upper()}\n"
                 f"Ticker: {ticker}\n"
                 f"Project Name: {name}\n"
+                f"Description: {description}\n"
+                f"Twitter: {twitter}\n"
+                f"Telegram: {telegram}\n"
+                f"Website: {website}\n"
                 f"Total Supply: {supply_float:,.0f}\n"
                 f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
                 f"Loan Supply: {loan_supply:,.0f}\n"
@@ -388,8 +482,11 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                     user_data.get('ticker'),
                     user_data.get('supply'),
                     user_data.get('percent'),
+                    user_data.get('description'),
+                    user_data.get('twitter'),
+                    user_data.get('telegram'),
+                    user_data.get('website'),
                     user_data.get('owner'),
-                    1,
                     int(fee)
                     )
             if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
@@ -407,6 +504,10 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 user_data.get('name'), 
                 user_data.get('supply'), 
                 user_data.get('percent'), 
+                user_data.get('description'),
+                user_data.get('twitter'),
+                user_data.get('telegram'),
+                user_data.get('website'),
                 0,
                 0,
                 user_data.get('owner'),
@@ -421,8 +522,12 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 user_data.get('ticker'),
                 user_data.get('supply'),
                 user_data.get('percent'),
+                user_data.get('description'),
+                user_data.get('twitter'),
+                user_data.get('telegram'),
+                user_data.get('website'),
                 web3.to_wei(user_data.get('loan'), 'ether'),
-                86400,
+                int(user_data.get('duration')) * 60 * 60 * 24,
                 user_data.get('owner'),
                 int(fee)
                 )
@@ -440,7 +545,11 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 user_data.get('ticker'),
                 user_data.get('name'), 
                 user_data.get('supply'), 
-                user_data.get('percent'), 
+                user_data.get('percent'),
+                user_data.get('description'),
+                user_data.get('twitter'),
+                user_data.get('telegram'),
+                user_data.get('website'),
                 user_data.get('loan'),
                 user_data.get('duration'), 
                 user_data.get('owner'),
@@ -510,6 +619,10 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             status_text["ticker"],
             int(status_text["supply"]),
             int(status_text["percent"]),
+            status_text["description"], 
+            status_text["twitter"], 
+            status_text["telegram"],
+            status_text["website"],
             web3.to_wei(status_text["loan"], 'ether'),
             int(status_text["duration"]) * 60 * 60 * 24,
             status_text["owner"],
@@ -570,8 +683,11 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             status_text["ticker"],
             int(status_text["supply"]),
             int(status_text["percent"]),
+            status_text["description"], 
+            status_text["twitter"], 
+            status_text["telegram"],
+            status_text["website"],
             status_text["owner"],
-            1,
             status_text["address"],
             status_text["secret_key"],
             int(status_text["fee"])

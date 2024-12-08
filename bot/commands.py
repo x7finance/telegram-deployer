@@ -116,8 +116,11 @@ async def status(update: Update, context: CallbackContext) -> int:
                     status_text["ticker"],
                     int(status_text["supply"]),
                     int(status_text["percent"]),
+                    status_text["description"], 
+                    status_text["twitter"], 
+                    status_text["telegram"],
+                    status_text["website"],
                     status_text["owner"],
-                    1,
                     int(status_text["fee"])
                     )
 
@@ -129,8 +132,12 @@ async def status(update: Update, context: CallbackContext) -> int:
                     status_text["ticker"],
                     int(status_text["supply"]),
                     int(status_text["percent"]),
+                    status_text["description"], 
+                    status_text["twitter"], 
+                    status_text["telegram"],
+                    status_text["website"],
                     web3.to_wei(status_text["loan"], 'ether'),
-                    86400,
+                    int(status_text["duration"]) * 60 * 60 * 24,
                     status_text["owner"],
                     int(status_text["fee"])
                     )
@@ -194,6 +201,10 @@ async def status(update: Update, context: CallbackContext) -> int:
                 f"{header}\n\n"
                 f"{status_text['ticker']} ({status_text['chain'].upper()})\n\n"
                 f"Project Name: {status_text['name']}\n"
+                f"Desciption: {status_text['description']}\n"
+                f"Twitter: {status_text['twitter']}\n"
+                f"Telegram: {status_text['telegram']}\n"
+                f"Website: {status_text['website']}\n"
                 f"Total Supply: {status_text['supply']}\n"
                 f"Team Supply: {team_tokens:,.0f} ({status_text['percent']}%)\n"
                 f"{loan_info}"
