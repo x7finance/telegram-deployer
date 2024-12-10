@@ -205,7 +205,7 @@ async def status(update: Update, context: CallbackContext) -> int:
                 f"Twitter: {status_text['twitter']}\n"
                 f"Telegram: {status_text['telegram']}\n"
                 f"Website: {status_text['website']}\n"
-                f"Total Supply: {status_text['supply']}\n"
+                f"Total Supply: {float(status_text['supply']):,.0f}\n"
                 f"Team Supply: {team_tokens:,.0f} ({status_text['percent']}%)\n"
                 f"{loan_info}"
                 f"Cost: {web3.from_wei(int(status_text['fee']), 'ether')} {chain_native.upper()}\n\n"
@@ -213,7 +213,7 @@ async def status(update: Update, context: CallbackContext) -> int:
                 f"Ownership {was_will_be} transferred to:\n`{status_text['owner']}`\n\n"
                 f"{message}\n\n"
                 f"Current Deployer Wallet Balance:\n"
-                f"{balance_str} {chain_native.upper()}\n\n",
+                f"{float(balance_str):,.6f} {chain_native.upper()}\n\n",
             parse_mode="Markdown",
             reply_markup=button
             )
