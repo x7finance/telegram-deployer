@@ -12,7 +12,7 @@ from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
 
-STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_DESCRIPTION, STAGE_TWITTER, STAGE_TELEGRAM, STAGE_WEBSITE, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE = range(14)
+STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_DESCRIPTION, STAGE_TWITTER, STAGE_TELEGRAM, STAGE_WEBSITE, STAGE_BUY_TAX, STAGE_SELL_TAX, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE = range(16)
 
 
 async def command(update: Update, context: CallbackContext) -> int:
@@ -143,13 +143,19 @@ async def stage_telegram(update: Update, context: CallbackContext) -> int:
     )
     return STAGE_WEBSITE
 
+
 async def stage_website(update: Update, context: CallbackContext) -> int:
     user_input = update.message.text.strip()
     if user_input.lower() == "none":
         context.user_data['website'] = ""
         await update.message.reply_text(
-            "Website link set as empty.\n\nWhat do you want the total supply of your token to be?")
-        return STAGE_SUPPLY
+            "Website link set as empty.\n\n"
+            "What do you want the buy tax of your token to be? Between 0-20\n\n"
+            "This can be changed after launch\n\n"
+            "Tax wallet will be set as the wallet you designate as owner\n\n"
+            "This can be a changed after launch"
+        )
+        return STAGE_BUY_TAX
     
     if not user_input.startswith("http://") and not user_input.startswith("https://"):
         await update.message.reply_text(
@@ -159,9 +165,64 @@ async def stage_website(update: Update, context: CallbackContext) -> int:
     
     context.user_data['website'] = user_input
     await update.message.reply_text(
-        f"{context.user_data['website']}\n\nWhat do you want the total supply of your token to be?"
+        f"{context.user_data['website']}\n\n"
+        "What do you want the buy tax of your token to be? Between 0-20\n\n"
+        "This can be changed after launch\n\n"
+        "Tax wallet will be set as the wallet you designate as owner\n\n"
+        "This can be a changed after launch"
     )
-    return STAGE_SUPPLY
+    return STAGE_BUY_TAX
+
+
+async def stage_buy_tax(update: Update, context: CallbackContext) -> int:
+    user_input = update.message.text.strip()
+
+    if user_input.isdigit():
+        buy_tax = int(user_input)
+
+        if 0 <= buy_tax <= 20:
+            context.user_data['buy_tax'] = buy_tax
+            await update.message.reply_text(
+                f"Buy Tax will initially be set at {buy_tax}\n\n"
+                "What do you want the sell tax to be? (0-20)"
+            )
+            return STAGE_SELL_TAX
+        else:
+            await update.message.reply_text(
+                "Error: Tax should be a number between 0 and 20 (inclusive)."
+            )
+            return STAGE_BUY_TAX
+    else:
+        await update.message.reply_text(
+            "Error: Please enter a valid number between 0 and 20."
+        )
+        return STAGE_BUY_TAX
+
+
+async def stage_sell_tax(update: Update, context: CallbackContext) -> int:
+    user_input = update.message.text.strip()
+
+    if user_input.isdigit():
+        sell_tax = int(user_input)
+
+        if 0 <= sell_tax <= 20:
+            context.user_data['sell_tax'] = sell_tax
+            await update.message.reply_text(
+                f"Buy Tax will initially be set at {sell_tax}\n\n"
+                "What do you want the total supply of your token to be?"
+            )
+            return STAGE_SUPPLY
+        else:
+            await update.message.reply_text(
+                "Error: Tax should be a number between 0 and 20 (inclusive)."
+            )
+            return STAGE_SELL_TAX
+    else:
+        await update.message.reply_text(
+            "Error: Please enter a valid number between 0 and 20."
+        )
+        return STAGE_SELL_TAX
+
 
 
 async def stage_supply(update: Update, context: CallbackContext) -> int:
@@ -336,8 +397,10 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         twitter = user_data.get('twitter')
         telegram = user_data.get('telegram')
         website = user_data.get('website')
+        buy_tax = user_data.get('buy_tax')
+        sell_tax = user_data.get('sell_tax')
 
-        if all([ticker, name, chain, supply, percent, contribution, address, description, twitter, telegram, website]):
+        if all([ticker, name, chain, supply, percent, contribution, address, buy_tax, sell_tax]):
             chain_web3 = chains.chains[chain].w3
             web3 = Web3(Web3.HTTPProvider(chain_web3))
             chain_native = chains.chains[chain].token
@@ -368,6 +431,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                 f"Twitter: {twitter}\n"
                 f"Telegram: {telegram}\n"
                 f"Website: {website}\n"
+                f"Taxes: {buy_tax}/{sell_tax}\n"
                 f"Total Supply: {supply_float:,.0f}\n"
                 f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
                 f"Liquidity Supply: {liquidity_supply:,.0f}\n"
@@ -396,8 +460,10 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         twitter = user_data.get('twitter')
         telegram = user_data.get('telegram')
         website = user_data.get('website')
+        buy_tax = user_data.get('buy_tax')
+        sell_tax = user_data.get('sell_tax')
 
-        if all([ticker, name, chain, supply, percent, loan, duration, address]):
+        if all([ticker, name, chain, supply, percent, loan, duration, address, buy_tax, sell_tax]):
             chain_web3 = chains.chains[chain].w3
             chain_native = chains.chains[chain].token
             web3 = Web3(Web3.HTTPProvider(chain_web3))
@@ -431,6 +497,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                 f"Twitter: {twitter}\n"
                 f"Telegram: {telegram}\n"
                 f"Website: {website}\n"
+                f"Taxes: {buy_tax}/{sell_tax}\n"
                 f"Total Supply: {supply_float:,.0f}\n"
                 f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
                 f"Loan Supply: {loan_supply:,.0f}\n"
@@ -486,6 +553,8 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                     user_data.get('twitter'),
                     user_data.get('telegram'),
                     user_data.get('website'),
+                    user_data.get('buy_tax'),
+                    user_data.get('sell_tax'),
                     user_data.get('owner'),
                     int(fee)
                     )
@@ -508,6 +577,8 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 user_data.get('twitter'),
                 user_data.get('telegram'),
                 user_data.get('website'),
+                user_data.get('buy_tax'),
+                user_data.get('sell_tax'),
                 0,
                 0,
                 user_data.get('owner'),
@@ -526,6 +597,8 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 user_data.get('twitter'),
                 user_data.get('telegram'),
                 user_data.get('website'),
+                user_data.get('buy_tax'),
+                user_data.get('sell_tax'),
                 web3.to_wei(user_data.get('loan'), 'ether'),
                 int(user_data.get('duration')) * 60 * 60 * 24,
                 user_data.get('owner'),
@@ -550,6 +623,8 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 user_data.get('twitter'),
                 user_data.get('telegram'),
                 user_data.get('website'),
+                user_data.get('buy_tax'),
+                user_data.get('sell_tax'),
                 user_data.get('loan'),
                 user_data.get('duration'), 
                 user_data.get('owner'),
@@ -623,6 +698,8 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             status_text["twitter"], 
             status_text["telegram"],
             status_text["website"],
+            status_text["buy_tax"],
+            status_text["sell_tax"],
             web3.to_wei(status_text["loan"], 'ether'),
             int(status_text["duration"]) * 60 * 60 * 24,
             status_text["owner"],
@@ -687,6 +764,8 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             status_text["twitter"], 
             status_text["telegram"],
             status_text["website"],
+            status_text["buy_tax"],
+            status_text["sell_tax"],
             status_text["owner"],
             status_text["address"],
             status_text["secret_key"],

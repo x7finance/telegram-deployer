@@ -33,6 +33,8 @@ def add_entry(
         twitter,
         telegram,
         website,
+        buy_tax,
+        sell_tax,
         loan,
         duration,
         owner,
@@ -58,12 +60,14 @@ def add_entry(
             twitter,
             telegram,
             website,
+            buy_tax,
+            sell_tax,
             loan,
             duration, 
             owner,
             fee
             )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         entry_data = (
             timedate, 
@@ -80,6 +84,8 @@ def add_entry(
             twitter,
             telegram,
             website,
+            buy_tax,
+            sell_tax,
             loan,
             duration,
             owner,
@@ -197,6 +203,8 @@ def search_entry(user_id):
             twitter,
             telegram,
             website,
+            buy_tax,
+            sell_tax,
             loan,
             duration,
             owner,
@@ -226,6 +234,8 @@ def search_entry(user_id):
                 "twitter": result["twitter"],
                 "telegram": result["telegram"],
                 "website": result["website"],
+                "buy_tax": result["buy_tax"],
+                "sell_tax": result["sell_tax"],
                 "loan": result["loan"],
                 "duration": result["duration"],
                 "owner": result["owner"],

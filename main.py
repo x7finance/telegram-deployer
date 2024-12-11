@@ -62,6 +62,8 @@ if __name__ == "__main__":
             launch.STAGE_TWITTER: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_twitter)],
             launch.STAGE_TELEGRAM: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_telegram)],
             launch.STAGE_WEBSITE: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_website)],
+            launch.STAGE_BUY_TAX: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_buy_tax)],
+            launch.STAGE_SELL_TAX: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_sell_tax)],
             launch.STAGE_SUPPLY: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_supply)],
             launch.STAGE_AMOUNT: [CallbackQueryHandler(launch.stage_amount, pattern='^amount_')],
             launch.STAGE_LOAN: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_loan)],

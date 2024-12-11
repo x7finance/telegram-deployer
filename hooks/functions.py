@@ -6,7 +6,7 @@ from web3 import Web3
 from hooks import api, tools
 
 
-def deploy_token_without_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, owner, address, key, loan_fee):
+def deploy_token_without_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, buy_tax, sell_tax, owner, address, key, loan_fee):
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
 
@@ -36,7 +36,10 @@ def deploy_token_without_loan(chain, name, symbol, supply, percent, description,
         "twitterLink": twitter,
         "telegramLink": telegram,
         "websiteLink": website,
-        "tokenURI": ""
+        "tokenURI": "",
+        "buyTax": int(buy_tax),
+        "sellTax": int(sell_tax),
+        "taxWallet": owner,
     }
 
     try:
@@ -67,7 +70,7 @@ def deploy_token_without_loan(chain, name, symbol, supply, percent, description,
         return f'Error deploying token: {str(e)}'
 
 
-def deploy_token_with_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, loan_amount, duration, owner, address, key, loan_fee):
+def deploy_token_with_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, buy_tax, sell_tax, loan_amount, duration, owner, address, key, loan_fee):
     if chain not in chains.chains:
         raise ValueError(f"Invalid chain: {chain}")
     
@@ -102,7 +105,10 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, description, tw
         "twitterLink": twitter,
         "telegramLink": telegram,
         "websiteLink": website,
-        "tokenURI": ""
+        "tokenURI": "",
+        "buyTax": int(buy_tax),
+        "sellTax": int(sell_tax),
+        "taxWallet": owner,
     }
 
     try:
@@ -133,7 +139,7 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, description, tw
         return f'Error deploying token: {str(e)}'
 
 
-def estimate_gas_without_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, owner, loan_fee):
+def estimate_gas_without_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, buy_tax, sell_tax, owner, loan_fee):
     try:
         chain_web3 = chains.chains[chain].w3
         web3 = Web3(Web3.HTTPProvider(chain_web3))
@@ -156,7 +162,11 @@ def estimate_gas_without_loan(chain, name, symbol, supply, percent, description,
             "twitterLink": twitter,
             "telegramLink": telegram,
             "websiteLink": website,
-            "tokenURI": ""
+            "tokenURI": "",
+            "buyTax": int(buy_tax),
+            "sellTax": int(sell_tax),
+            "taxWallet": owner,
+            
         }
 
         gas_estimate = deployer_contract.functions.deployTokenWithoutLoan(params).estimate_gas({
@@ -172,7 +182,7 @@ def estimate_gas_without_loan(chain, name, symbol, supply, percent, description,
             return f"Error estimating gas: {str(e)}"
 
 
-def estimate_gas_with_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, loan_amount, duration, owner, loan_fee):
+def estimate_gas_with_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, buy_tax, sell_tax, loan_amount, duration, owner, loan_fee):
     try:
         chain_web3 = chains.chains[chain].w3
         web3 = Web3(Web3.HTTPProvider(chain_web3))
@@ -199,7 +209,10 @@ def estimate_gas_with_loan(chain, name, symbol, supply, percent, description, tw
             "twitterLink": twitter,
             "telegramLink": telegram,
             "websiteLink": website,
-            "tokenURI": ""
+            "tokenURI": "",
+            "buyTax": int(buy_tax),
+            "sellTax": int(sell_tax),
+            "taxWallet": owner,
         }
         
         gas_estimate = deployer_contract.functions.deployTokenWithLoan(params).estimate_gas({
