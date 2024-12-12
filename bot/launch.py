@@ -167,9 +167,8 @@ async def stage_website(update: Update, context: CallbackContext) -> int:
     await update.message.reply_text(
         f"{context.user_data['website']}\n\n"
         "What do you want the buy tax of your token to be? Between 0-20\n\n"
-        "This can be changed after launch\n\n"
         "Tax wallet will be set as the wallet you designate as owner\n\n"
-        "This can be a changed after launch"
+        "These can be a changed after launch"
     )
     return STAGE_BUY_TAX
 
@@ -243,7 +242,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     await update.message.reply_text(
-        f"{supply_float:,.0f} Total Supply\n\nWhat percentage of tokens (if any) do you want to keep back?\n\n"
+        f"{supply_float:,.0f} Total Supply\n\nWhat percentage of tokens (if any) do you want to keep back from the LP?\n\n"
         "These tokens will not be added to initial liquidity",
         reply_markup=keyboard
     )
@@ -745,10 +744,11 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             f"Congratulations {status_text['ticker']} has been launched and an Xchange ILL Created on {chain_name}\n\n"
             f"CA: `{token_address}`\n\n"
             f"Loan ID: {loan_id}\n\n"
-            f"Ownership transferred to:\n"
-            f"`{status_text['owner']}`\n\n"
             f"Payment Schedule:\n\n"
-            f"{schedule}"
+            f"{schedule}\n\n"
+            f"Your wallet:\n"
+            f"`{status_text['owner']}`\n"
+            f"Has the ability to change the taxes, the tax wallet and to renounce the contract via the 'Token Contract' button below"
         )
 
         loan_button = InlineKeyboardButton(text="View Loan", url=f"{urls.XCHANGE}lending/{chain_short_name}/{bot.LIVE_LOAN(chain, "name")}/{token_by_id}")
@@ -779,10 +779,11 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         token_address, pair_address = launched
 
         message_text = (
-            f"Congrats {status_text['ticker']} has been launched and liquidity has been added\n\n"
+            f"Congratulations {status_text['ticker']} has been launched and liquidity has been added\n\n"
             f"CA: `{token_address}`\n\n"
-            f"Ownership transferred to:\n"
-            f"`{status_text['owner']}`"
+            f"Your wallet:\n"
+            f"`{status_text['owner']}`\n"
+            f"Has the ability to change the taxes, the tax wallet and to renounce the contract via the 'Token Contract' button below"
         )
     
     refund = functions.transfer_balance(
