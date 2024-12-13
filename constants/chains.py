@@ -3,6 +3,8 @@
 import os
 from constants import urls
 
+from web3 import Web3
+
 
 class ChainInfo:
     def __init__(
@@ -12,7 +14,7 @@ class ChainInfo:
         short_name: str,
         scan_name: str,
         id: int,
-        token: str,
+        native: str,
         address: str,
         scan_token: str,
         scan_address: str,
@@ -27,13 +29,13 @@ class ChainInfo:
         self.short_name = short_name
         self.scan_name = scan_name
         self.id = id
-        self.token = token
+        self.native = native
         self.address = address
         self.scan_token = scan_token
         self.scan_address = scan_address
         self.scan_tx = scan_tx
         self.dext = dext
-        self.w3 = w3
+        self.w3 = Web3(Web3.HTTPProvider(w3))
         self.api = api
         self.key = key
 

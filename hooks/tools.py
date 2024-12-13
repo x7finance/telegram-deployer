@@ -2,7 +2,6 @@ from constants import bot, chains
 from hooks import api
 
 from datetime import datetime, timedelta
-from web3 import Web3
 import unicodedata
 
 chainscan = api.ChainScan()
@@ -67,28 +66,26 @@ def format_schedule(schedule1, schedule2, native_token):
 
 
 def generate_loan_terms(chain, loan_amount):
-    chain_native = chains.chains[chain].token
-    chain_web3 = chains.chains[chain].w3
-    web3 = Web3(Web3.HTTPProvider(chain_web3))
+    chain_info = chains.chains[chain]
     
-    loan_in_wei = web3.to_wei(loan_amount, 'ether')
+    loan_in_wei = chain_info.w3.to_wei(loan_amount, 'ether')
     
     loan_contract_address = bot.LIVE_LOAN(chain, "address")
     
-    contract = web3.eth.contract(
-        address=web3.to_checksum_address(loan_contract_address),
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(loan_contract_address),
         abi=chainscan.get_abi(loan_contract_address, chain)
     )
     
     quote = contract.functions.getQuote(loan_in_wei).call()
     origination_fee = quote[1]
     
-    loan_deposit = web3.to_wei(bot.LIQUIDATION_DEPOSIT, 'ether')
+    loan_deposit = chain_info.w3.to_wei(bot.LIQUIDATION_DEPOSIT, 'ether')
     total_fee = origination_fee + loan_deposit
     
     text = (
-        f"Borrow up to {bot.MAX_LOAN_AMOUNT} {chain_native.upper()} liquidity for "
-        f"{web3.from_wei(origination_fee, 'ether')} + {bot.LIQUIDATION_DEPOSIT} {chain_native.upper()} deposit"
+        f"Borrow up to {bot.MAX_LOAN_AMOUNT} {chain_info.native.upper()} liquidity for "
+        f"{chain_info.w3.from_wei(origination_fee, 'ether')} + {bot.LIQUIDATION_DEPOSIT} {chain_info.native.upper()} deposit"
     )
 
     return total_fee, text

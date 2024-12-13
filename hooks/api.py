@@ -1,7 +1,6 @@
 # API
 
-import requests, time
-from datetime import datetime
+import requests
 from constants import chains
 
 
@@ -59,7 +58,7 @@ class ChainScan:
         else:
             field = "ethusd"
         
-        url = f"{chain_info.api}?module=stats&action={chain_info.token}price{chain_info.key}"
+        url = f"{chain_info.api}?module=stats&action={chain_info.native}price{chain_info.key}"
         response = requests.get(url)
         data = response.json()
 

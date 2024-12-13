@@ -2,7 +2,6 @@ from telegram import *
 from telegram.ext import *
 
 from datetime import datetime, timedelta
-from web3 import Web3
 
 from constants import bot, chains
 from hooks import db, tools
@@ -53,10 +52,9 @@ async def search(update: Update, context: CallbackContext) -> int:
             else:
                 entry = db.search_entry(id)
                 if entry:
-                    chain_web3 = chains.chains[entry["chain"]].w3
-                    web3 = Web3(Web3.HTTPProvider(chain_web3))
-                    balance_wei = web3.eth.get_balance(entry['address'])
-                    balance = web3.from_wei(balance_wei, 'ether')
+                    chain_info = chains.chains[entry["chain"]]
+                    balance_wei = chain_info.w3.eth.get_balance(entry['address'])
+                    balance = chain_info.w3.from_wei(balance_wei, 'ether')
                     if entry['complete'] == 1:
                         status = "Deployed"
                     else:
@@ -93,10 +91,9 @@ async def view(update: Update, context: CallbackContext) -> int:
             one_month_ago = datetime.now() - timedelta(days=30)
             formatted_entries = []
             for entry in entries:
-                chain_web3 = chains.chains[entry["chain"]].w3
-                web3 = Web3(Web3.HTTPProvider(chain_web3))
-                balance_wei = web3.eth.get_balance(entry["address"])
-                balance = web3.from_wei(balance_wei, 'ether')
+                chain_info = chains.chains[entry["chain"]]
+                balance_wei = chain_info.w3.eth.get_balance(entry["address"])
+                balance = chain_info.w3.from_wei(balance_wei, 'ether')
                 
                 entry_date = entry["timedate"]
                 if isinstance(entry_date, str):

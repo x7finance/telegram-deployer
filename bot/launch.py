@@ -4,7 +4,6 @@ from telegram.ext import *
 from eth_utils import is_checksum_address
 from eth_account import Account
 from datetime import datetime
-from web3 import Web3
 from decimal import Decimal, InvalidOperation
 
 from constants import ca, bot, chains, urls
@@ -46,7 +45,7 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
     await query.answer()
     chain = query.data.split('_')[1].lower()
     context.user_data['chain'] = chain
-    chain_native = chains.chains[chain.lower()].token
+    chain_native = chains.chains[chain.lower()].native
     funds = functions.get_pool_funds(chain.lower())
     await context.bot.send_message(
         chat_id=query.message.chat_id,
@@ -109,7 +108,7 @@ async def stage_twitter(update: Update, context: CallbackContext) -> int:
         )
         return STAGE_TELEGRAM
     
-    if not user_input.startswith("http://") and not user_input.startswith("https://"):
+    if not user_input.lower().startswith(("http://", "https://")):
         await update.message.reply_text(
             "Error: The Twitter link must start with http:// or https://, or type 'None' if not applicable. Please try again."
         )
@@ -131,7 +130,7 @@ async def stage_telegram(update: Update, context: CallbackContext) -> int:
         )
         return STAGE_WEBSITE
     
-    if not user_input.startswith("http://") and not user_input.startswith("https://"):
+    if not user_input.lower().startswith(("http://", "https://")):
         await update.message.reply_text(
             "Error: The Telegram link must start with http:// or https://, or type 'None' if not applicable. Please try again."
         )
@@ -157,7 +156,7 @@ async def stage_website(update: Update, context: CallbackContext) -> int:
         )
         return STAGE_BUY_TAX
     
-    if not user_input.startswith("http://") and not user_input.startswith("https://"):
+    if not user_input.lower().startswith(("http://", "https://")):
         await update.message.reply_text(
             "Error: The Website link must start with http:// or https://, or type 'None' if not applicable. Please try again."
         )
@@ -254,7 +253,7 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
     await query.answer()
     percent = query.data.split('_')[1]
     chain = context.user_data['chain'].lower()
-    chain_native = chains.chains[chain].token
+    chain_native = chains.chains[chain].native
     context.user_data['percent'] = percent
     pool = functions.get_pool_funds(chain)
 
@@ -279,7 +278,7 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
 async def stage_loan(update: Update, context: CallbackContext) -> int:
     loan_input = update.message.text.strip()
     chain = context.user_data['chain'].lower()
-    chain_native = chains.chains[chain].token
+    chain_native = chains.chains[chain].native
     pool = functions.get_pool_funds(chain)
 
     try:
@@ -364,7 +363,7 @@ async def stage_contribute(update: Update, context: CallbackContext) -> int:
         return STAGE_CONTRIBUTE
 
     context.user_data['contribution'] = contribution
-    chain_native = chains.chains[context.user_data["chain"]].token
+    chain_native = chains.chains[context.user_data["chain"]].native
 
     await update.message.reply_text(
         f"{contribution} {chain_native.upper()} will be allocated for initial liquidity\n\n"
@@ -400,9 +399,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         sell_tax = user_data.get('sell_tax')
 
         if all([ticker, name, chain, supply, percent, contribution, address, buy_tax, sell_tax]):
-            chain_web3 = chains.chains[chain].w3
-            web3 = Web3(Web3.HTTPProvider(chain_web3))
-            chain_native = chains.chains[chain].token
+            chain_info = chains.chains[chain]
 
             team_tokens = int(supply) * (int(percent) / 100)
             liquidity_tokens = int(supply) - team_tokens
@@ -434,7 +431,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                 f"Total Supply: {supply_float:,.0f}\n"
                 f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
                 f"Liquidity Supply: {liquidity_supply:,.0f}\n"
-                f"Contribution: {contribution} {chain_native.upper()}\n\n"
+                f"Contribution: {contribution} {chain_info.native.upper()}\n\n"
                 f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
                 f"Ownership of the project will be transferred to:\n`{address}`\n\n"
                 "Do you want to proceed with the launch?",
@@ -463,9 +460,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         sell_tax = user_data.get('sell_tax')
 
         if all([ticker, name, chain, supply, percent, loan, duration, address, buy_tax, sell_tax]):
-            chain_web3 = chains.chains[chain].w3
-            chain_native = chains.chains[chain].token
-            web3 = Web3(Web3.HTTPProvider(chain_web3))
+            chain_info = chains.chains[chain]
 
             fee, _ = tools.generate_loan_terms(chain, loan)
             context.user_data['fee'] = fee
@@ -500,9 +495,9 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
                 f"Total Supply: {supply_float:,.0f}\n"
                 f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
                 f"Loan Supply: {loan_supply:,.0f}\n"
-                f"Loan Amount: {loan} {chain_native.upper()}\n"
+                f"Loan Amount: {loan} {chain_info.native.upper()}\n"
                 f"Loan Duration: {duration} Days\n"
-                f"Cost: {web3.from_wei(fee, 'ether')} {chain_native.upper()}\n\n"
+                f"Cost: {chain_info.w3.from_wei(fee, 'ether')} {chain_info.native.upper()}\n\n"
                 f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
                 f"Ownership of the project will be transferred to:\n`{address}`\n\n"
                 "Do you want to proceed with the launch?",
@@ -526,13 +521,12 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
     if confirm == "yes":
         account = Account.create()
         now = datetime.now()
-        chain_web3 = chains.chains[user_data.get('chain')].w3
-        web3 = Web3(Web3.HTTPProvider(chain_web3))
-        chain_native = chains.chains[user_data.get('chain')].token
-        chain_name = chains.chains[user_data.get('chain')].name
+
+        chain = user_data.get('chain')
+        chain_info = chains.chains[chain]
 
         def message(total_cost):
-            return (f"On {chain_name.upper()}. Send {round(web3.from_wei(total_cost, "ether"), 4)} {chain_native.upper()} (This includes gas fees) to the following address:\n\n"
+            return (f"On {chain_info.name.upper()}. Send {round(chain_info.w3.from_wei(total_cost, "ether"), 4)} {chain_info.native.upper()} (This includes gas fees) to the following address:\n\n"
                     f"`{account.address}`\n\n"
                     "Any fees not used will be returned to the wallet you designated as owner at deployment\n\n"
                     "*Ensure you are sending funds on the correct chain\n\n"
@@ -598,7 +592,7 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                 user_data.get('website'),
                 user_data.get('buy_tax'),
                 user_data.get('sell_tax'),
-                web3.to_wei(user_data.get('loan'), 'ether'),
+                chain_info.w3.to_wei(user_data.get('loan'), 'ether'),
                 int(user_data.get('duration')) * 60 * 60 * 24,
                 user_data.get('owner'),
                 int(fee)
@@ -668,13 +662,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         return
     
     chain = status_text["chain"]
-    chain_url = chains.chains[chain].scan_token
-    chain_tx = chains.chains[chain].scan_tx
-    chain_dext = chains.chains[chain].dext
-    chain_id = chains.chains[chain].id
-    chain_name = chains.chains[chain].name
-    chain_short_name = chains.chains[chain].short_name
-    chain_token = chains.chains[chain].token
+    chain_info = chains.chains[chain]
     
     await query.edit_message_text(
         f"Deploying {status_text['ticker']} ({status_text['chain']})...."
@@ -683,8 +671,6 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     loan_button = None
 
     if with_loan:
-        chain_web3 = chains.chains[chain].w3
-        web3 = Web3(Web3.HTTPProvider(chain_web3))
         loan_contract = bot.LIVE_LOAN(chain, "address")
 
         loan = functions.deploy_token_with_loan(
@@ -699,7 +685,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             status_text["website"],
             status_text["buy_tax"],
             status_text["sell_tax"],
-            web3.to_wei(status_text["loan"], 'ether'),
+            chain_info.w3.to_wei(status_text["loan"], 'ether'),
             int(status_text["duration"]) * 60 * 60 * 24,
             status_text["owner"],
             status_text["address"],
@@ -714,11 +700,11 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
         token_address, pair_address, loan_id = loan
 
         try:
-            contract = web3.eth.contract(address=web3.to_checksum_address(loan_contract), 
+            contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(loan_contract), 
                                          abi=chainscan.get_abi(loan_contract, chain))
             schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
             schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
-            schedule = tools.format_schedule(schedule1, schedule2, chain_token.upper())
+            schedule = tools.format_schedule(schedule1, schedule2, chain_info.native.upper())
         except Exception:
             schedule = "Unavailable"
 
@@ -741,17 +727,22 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             token_by_id = None
 
         message_text = (
-            f"Congratulations {status_text['ticker']} has been launched and an Xchange ILL Created on {chain_name}\n\n"
+            f"Congratulations {status_text['ticker']} has been launched and an Xchange ILL Created on {chain_info.name}\n\n"
             f"CA: `{token_address}`\n\n"
             f"Loan ID: {loan_id}\n\n"
             f"Payment Schedule:\n\n"
             f"{schedule}\n\n"
             f"Your wallet:\n"
-            f"`{status_text['owner']}`\n"
-            f"Has the ability to change the taxes, the tax wallet and to renounce the contract via the 'Token Contract' button below"
+            f"`{status_text['owner']}`\n\n"
+            f"Has the ability to:\n"
+            f"- Change the taxes\n"
+            f"- Update the tax wallet\n"
+            f"- Adjust the fee thresholds\n"
+            f"- Renounce the contract\n\n"
+            f"Use the 'Token Contract' button below"
         )
 
-        loan_button = InlineKeyboardButton(text="View Loan", url=f"{urls.XCHANGE}lending/{chain_short_name}/{bot.LIVE_LOAN(chain, "name")}/{token_by_id}")
+        loan_button = InlineKeyboardButton(text="View Loan", url=f"{urls.XCHANGE}lending/{chain_info.short_name}/{bot.LIVE_LOAN(chain, "name")}/{token_by_id}")
 
     else:
         launched = functions.deploy_token_without_loan(
@@ -782,8 +773,13 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             f"Congratulations {status_text['ticker']} has been launched and liquidity has been added\n\n"
             f"CA: `{token_address}`\n\n"
             f"Your wallet:\n"
-            f"`{status_text['owner']}`\n"
-            f"Has the ability to change the taxes, the tax wallet and to renounce the contract via the 'Token Contract' button below"
+            f"`{status_text['owner']}`\n\n"
+            f"Has the ability to:\n"
+            f"- Change the taxes\n"
+            f"- Update the tax wallet\n"
+            f"- Adjust the fee thresholds\n"
+            f"- Renounce the contract\n\n"
+            f"Use the 'Token Contract' button below"
         )
     
     refund = functions.transfer_balance(
@@ -798,14 +794,14 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
     else:
         refund_text = (
             "Funds returned\n\n"
-            f"{chain_tx}{refund}"
+            f"{chain_info.scan_tx}{refund}"
         )
 
     buttons = [
-        [InlineKeyboardButton(text="Token Contract", url=f"{chain_url}{token_address}")],
-        [InlineKeyboardButton(text="Pair Contract", url=f"{chain_url}{pair_address}")],
-        [InlineKeyboardButton(text="Buy Link", url=f"{urls.XCHANGE_BUY(chain_id, token_address)}")],
-        [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{token_address}")]
+        [InlineKeyboardButton(text="Token Contract", url=chain_info.scan_token + token_address)],
+        [InlineKeyboardButton(text="Pair Contract", url=chain_info.address + pair_address)],
+        [InlineKeyboardButton(text="Buy Link", url=urls.XCHANGE_BUY(chain_info.id, token_address))],
+        [InlineKeyboardButton(text="Chart", url=urls.DEX_TOOLS(chain_info.dext, token_address))]
     ]
 
     if loan:
