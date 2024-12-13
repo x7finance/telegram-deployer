@@ -2,10 +2,10 @@
 
 def DEPLOYER(chain):
     map = {
-        "base": "0x802e377183BA1E895e63e25fA01422672c6cEeE6",
-        "base-sepolia": "0x8a9aE146e1771b56Ed2cd31853b3Dd355b9BFA03",
+        "base": "0xf4C0124b9a862a281379374e3CCc564acC68a5af",
+        "base-sepolia": "0x9a6570e285c4625339c621E9022dD3ef17376B33",
         "eth": "0xfD392Fc17fcCe76b41d9ab4Ea72943bc5e244F6e",
-        "eth-sepolia": "0x32149a5fc4974095217a2318ba0fD8D9A5fC10D2"
+        "eth-sepolia": "0x38223487360226Cb25Ba8037b121e54D80A2e904"
     }
     return map.get(chain) 
 
