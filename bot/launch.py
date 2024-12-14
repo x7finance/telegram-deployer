@@ -799,7 +799,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
 
     buttons = [
         [InlineKeyboardButton(text="Token Contract", url=chain_info.scan_token + token_address)],
-        [InlineKeyboardButton(text="Pair Contract", url=chain_info.address + pair_address)],
+        [InlineKeyboardButton(text="Pair Contract", url=chain_info.scan_address + pair_address)],
         [InlineKeyboardButton(text="Buy Link", url=urls.XCHANGE_BUY(chain_info.id, token_address))],
         [InlineKeyboardButton(text="Chart", url=urls.DEX_TOOLS(chain_info.dext, token_address))]
     ]
