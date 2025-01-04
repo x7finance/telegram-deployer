@@ -59,7 +59,7 @@ def deploy_token_without_loan(chain, name, symbol, supply, percent, description,
 
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        tx_receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash)
+        tx_receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
 
         create_log = deployer_contract.events.TokenDeployed().process_receipt(tx_receipt)
         pair_log = factory_contract.events.PairCreated().process_receipt(tx_receipt)
@@ -128,7 +128,7 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, description, tw
 
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        tx_receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash)
+        tx_receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
 
         create_log = deployer_contract.events.TokenDeployed().process_receipt(tx_receipt)
         pair_log = factory_contract.events.PairCreated().process_receipt(tx_receipt)
@@ -136,6 +136,44 @@ def deploy_token_with_loan(chain, name, symbol, supply, percent, description, tw
 
     except Exception as e:
         return f'Error deploying token: {str(e)}'
+
+
+def cancel_tx(chain, address, key, gas_multiplier=1.5):
+    try:
+        if chain not in chains.chains:
+            raise ValueError(f"Invalid chain: {chain}")
+
+        chain_info = chains.chains[chain]
+        latest_nonce = chain_info.w3.eth.get_transaction_count(address, "latest")
+        pending_nonce = chain_info.w3.eth.get_transaction_count(address, "pending")
+        print(latest_nonce, pending_nonce)
+        if pending_nonce == latest_nonce:
+            return "No pending transactions found. No action needed."
+
+        gas_price = chain_info.w3.eth.gas_price
+        adjusted_gas_price = int(gas_price * gas_multiplier)
+
+        transaction = {
+            "from": address,
+            "to": address,
+            "value": 0,
+            "gas": 21000,
+            "gasPrice": adjusted_gas_price,
+            "nonce": pending_nonce,
+            "chainId": int(chain_info.id),
+        }
+
+        signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+        if receipt.status == 1:
+            return f"Stuck transaction successfully replaced\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        else:
+            return f"Error: Transaction failed to replace stuck transaction"
+
+    except Exception as e:
+        return f"Error sending transaction: {str(e)}"
 
 
 def estimate_gas_without_loan(chain, name, symbol, supply, percent, description, twitter, telegram, website, buy_tax, sell_tax, owner, loan_fee):
@@ -283,7 +321,7 @@ def transfer_balance(chain, address, owner, key):
 
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        tx_receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash)
+        tx_receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         return tx_hash.hex()
 
     except Exception as e:
