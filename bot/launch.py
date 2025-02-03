@@ -11,7 +11,7 @@ from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
 
-STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_DESCRIPTION, STAGE_TWITTER, STAGE_TELEGRAM, STAGE_WEBSITE, STAGE_BUY_TAX, STAGE_SELL_TAX, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE = range(16)
+STAGE_DEX, STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_DESCRIPTION, STAGE_TWITTER, STAGE_TELEGRAM, STAGE_WEBSITE, STAGE_BUY_TAX, STAGE_SELL_TAX, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE = range(17)
 
 
 async def command(update: Update, context: CallbackContext) -> int:
@@ -27,17 +27,37 @@ async def command(update: Update, context: CallbackContext) -> int:
             )
         else:
             buttons = [
-                [InlineKeyboardButton(chain.upper(), callback_data=f'chain_{chain.lower()}')]
-                for chain in chains.live
+                [InlineKeyboardButton(dex.upper(), callback_data=f'dex_{dex.lower()}')]
+                for dex in chains.dexes
             ]
             keyboard = InlineKeyboardMarkup(buttons)
             await update.message.reply_text(
                 f"Let's get your project launched by answering a few questions...\n\n"
                 f"use /cancel at any time to end the conversation\n\n"
-                f"First, select your chain:",
+                f"First, select the DEX you want to launch on:",
                 reply_markup=keyboard
             )
-            return STAGE_CHAIN
+            return STAGE_DEX
+
+
+async def stage_dex(update: Update, context: CallbackContext) -> int:
+    query = update.callback_query
+    await query.answer()
+    dex = query.data.split('_')[1].lower()
+    context.user_data['dex'] = dex
+    buttons = [
+        [InlineKeyboardButton(chain.upper(), callback_data=f'chain_{chain.lower()}')]
+        for chain in chains.live
+    ]
+    keyboard = InlineKeyboardMarkup(buttons)
+    await context.bot.send_message(
+    chat_id=query.message.chat_id,
+    text=
+        f"Launching on {dex}\n\n"
+        f"Now, select your chain:",
+        reply_markup=keyboard
+    )
+    return STAGE_CHAIN
 
 
 async def stage_chain(update: Update, context: CallbackContext) -> int:
@@ -45,13 +65,17 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
     await query.answer()
     chain = query.data.split('_')[1].lower()
     context.user_data['chain'] = chain
-    chain_native = chains.chains[chain.lower()].native
-    funds = functions.get_pool_funds(chain.lower())
+    if context.user_data['dex'] == "xchange":
+        chain_native = chains.chains[chain.lower()].native
+        funds = functions.get_pool_funds(chain.lower())
+        pool_text = f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed, so let's get your project launched!\n\n"
+    else:
+        pool_text = ""
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=
             f"{context.user_data['chain'].upper()} Chain Selected.\n\n"
-            f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed, so let's get your project launched!\n\n"
+            f"{pool_text}"
             "What's the project's token ticker?"
         )
     return STAGE_TICKER
@@ -79,10 +103,20 @@ async def stage_name(update: Update, context: CallbackContext) -> int:
         return STAGE_NAME
 
     context.user_data['name'] = update.message.text
-    await update.message.reply_text(
+    
+    if context.user_data['dex'] == "xchange":
+        await update.message.reply_text(
         f"Name: {context.user_data['name']}\n\nPlease write a short description of your project (in 200 characters or less)"
     )
-    return STAGE_DESCRIPTION
+        return STAGE_DESCRIPTION
+    else:
+        await update.message.reply_text(
+            "What do you want the buy tax of your token to be? Between 0-20\n\n"
+            "This can be changed after launch\n\n"
+            "Tax wallet will be set as the wallet you designate as owner\n\n"
+            "This can be a changed after launch"
+        )
+        return STAGE_BUY_TAX
 
 
 async def stage_description(update: Update, context: CallbackContext) -> int:
@@ -222,7 +256,6 @@ async def stage_sell_tax(update: Update, context: CallbackContext) -> int:
         return STAGE_SELL_TAX
 
 
-
 async def stage_supply(update: Update, context: CallbackContext) -> int:
     supply_input = update.message.text.strip()
     if not (supply_input.isdigit() and int(supply_input) > 0):
@@ -261,18 +294,26 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
         percent_str = "No tokens will be held, and 100% of tokens will go into the liquidity"
     else:
         percent_str = f"{percent}% of tokens will be held as team supply"
-    
-    await context.bot.send_message(
-        chat_id=query.message.chat_id,
-        text=(
-            f"{percent_str}\n\n"
-            f"How much {chain_native.upper()} (if any) do you want to borrow in initial liquidity?\n\n"
-            f"Currently available to borrow: {pool} {chain_native.upper()}.\n\n"
-            f"You can launch without a loan and supply the {chain_native.upper()} yourself by typing 0\n\n"
-            "Please enter the amount as a number (e.g., 0, 1, 2.5):"
+    if context.user_data['dex'] == "xchange":
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=
+                f"{percent_str}\n\n"
+                f"How much {chain_native.upper()} (if any) do you want to borrow in initial liquidity?\n\n"
+                f"Currently available to borrow: {pool} {chain_native.upper()}.\n\n"
+                f"You can launch without a loan and supply the {chain_native.upper()} yourself by typing 0\n\n"
+                "Please enter the amount as a number (e.g., 0, 1, 2.5):"   
         )
-    )
-    return STAGE_LOAN
+        return STAGE_LOAN
+    else:
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=
+                f"{percent_str}\n\n"
+                f"How much {chain_native.upper()} do you want to provide in initial liquidity?\n\n"
+                "Please enter the amount as a number (e.g., 0.5, 1, 2.5):"
+            )
+        return STAGE_CONTRIBUTE
 
 
 async def stage_loan(update: Update, context: CallbackContext) -> int:
@@ -285,7 +326,7 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
         loan_amount = Decimal(loan_input)
     except InvalidOperation:
         await update.message.reply_text(
-            f"Error: Please enter a valid number for the loan amount in {chain_native.upper()}. Try again."
+            f"Error: Please enter a valid number in {chain_native.upper()}. Try again."
         )
         return STAGE_LOAN
 
@@ -381,134 +422,82 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
         await update.message.reply_text("Error: Invalid address - Please enter a valid checksum address")
         return STAGE_OWNER
     
+    chain_info = chains.chains[context.user_data['chain']]
+
     user_data = context.user_data
-    
+
+    ticker = user_data.get('ticker')
+    name = user_data.get('name')
+    chain = user_data.get('chain')
+    supply = user_data.get('supply')
+    percent = user_data.get('percent')
+    address = user_data.get('owner')
+    description = user_data.get('description')
+    twitter = user_data.get('twitter')
+    telegram = user_data.get('telegram')
+    website = user_data.get('website')
+    buy_tax = user_data.get('buy_tax')
+    sell_tax = user_data.get('sell_tax')
+
+    supply_float = float(supply)
+    amount_percentage = float(percent) / 100
+    team_supply = supply_float * amount_percentage
+
     if 'contribution' in user_data:
-        contribution = user_data['contribution']
-        ticker = user_data.get('ticker')
-        name = user_data.get('name')
-        chain = user_data.get('chain')
-        supply = user_data.get('supply')
-        percent = user_data.get('percent')
-        address = user_data.get('owner')
-        description = user_data.get('description')
-        twitter = user_data.get('twitter')
-        telegram = user_data.get('telegram')
-        website = user_data.get('website')
-        buy_tax = user_data.get('buy_tax')
-        sell_tax = user_data.get('sell_tax')
-
-        if all([ticker, name, chain, supply, percent, contribution, address, buy_tax, sell_tax]):
-            chain_info = chains.chains[chain]
-
-            team_tokens = int(supply) * (int(percent) / 100)
-            liquidity_tokens = int(supply) - team_tokens
-
-            price_native = float(contribution) / liquidity_tokens
-            price_usd = price_native * chainscan.get_native_price(chain.lower()) * 2
-            market_cap_usd = price_usd * int(supply) * 2
-
-            supply_float = float(supply)
-            amount_percentage = float(percent) / 100
-            team_supply = supply_float * amount_percentage
-            liquidity_supply = supply_float - team_supply
-
-            buttons = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Yes", callback_data="confirm_yes")],
-                [InlineKeyboardButton("No", callback_data="confirm_no")]
-            ])
-
-            await update.message.reply_text(
-                f"Thank you! Please check the values below:\n\n"
-                f"Chain: {chain.upper()}\n"
-                f"Ticker: {ticker}\n"
-                f"Project Name: {name}\n"
-                f"Description: {description}\n"
-                f"Twitter: {twitter}\n"
-                f"Telegram: {telegram}\n"
-                f"Website: {website}\n"
-                f"Taxes: {buy_tax}/{sell_tax}\n"
-                f"Total Supply: {supply_float:,.0f}\n"
-                f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
-                f"Liquidity Supply: {liquidity_supply:,.0f}\n"
-                f"Contribution: {contribution} {chain_info.native.upper()}\n\n"
-                f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
-                f"Ownership of the project will be transferred to:\n`{address}`\n\n"
-                "Do you want to proceed with the launch?",
-            parse_mode="Markdown",
-            reply_markup=buttons
-            )
-            return STAGE_CONFIRM
-        else:
-            await update.message.reply_text("Error: Incomplete information provided")
-            return ConversationHandler.END
-    
+        liquidity = user_data['contribution']
+        loan_text  = ""
+            
     else:
-        ticker = user_data.get('ticker')
-        name = user_data.get('name')
-        chain = user_data.get('chain')
-        supply = user_data.get('supply')
-        percent = user_data.get('percent')
-        loan = user_data.get('loan')
+        liquidity = user_data.get('loan')
         duration = user_data.get('duration')
-        address = user_data.get('owner')
-        description = user_data.get('description')
-        twitter = user_data.get('twitter')
-        telegram = user_data.get('telegram')
-        website = user_data.get('website')
-        buy_tax = user_data.get('buy_tax')
-        sell_tax = user_data.get('sell_tax')
 
-        if all([ticker, name, chain, supply, percent, loan, duration, address, buy_tax, sell_tax]):
-            chain_info = chains.chains[chain]
+    team_tokens = int(supply) * (int(percent) / 100)
+    liquidity_tokens = int(supply) - team_tokens
 
-            fee, _ = tools.generate_loan_terms(chain, loan)
-            context.user_data['fee'] = fee
+    price_native = float(liquidity) / liquidity_tokens
+    price_usd = price_native * chainscan.get_native_price(chain.lower()) * 2
+    market_cap_usd = price_usd * int(supply) * 2
 
-            team_tokens = int(supply) * (int(percent) / 100)
-            liquidity_tokens = int(supply) - team_tokens
-
-            price_native = float(loan) / liquidity_tokens
-            price_usd = price_native * chainscan.get_native_price(chain.lower()) * 2
-            market_cap_usd = price_usd * int(supply) * 2
-
-            supply_float = float(supply)
-            amount_percentage = float(percent) / 100
-            team_supply = supply_float * amount_percentage
-            loan_supply = supply_float - team_supply
-
-            buttons = InlineKeyboardMarkup([
-                [InlineKeyboardButton("Yes", callback_data="confirm_yes")],
-                [InlineKeyboardButton("No", callback_data="confirm_no")]
-            ])
-
-            await update.message.reply_text(
-                f"Thank you! Please check the values below:\n\n"
-                f"Chain: {chain.upper()}\n"
-                f"Ticker: {ticker}\n"
-                f"Project Name: {name}\n"
+    if context.user_data['dex'] == "xchange":
+        token_text = (
                 f"Description: {description}\n"
                 f"Twitter: {twitter}\n"
                 f"Telegram: {telegram}\n"
                 f"Website: {website}\n"
-                f"Taxes: {buy_tax}/{sell_tax}\n"
-                f"Total Supply: {supply_float:,.0f}\n"
-                f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
-                f"Loan Supply: {loan_supply:,.0f}\n"
-                f"Loan Amount: {loan} {chain_info.native.upper()}\n"
+            )
+
+        fee, _ = tools.generate_loan_terms(chain, liquidity)
+        context.user_data['fee'] = fee
+        loan_text = (    
+                f"Loan Amount: {liquidity} {chain_info.native.upper()}\n"
                 f"Loan Duration: {duration} Days\n"
                 f"Cost: {chain_info.w3.from_wei(fee, 'ether')} {chain_info.native.upper()}\n\n"
-                f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
-                f"Ownership of the project will be transferred to:\n`{address}`\n\n"
-                "Do you want to proceed with the launch?",
-            parse_mode="Markdown",
-            reply_markup=buttons
-            )
-            return STAGE_CONFIRM
-        else:
-            await update.message.reply_text("Error: Incomplete information provided")
-            return ConversationHandler.END
-        
+                )
+    else:
+        token_text = ""
+        loan_text  = ""
+
+    await update.message.reply_text(
+        f"Thank you! Please check the values below:\n\n"
+        f"Chain: {chain.upper()}\n"
+        f"Ticker: {ticker}\n"
+        f"Project Name: {name}\n"
+        f"{token_text}"
+        f"Taxes: {buy_tax}/{sell_tax}\n"
+        f"Total Supply: {supply_float:,.0f}\n"
+        f"Team Supply: {team_supply:,.0f} ({percent}%)\n"
+        f"{loan_text}"
+        f"Launch Market Cap: ${market_cap_usd:,.0f}\n\n"
+        f"Ownership of the project will be transferred to:\n`{address}`\n\n"
+        "Do you want to proceed with the launch?",
+    parse_mode="Markdown",
+    reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Yes", callback_data="confirm_yes")],
+            [InlineKeyboardButton("No", callback_data="confirm_no")]
+        ])
+    )
+    return STAGE_CONFIRM
+      
 
 async def stage_confirm(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
@@ -533,96 +522,84 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
                     "Make a note of the wallet address above and private key below*\n\n"
                     f"`{account.key.hex()}`\n\n"
                     "To check the status of your launch use /status")
+        
+        if context.user_data['dex'] == "xchange":
+            if 'contribution' in user_data:
+                fee = user_data.get('contribution') * 10 ** 18
+                gas_estimate = functions.estimate_gas_without_loan(
+                        user_data.get('chain'),
+                        user_data.get('name'),
+                        user_data.get('ticker'),
+                        user_data.get('supply'),
+                        user_data.get('percent'),
+                        user_data.get('buy_tax'),
+                        user_data.get('sell_tax'),
+                        user_data.get('owner'),
+                        int(fee)
+                        )
+                if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
+                    await query.message.reply_text(f"{gas_estimate}")
+                    return
 
-        if 'contribution' in user_data:
-            fee = user_data.get('contribution') * 10 ** 18
-            gas_estimate = functions.estimate_gas_without_loan(
+            else:
+                fee = user_data.get('fee')
+                gas_estimate = functions.estimate_gas_with_loan(
                     user_data.get('chain'),
                     user_data.get('name'),
                     user_data.get('ticker'),
                     user_data.get('supply'),
                     user_data.get('percent'),
-                    user_data.get('description'),
-                    user_data.get('twitter'),
-                    user_data.get('telegram'),
-                    user_data.get('website'),
                     user_data.get('buy_tax'),
                     user_data.get('sell_tax'),
+                    chain_info.w3.to_wei(user_data.get('loan'), 'ether'),
+                    int(user_data.get('duration')) * 60 * 60 * 24,
                     user_data.get('owner'),
                     int(fee)
                     )
-            if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
-                await query.message.reply_text(f"{gas_estimate}")
-                return
-
-            db.add_entry(
-                now, 
-                user_name, 
-                user_id, 
-                account.address, 
-                account.key.hex(), 
-                user_data.get('chain'), 
-                user_data.get('ticker'),
-                user_data.get('name'), 
-                user_data.get('supply'), 
-                user_data.get('percent'), 
-                user_data.get('description'),
-                user_data.get('twitter'),
-                user_data.get('telegram'),
-                user_data.get('website'),
-                user_data.get('buy_tax'),
-                user_data.get('sell_tax'),
-                0,
-                0,
-                user_data.get('owner'),
-                int(fee)
-            )
-
+                if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
+                    await query.message.reply_text(f"{gas_estimate}")
+                    return
+                
         else:
-            fee = user_data.get('fee')
-            gas_estimate = functions.estimate_gas_with_loan(
+            fee = user_data.get('contribution') * 10 ** 18
+            gas_estimate = functions.estimate_gas_uniswap(
                 user_data.get('chain'),
                 user_data.get('name'),
                 user_data.get('ticker'),
                 user_data.get('supply'),
                 user_data.get('percent'),
-                user_data.get('description'),
-                user_data.get('twitter'),
-                user_data.get('telegram'),
-                user_data.get('website'),
                 user_data.get('buy_tax'),
                 user_data.get('sell_tax'),
-                chain_info.w3.to_wei(user_data.get('loan'), 'ether'),
-                int(user_data.get('duration')) * 60 * 60 * 24,
                 user_data.get('owner'),
                 int(fee)
                 )
-            if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
-                await query.message.reply_text(f"{gas_estimate}")
-                return
-             
-            db.add_entry(
-                now, 
-                user_name, 
-                user_id, 
-                account.address, 
-                account.key.hex(), 
-                user_data.get('chain'), 
-                user_data.get('ticker'),
-                user_data.get('name'), 
-                user_data.get('supply'), 
-                user_data.get('percent'),
-                user_data.get('description'),
-                user_data.get('twitter'),
-                user_data.get('telegram'),
-                user_data.get('website'),
-                user_data.get('buy_tax'),
-                user_data.get('sell_tax'),
-                user_data.get('loan'),
-                user_data.get('duration'), 
-                user_data.get('owner'),
-                int(fee)
-            )
+        if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
+            await query.message.reply_text(f"{gas_estimate}")
+            return
+
+        db.add_entry(
+            now, 
+            user_name, 
+            user_id, 
+            account.address, 
+            account.key.hex(),
+            user_data.get('dex'), 
+            user_data.get('chain'), 
+            user_data.get('ticker'),
+            user_data.get('name'), 
+            user_data.get('supply'), 
+            user_data.get('percent'),
+            user_data.get('description'),
+            user_data.get('twitter'),
+            user_data.get('telegram'),
+            user_data.get('website'),
+            user_data.get('buy_tax'),
+            user_data.get('sell_tax'),
+            user_data.get('loan'),
+            user_data.get('duration'), 
+            user_data.get('owner'),
+            int(fee)
+        )
 
         total_cost = (int(fee) + gas_estimate)
 
@@ -643,17 +620,11 @@ async def cancel(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 
-async def with_loan(update: Update, context: CallbackContext) -> int:
-    await function(update, context, with_loan=True)
-
-
-async def without_loan(update: Update, context: CallbackContext) -> int:
-    await function(update, context, with_loan=False)
-
-
-async def function(update: Update, context: CallbackContext, with_loan: bool) -> int:
+async def function(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     await query.answer()
+    launch_type = query.data
+
     user_id = update.effective_user.id
     status_text = db.search_entry(user_id)
     
@@ -670,7 +641,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
 
     loan_button = None
 
-    if with_loan:
+    if launch_type == "launch_with_loan":
         loan_contract = bot.LIVE_LOAN(chain, "address")
 
         loan = functions.deploy_token_with_loan(
@@ -744,7 +715,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
 
         loan_button = InlineKeyboardButton(text="View Loan", url=f"{urls.XCHANGE}lending/{chain_info.short_name}/{bot.LIVE_LOAN(chain, "name")}/{token_by_id}")
 
-    else:
+    elif launch_type == "launch_without_loan":
         launched = functions.deploy_token_without_loan(
             status_text["chain"],
             status_text["name"],
@@ -755,6 +726,40 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             status_text["twitter"], 
             status_text["telegram"],
             status_text["website"],
+            status_text["buy_tax"],
+            status_text["sell_tax"],
+            status_text["owner"],
+            status_text["address"],
+            status_text["secret_key"],
+            int(status_text["fee"])
+        )
+
+        if isinstance(launched, str) and launched.startswith("Error"):
+            await query.edit_message_text(f"Error initiating TX\n\nUse /withdraw if you want to cancel the deployment and return your funds\n\n{launched}")
+            return
+
+        token_address, pair_address = launched
+
+        message_text = (
+            f"Congratulations {status_text['ticker']} has been launched and liquidity has been added\n\n"
+            f"CA: `{token_address}`\n\n"
+            f"Your wallet:\n"
+            f"`{status_text['owner']}`\n\n"
+            f"Has the ability to:\n"
+            f"- Change the taxes\n"
+            f"- Update the tax wallet\n"
+            f"- Adjust the fee thresholds\n"
+            f"- Renounce the contract\n\n"
+            f"Use the 'Token Contract' button below"
+        )
+
+    elif launch_type == "launch_uniswap":
+        launched = functions.deploy_token(
+            status_text["chain"],
+            status_text["name"],
+            status_text["ticker"],
+            int(status_text["supply"]),
+            int(status_text["percent"]),
             status_text["buy_tax"],
             status_text["sell_tax"],
             status_text["owner"],
@@ -796,7 +801,7 @@ async def function(update: Update, context: CallbackContext, with_loan: bool) ->
             "Funds returned\n\n"
             f"{chain_info.scan_tx}{refund}"
         )
-
+    
     buttons = [
         [InlineKeyboardButton(text="Token Contract", url=chain_info.scan_token + token_address)],
         [InlineKeyboardButton(text="Pair Contract", url=chain_info.scan_address + pair_address)],

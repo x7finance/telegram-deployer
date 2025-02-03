@@ -104,52 +104,59 @@ async def status(update: Update, context: CallbackContext) -> int:
             balance_wei = chain_info.w3.eth.get_balance(status_text["address"])
             balance = chain_info.w3.from_wei(balance_wei, 'ether')
             balance_str = format(balance, '.18f')
-
-            if status_text["loan"] == "0":
-                loan_deployment = False
-                gas_estimate = functions.estimate_gas_without_loan(
-                    status_text["chain"],
-                    status_text["name"],
-                    status_text["ticker"],
-                    int(status_text["supply"]),
-                    int(status_text["percent"]),
-                    status_text["description"], 
-                    status_text["twitter"], 
-                    status_text["telegram"],
-                    status_text["website"],
-                    status_text["buy_tax"],
-                    status_text["sell_tax"],
-                    status_text["owner"],
-                    int(status_text["fee"])
-                    )
-
+            if status_text["dex"] == "xchange":
+                token_text = (
+                    f"Description: {status_text['description']}\n"
+                    f"Twitter: {status_text['twitter']}\n"
+                    f"Telegram: {status_text['telegram']}\n"
+                    f"Website: {status_text['website']}\n"
+                )
+                if not status_text["loan"]:
+                    callback_data = "launch_without_loan"
+                    gas_estimate = functions.estimate_gas_without_loan(
+                        status_text["chain"],
+                        status_text["name"],
+                        status_text["ticker"],
+                        int(status_text["supply"]),
+                        int(status_text["percent"]),
+                        status_text["buy_tax"],
+                        status_text["sell_tax"],
+                        status_text["owner"],
+                        int(status_text["fee"])
+                        )
+                else:
+                    callback_data = "launch_with_loan"
+                    gas_estimate = functions.estimate_gas_with_loan(
+                        status_text["chain"],
+                        status_text["name"],
+                        status_text["ticker"],
+                        int(status_text["supply"]),
+                        int(status_text["percent"]),
+                        status_text["buy_tax"],
+                        status_text["sell_tax"],
+                        chain_info.w3.to_wei(status_text["loan"], 'ether'),
+                        int(status_text["duration"]) * 60 * 60 * 24,
+                        status_text["owner"],
+                        int(status_text["fee"])
+                        )
             else:
-                loan_deployment = True
-                gas_estimate = functions.estimate_gas_with_loan(
-                    status_text["chain"],
-                    status_text["name"],
-                    status_text["ticker"],
-                    int(status_text["supply"]),
-                    int(status_text["percent"]),
-                    status_text["description"], 
-                    status_text["twitter"], 
-                    status_text["telegram"],
-                    status_text["website"],
-                    status_text["buy_tax"],
-                    status_text["sell_tax"],
-                    chain_info.w3.to_wei(status_text["loan"], 'ether'),
-                    int(status_text["duration"]) * 60 * 60 * 24,
-                    status_text["owner"],
+                callback_data = "launch_uniswap"
+                gas_estimate = functions.estimate_gas_uniswap(
+                    status_text['chain'],
+                    status_text['name'],
+                    status_text['ticker'],
+                    status_text['supply'],
+                    status_text['percent'],
+                    status_text['buy_tax'],
+                    status_text['sell_tax'],
+                    status_text['owner'],
                     int(status_text["fee"])
                     )
+                token_text =  ""
 
             if status_text["complete"] == 0:
                 total_cost = int(status_text["fee"]) + gas_estimate
                 if balance_wei >= total_cost:
-                    if loan_deployment:
-                        callback_data = "launch_with_loan"
-                    else:
-                        callback_data = "launch_without_loan"
 
                     button = InlineKeyboardMarkup(
                         [
@@ -160,26 +167,25 @@ async def status(update: Update, context: CallbackContext) -> int:
                     header = "*LAUNCH STATUS - READY*"
                     was_will_be = "will be"
                 else:
-
-
                     message = (
-                        f"Send `{status_text['address']}` with {round(chain_info.w3.from_wei(total_cost, "ether"), 4)} {chain_info.native.upper()} (This includes gas fees)\n\n"
+                        f"On {chain_info.name} send {round(chain_info.w3.from_wei(total_cost, "ether"), 4)} {chain_info.native.upper()} to:\n"
+                        f"`{status_text['address']}`\n(This includes gas fees)\n\n"
                         "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
                         "use /withdraw to return any un-used funds\n"
                         "use /reset to clear this launch"
                     )
-                    header = "*LAUNCH STATUS - WAITING*"
+                    header = f"*{status_text['dex'].upper()} LAUNCH STATUS - WAITING*"
                     was_will_be = "will be"
                     button = ""
             else:
                 button = ""
                 message = "use /withdraw to return any un-used funds\nuse /reset to clear this launch"
-                header = "*LAUNCH STATUS - CONFIRMED*"
+                header = f"*{status_text['dex'].upper()} LAUNCH STATUS - CONFIRMED*"
                 was_will_be = "was"
             
             team_tokens = int(status_text["supply"]) * (int(status_text["percent"]) / 100)
             liquidity_tokens = int(status_text["supply"]) - team_tokens
-            if loan_deployment:
+            if callback_data == "launch_with_loan":
                 price_native = float(status_text["loan"]) / liquidity_tokens
                 price_usd = price_native * chainscan.get_native_price(status_text["chain"]) * 2
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
@@ -197,15 +203,12 @@ async def status(update: Update, context: CallbackContext) -> int:
                 price_native = (int(status_text["fee"]) / 10 ** 18) / liquidity_tokens
                 price_usd = price_native * chainscan.get_native_price(status_text["chain"]) * 2
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
-                loan_info = "No Loan, self-funded deployment.\n"
+                loan_info = ""
             await update.message.reply_text(
                 f"{header}\n\n"
                 f"{status_text['ticker']} ({status_text['chain'].upper()})\n\n"
                 f"Project Name: {status_text['name']}\n"
-                f"Description: {status_text['description']}\n"
-                f"Twitter: {status_text['twitter']}\n"
-                f"Telegram: {status_text['telegram']}\n"
-                f"Website: {status_text['website']}\n"
+                f"{token_text}"
                 f"Taxes: {status_text['buy_tax']}/{status_text['sell_tax']}\n"
                 f"Total Supply: {float(status_text['supply']):,.0f}\n"
                 f"Team Supply: {team_tokens:,.0f} ({status_text['percent']}%)\n"

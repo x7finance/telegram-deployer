@@ -63,6 +63,11 @@ def XCHANGE_BUY(chain_id, token1):
     return f"https://x7finance.org/swap?chainId={chain_id}&token1={token1}"
 
 
+def UNISWAP_BUY(chain_id, token1):
+    return f"https://app.uniswap.org/swap?outputCurrency={token1}"
+
+
+
 # TG
 TG_MAIN = "t.me/x7portal"
 TG_ALERTS = "t.me/xchange_alerts"

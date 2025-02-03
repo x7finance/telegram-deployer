@@ -7,10 +7,30 @@ def DEPLOYER(chain):
         "eth": "0xfD392Fc17fcCe76b41d9ab4Ea72943bc5e244F6e",
         "eth-sepolia": "0x38223487360226Cb25Ba8037b121e54D80A2e904"
     }
+    return map.get(chain)
+
+
+def DEPLOYER_UNISWAP(chain):
+    map = {
+        "base": "0xA33C9a350BE602957104486f95352B9589E85E15",
+        "base-sepolia": "0x9a6570e285c4625339c621E9022dD3ef17376B33",
+        "eth": "0xfD392Fc17fcCe76b41d9ab4Ea72943bc5e244F6e",
+        "eth-sepolia": "0x38223487360226Cb25Ba8037b121e54D80A2e904"
+    }
     return map.get(chain) 
+
 
 def FACTORY(chain):
         return "0x8B76C05676D205563ffC1cbd11c0A6e3d83929c5"
+
+def FACTORY_UNISWAP(chain):
+    map = {
+        "base": "0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6",
+        "base-sepolia": "0x9a6570e285c4625339c621E9022dD3ef17376B33",
+        "eth": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+        "eth-sepolia": "0xF62c03E08ada871A0bEb309762E260a7a6a880E6"
+    }
+    return map.get(chain) 
 
 def ILL004(chain):
     map = {

@@ -56,6 +56,7 @@ if __name__ == "__main__":
     launch_handler = ConversationHandler(
         entry_points=[CommandHandler('launch', launch.command)],
         states={
+            launch.STAGE_DEX: [CallbackQueryHandler(launch.stage_dex, pattern='^dex_')],
             launch.STAGE_CHAIN: [CallbackQueryHandler(launch.stage_chain, pattern='^chain_')],
             launch.STAGE_TICKER: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_ticker)],
             launch.STAGE_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_name)],
@@ -77,8 +78,6 @@ if __name__ == "__main__":
     )
     application.add_handler(launch_handler)
     application.add_handler(CallbackQueryHandler(commands.reset_callback, pattern='^reset_'))
-    application.add_handler(CallbackQueryHandler(launch.with_loan, pattern='^launch_with_loan$'))
-    application.add_handler(CallbackQueryHandler(launch.without_loan, pattern='^launch_without_loan$'))
-
+    application.add_handler(CallbackQueryHandler(launch.function, pattern=r'^(launch_uniswap|launch_with_loan|launch_without_loan)$'))
     ## START ##
     application.run_polling(allowed_updates=Update.ALL_TYPES)

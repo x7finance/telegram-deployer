@@ -23,7 +23,8 @@ def add_entry(
         user_name, 
         user_id, 
         address, 
-        secret_key, 
+        secret_key,
+        dex,
         chain, 
         ticker, 
         name, 
@@ -50,7 +51,8 @@ def add_entry(
             user_name, 
             user_id, 
             address, 
-            secret_key, 
+            secret_key,
+            dex,
             chain, 
             ticker, 
             name, 
@@ -67,14 +69,15 @@ def add_entry(
             owner,
             fee
             )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         entry_data = (
             timedate, 
             user_name, 
             user_id, 
             address, 
-            secret_key, 
+            secret_key,
+            dex,
             chain, 
             ticker, 
             name, 
@@ -194,6 +197,7 @@ def search_entry(user_id):
             user_id, 
             address,
             secret_key,
+            dex,
             chain, 
             ticker, 
             name, 
@@ -225,6 +229,7 @@ def search_entry(user_id):
                 "user_id": result["user_id"],
                 "address": result["address"],
                 "secret_key": result["secret_key"],
+                "dex": result["dex"],
                 "chain": result["chain"],
                 "ticker": result["ticker"],
                 "name": result["name"],
