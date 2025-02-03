@@ -164,7 +164,7 @@ async def status(update: Update, context: CallbackContext) -> int:
                         ]
                     )
                     message = "Ready to launch, hit the button below!"
-                    header = "*LAUNCH STATUS - READY*"
+                    header = f"*{status_text['dex'].upper()} LAUNCH STATUS - READY*"
                     was_will_be = "will be"
                 else:
                     message = (

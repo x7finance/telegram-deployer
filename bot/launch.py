@@ -446,6 +446,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
     if 'contribution' in user_data:
         liquidity = user_data['contribution']
         loan_text  = ""
+        duration = 0
             
     else:
         liquidity = user_data.get('loan')
