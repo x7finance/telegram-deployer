@@ -1,6 +1,3 @@
-from telegram import *
-from telegram.ext import *
-
 from constants import bot, ca, chains
 from hooks import api, tools
 

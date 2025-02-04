@@ -1,16 +1,16 @@
-from telegram import *
-from telegram.ext import *
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import CallbackContext
 
 from constants import chains, bot
 from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
 
-async def test(update: Update, context: CallbackContext) -> int:
+async def test(update: Update, context: CallbackContext):
     return
 
 
-async def id(update: Update, context: CallbackContext) -> int:
+async def id(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -20,7 +20,7 @@ async def id(update: Update, context: CallbackContext) -> int:
     )
 
 
-async def reset(update: Update, context: CallbackContext) -> int:
+async def reset(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -48,7 +48,7 @@ async def reset(update: Update, context: CallbackContext) -> int:
     )
 
 
-async def reset_callback(update: Update, context: CallbackContext) -> int:
+async def reset_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     
@@ -68,7 +68,7 @@ async def reset_callback(update: Update, context: CallbackContext) -> int:
         await query.edit_message_text("Reset canceled.")
 
 
-async def start(update: Update, context: CallbackContext) -> int:
+async def start(update: Update, context: CallbackContext):
     user = update.effective_user
     user_name = user.username or f"{user.first_name} {user.last_name}"
     chat_type = update.message.chat.type
@@ -79,10 +79,11 @@ async def start(update: Update, context: CallbackContext) -> int:
             f"Welcome to {tools.escape_markdown(bot.BOT_NAME)}, {tools.escape_markdown(user_name)}!\n"
             f"Your gateway to creating and launching tokens in just minutes.\n\n"
             f"*Here's what you can do:*\n"
-            "- Launch a Token: Seamlessly create and deploy your token.\n"
-            f"- Borrow Liquidity: {loan_fees}\n\n"
-            "*Key Features:*\n"
-            "- Flexible Loan Terms: Choose your preferred loan duration. If unpaid by the expiry date, "
+            "- Launch a Token: Seamlessly create and deploy your token and trade instantly.\n"
+            f"- Borrow Liquidity on Xchange: {loan_fees}\n"
+            f"- Launch Instantly on Uniswap for 1% of token supply\n\n"
+            "*Loan Terms:*\n"
+            "- Choose your preferred loan duration. If unpaid by the expiry date, "
             "repayment will occur through pair liquidity.\n"
             f"- Refundable Deposit: The {bot.LIQUIDATION_DEPOSIT} ETH liquidation deposit is fully "
             "returned once your loan is settled.\n\n"
@@ -93,7 +94,7 @@ async def start(update: Update, context: CallbackContext) -> int:
         )
 
 
-async def status(update: Update, context: CallbackContext) -> int:
+async def status(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -164,23 +165,23 @@ async def status(update: Update, context: CallbackContext) -> int:
                         ]
                     )
                     message = "Ready to launch, hit the button below!"
-                    header = f"*{status_text['dex'].upper()} LAUNCH STATUS - READY*"
+                    header = f"*{status_text['dex'].upper()} ({status_text['chain'].upper()}) LAUNCH STATUS - READY*"
                     was_will_be = "will be"
                 else:
                     message = (
-                        f"On {chain_info.name} send {round(chain_info.w3.from_wei(total_cost, "ether"), 4)} {chain_info.native.upper()} to:\n"
-                        f"`{status_text['address']}`\n(This includes gas fees)\n\n"
+                        f"On {chain_info.name} send {round(chain_info.w3.from_wei(total_cost, "ether"), 4)} {chain_info.native.upper()} (This includes gas fees) to:\n"
+                        f"`{status_text['address']}`\n\n"
                         "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
                         "use /withdraw to return any un-used funds\n"
                         "use /reset to clear this launch"
                     )
-                    header = f"*{status_text['dex'].upper()} LAUNCH STATUS - WAITING*"
+                    header = f"*{status_text['dex'].upper()} ({status_text['chain'].upper()}) LAUNCH STATUS - WAITING*"
                     was_will_be = "will be"
                     button = ""
             else:
                 button = ""
                 message = "use /withdraw to return any un-used funds\nuse /reset to clear this launch"
-                header = f"*{status_text['dex'].upper()} LAUNCH STATUS - CONFIRMED*"
+                header = f"*{status_text['dex'].upper()} ({status_text['chain'].upper()}) LAUNCH STATUS - CONFIRMED*"
                 was_will_be = "was"
             
             team_tokens = int(status_text["supply"]) * (int(status_text["percent"]) / 100)
@@ -206,8 +207,8 @@ async def status(update: Update, context: CallbackContext) -> int:
                 loan_info = ""
             await update.message.reply_text(
                 f"{header}\n\n"
-                f"{status_text['ticker']} ({status_text['chain'].upper()})\n\n"
-                f"Project Name: {status_text['name']}\n"
+                f"Ticker: {status_text['ticker']}\n"
+                f"Name: {status_text['name']}\n"
                 f"{token_text}"
                 f"Taxes: {status_text['buy_tax']}/{status_text['sell_tax']}\n"
                 f"Total Supply: {float(status_text['supply']):,.0f}\n"
@@ -226,7 +227,7 @@ async def status(update: Update, context: CallbackContext) -> int:
             await update.message.reply_text("No projects waiting, please use /launch to start")
 
 
-async def stuck(update: Update, context: CallbackContext) -> int:
+async def stuck(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -235,7 +236,7 @@ async def stuck(update: Update, context: CallbackContext) -> int:
         await update.message.reply_text(data)
                                    
 
-async def withdraw(update: Update, context: CallbackContext) -> int:
+async def withdraw(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id

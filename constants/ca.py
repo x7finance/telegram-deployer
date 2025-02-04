@@ -1,5 +1,3 @@
-# SMART CA
-
 def DEPLOYER(chain):
     map = {
         "base": "0xf4C0124b9a862a281379374e3CCc564acC68a5af",

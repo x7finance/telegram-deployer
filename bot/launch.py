@@ -1,5 +1,5 @@
-from telegram import *
-from telegram.ext import *
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import CallbackContext, ConversationHandler
 
 from eth_utils import is_checksum_address
 from eth_account import Account
@@ -14,7 +14,7 @@ chainscan = api.ChainScan()
 STAGE_DEX, STAGE_CHAIN, STAGE_TICKER, STAGE_NAME, STAGE_SUPPLY, STAGE_AMOUNT, STAGE_DESCRIPTION, STAGE_TWITTER, STAGE_TELEGRAM, STAGE_WEBSITE, STAGE_BUY_TAX, STAGE_SELL_TAX, STAGE_LOAN, STAGE_DURATION, STAGE_OWNER, STAGE_CONFIRM, STAGE_CONTRIBUTE = range(17)
 
 
-async def command(update: Update, context: CallbackContext) -> int:
+async def command(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -33,14 +33,16 @@ async def command(update: Update, context: CallbackContext) -> int:
             keyboard = InlineKeyboardMarkup(buttons)
             await update.message.reply_text(
                 f"Let's get your project launched by answering a few questions...\n\n"
-                f"use /cancel at any time to end the conversation\n\n"
-                f"First, select the DEX you want to launch on:",
+                f"First, select the DEX you want to launch on:\n\n"
+                f"- Launch on Xchange and launch with an optional Liquidity Loan\n\n"
+                 f"- Launch on Uniswap at the cost of 1% token supply\n"
+                f"use /cancel at any time to end the conversation\n",
                 reply_markup=keyboard
             )
             return STAGE_DEX
 
 
-async def stage_dex(update: Update, context: CallbackContext) -> int:
+async def stage_dex(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     dex = query.data.split('_')[1].lower()
@@ -60,7 +62,7 @@ async def stage_dex(update: Update, context: CallbackContext) -> int:
     return STAGE_CHAIN
 
 
-async def stage_chain(update: Update, context: CallbackContext) -> int:
+async def stage_chain(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     chain = query.data.split('_')[1].lower()
@@ -68,20 +70,20 @@ async def stage_chain(update: Update, context: CallbackContext) -> int:
     if context.user_data['dex'] == "xchange":
         chain_native = chains.chains[chain.lower()].native
         funds = functions.get_pool_funds(chain.lower())
-        pool_text = f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed, so let's get your project launched!\n\n"
+        dex_text = f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed, so let's get your project launched!\n\n"
     else:
-        pool_text = ""
+        dex_text = "The only fee you need to pay to launch is 1% of token supply"
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=
             f"{context.user_data['chain'].upper()} Chain Selected.\n\n"
-            f"{pool_text}"
+            f"{dex_text}"
             "What's the project's token ticker?"
         )
     return STAGE_TICKER
 
 
-async def stage_ticker(update: Update, context: CallbackContext) -> int:
+async def stage_ticker(update: Update, context: CallbackContext):
     if len(update.message.text) > 6 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
             "Error: The ticker must be 6 standard characters or fewer. Please enter a valid ticker"
@@ -95,7 +97,7 @@ async def stage_ticker(update: Update, context: CallbackContext) -> int:
     return STAGE_NAME
 
 
-async def stage_name(update: Update, context: CallbackContext) -> int:
+async def stage_name(update: Update, context: CallbackContext):
     if len(update.message.text) > 30 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
             "Error: The name must be 30 standard characters or fewer. Please enter a valid name"
@@ -119,7 +121,7 @@ async def stage_name(update: Update, context: CallbackContext) -> int:
         return STAGE_BUY_TAX
 
 
-async def stage_description(update: Update, context: CallbackContext) -> int:
+async def stage_description(update: Update, context: CallbackContext):
     if len(update.message.text) > 200:
         await update.message.reply_text(
             "Error: The description must be 200 characters or fewer. Please try again"
@@ -133,7 +135,7 @@ async def stage_description(update: Update, context: CallbackContext) -> int:
     return STAGE_TWITTER
 
 
-async def stage_twitter(update: Update, context: CallbackContext) -> int:
+async def stage_twitter(update: Update, context: CallbackContext):
     user_input = update.message.text.strip()
     if user_input.lower() == "none":
         context.user_data['twitter'] = ""
@@ -155,7 +157,7 @@ async def stage_twitter(update: Update, context: CallbackContext) -> int:
     return STAGE_TELEGRAM
 
 
-async def stage_telegram(update: Update, context: CallbackContext) -> int:
+async def stage_telegram(update: Update, context: CallbackContext):
     user_input = update.message.text.strip()
     if user_input.lower() == "none":
         context.user_data['telegram'] = ""
@@ -177,7 +179,7 @@ async def stage_telegram(update: Update, context: CallbackContext) -> int:
     return STAGE_WEBSITE
 
 
-async def stage_website(update: Update, context: CallbackContext) -> int:
+async def stage_website(update: Update, context: CallbackContext):
     user_input = update.message.text.strip()
     if user_input.lower() == "none":
         context.user_data['website'] = ""
@@ -206,7 +208,7 @@ async def stage_website(update: Update, context: CallbackContext) -> int:
     return STAGE_BUY_TAX
 
 
-async def stage_buy_tax(update: Update, context: CallbackContext) -> int:
+async def stage_buy_tax(update: Update, context: CallbackContext):
     user_input = update.message.text.strip()
 
     if user_input.isdigit():
@@ -231,7 +233,7 @@ async def stage_buy_tax(update: Update, context: CallbackContext) -> int:
         return STAGE_BUY_TAX
 
 
-async def stage_sell_tax(update: Update, context: CallbackContext) -> int:
+async def stage_sell_tax(update: Update, context: CallbackContext):
     user_input = update.message.text.strip()
 
     if user_input.isdigit():
@@ -256,11 +258,11 @@ async def stage_sell_tax(update: Update, context: CallbackContext) -> int:
         return STAGE_SELL_TAX
 
 
-async def stage_supply(update: Update, context: CallbackContext) -> int:
+async def stage_supply(update: Update, context: CallbackContext):
     supply_input = update.message.text.strip()
-    if not (supply_input.isdigit() and int(supply_input) > 0):
+    if not (supply_input.isdigit() and int(supply_input) > 1000):
         await update.message.reply_text(
-            "Error: Total supply should be a whole number greater than zero, with no decimals. Please try again"
+            "Error: Total supply should be a whole number greater than 1000, with no decimals. Please try again"
         )
         return STAGE_SUPPLY
     
@@ -281,7 +283,7 @@ async def stage_supply(update: Update, context: CallbackContext) -> int:
     return STAGE_AMOUNT
 
 
-async def stage_amount(update: Update, context: CallbackContext) -> int:
+async def stage_amount(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     percent = query.data.split('_')[1]
@@ -316,7 +318,7 @@ async def stage_amount(update: Update, context: CallbackContext) -> int:
         return STAGE_CONTRIBUTE
 
 
-async def stage_loan(update: Update, context: CallbackContext) -> int:
+async def stage_loan(update: Update, context: CallbackContext):
     loan_input = update.message.text.strip()
     chain = context.user_data['chain'].lower()
     chain_native = chains.chains[chain].native
@@ -361,7 +363,7 @@ async def stage_loan(update: Update, context: CallbackContext) -> int:
     return STAGE_DURATION
 
 
-async def stage_duration(update: Update, context: CallbackContext) -> int:
+async def stage_duration(update: Update, context: CallbackContext):
     duration_input = update.message.text.strip()
 
     if not (duration_input.isdigit() and 1 <= int(duration_input) <= bot.MAX_LOAN_LENGTH):
@@ -383,7 +385,7 @@ async def stage_duration(update: Update, context: CallbackContext) -> int:
     return STAGE_OWNER
 
 
-async def stage_contribute(update: Update, context: CallbackContext) -> int:
+async def stage_contribute(update: Update, context: CallbackContext):
     native_amount = update.message.text.strip()
 
     try:
@@ -415,7 +417,7 @@ async def stage_contribute(update: Update, context: CallbackContext) -> int:
     return STAGE_OWNER
 
 
-async def stage_owner(update: Update, context: CallbackContext) -> int:
+async def stage_owner(update: Update, context: CallbackContext):
     context.user_data['owner'] = update.message.text
     if not is_checksum_address(context.user_data['owner']) \
         or context.user_data['owner'] == ca.DEAD or context.user_data['owner'] == ca.ZERO:
@@ -500,7 +502,7 @@ async def stage_owner(update: Update, context: CallbackContext) -> int:
     return STAGE_CONFIRM
       
 
-async def stage_confirm(update: Update, context: CallbackContext) -> int:
+async def stage_confirm(update: Update, context: CallbackContext):
     query = update.callback_query
     user_data = context.user_data
     confirm = query.data.split('_')[1]
@@ -516,28 +518,29 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
         chain_info = chains.chains[chain]
 
         def message(total_cost):
-            return (f"On {chain_info.name.upper()}. Send {round(chain_info.w3.from_wei(total_cost, "ether"), 4)} {chain_info.native.upper()} (This includes gas fees) to the following address:\n\n"
-                    f"`{account.address}`\n\n"
-                    "Any fees not used will be returned to the wallet you designated as owner at deployment\n\n"
-                    "*Ensure you are sending funds on the correct chain\n\n"
-                    "Make a note of the wallet address above and private key below*\n\n"
-                    f"`{account.key.hex()}`\n\n"
-                    "To check the status of your launch use /status")
+            return (
+                f"On {chain_info.name.upper()}. Send {round(chain_info.w3.from_wei(total_cost, "ether"), 4)} {chain_info.native.upper()} (This includes gas fees) to:\n\n"
+                f"`{account.address}`\n\n"
+                "Any fees not used will be returned to the wallet you designated as owner at deployment\n\n"
+                "*Ensure you are sending funds on the correct chain\n\n"
+                "Make a note of the wallet address above and private key below*\n\n"
+                f"`{account.key.hex()}`\n\n"
+                "To check the status of your launch use /status")
         
         if context.user_data['dex'] == "xchange":
             if 'contribution' in user_data:
                 fee = user_data.get('contribution') * 10 ** 18
                 gas_estimate = functions.estimate_gas_without_loan(
-                        user_data.get('chain'),
-                        user_data.get('name'),
-                        user_data.get('ticker'),
-                        user_data.get('supply'),
-                        user_data.get('percent'),
-                        user_data.get('buy_tax'),
-                        user_data.get('sell_tax'),
-                        user_data.get('owner'),
-                        int(fee)
-                        )
+                    user_data.get('chain'),
+                    user_data.get('name'),
+                    user_data.get('ticker'),
+                    user_data.get('supply'),
+                    user_data.get('percent'),
+                    user_data.get('buy_tax'),
+                    user_data.get('sell_tax'),
+                    user_data.get('owner'),
+                    int(fee)
+                    )
                 if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
                     await query.message.reply_text(f"{gas_estimate}")
                     return
@@ -616,12 +619,12 @@ async def stage_confirm(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
 
 
-async def cancel(update: Update, context: CallbackContext) -> int:
+async def cancel(update: Update, context: CallbackContext):
     await update.message.reply_text("Launch canceled.")
     return ConversationHandler.END
 
 
-async def function(update: Update, context: CallbackContext) -> int:
+async def function(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     launch_type = query.data
@@ -635,12 +638,14 @@ async def function(update: Update, context: CallbackContext) -> int:
     
     chain = status_text["chain"]
     chain_info = chains.chains[chain]
+    dex_info = chains.dexes[status_text["dex"]]
     
     await query.edit_message_text(
-        f"Deploying {status_text['ticker']} ({status_text['chain']})...."
+        f"Deploying {status_text['ticker']} on {status_text["dex"].upper()} ({chain_info.name.upper()})...."
     )
 
     loan_button = None
+    loan_text = ""
 
     if launch_type == "launch_with_loan":
         loan_contract = bot.LIVE_LOAN(chain, "address")
@@ -673,7 +678,7 @@ async def function(update: Update, context: CallbackContext) -> int:
 
         try:
             contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(loan_contract), 
-                                         abi=chainscan.get_abi(loan_contract, chain))
+                                                  abi=chainscan.get_abi(loan_contract, chain))
             schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
             schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
             schedule = tools.format_schedule(schedule1, schedule2, chain_info.native.upper())
@@ -698,23 +703,16 @@ async def function(update: Update, context: CallbackContext) -> int:
         except Exception:
             token_by_id = None
 
-        message_text = (
-            f"Congratulations {status_text['ticker']} has been launched and an Xchange ILL Created on {chain_info.name}\n\n"
-            f"CA: `{token_address}`\n\n"
+        loan_button = InlineKeyboardButton(
+            text="View Loan",
+            url=f"{dex_info.url}lending/{chain_info.short_name}/{bot.LIVE_LOAN(chain, 'name')}/{token_by_id}"
+        )
+
+        loan_text = (
             f"Loan ID: {loan_id}\n\n"
             f"Payment Schedule:\n\n"
             f"{schedule}\n\n"
-            f"Your wallet:\n"
-            f"`{status_text['owner']}`\n\n"
-            f"Has the ability to:\n"
-            f"- Change the taxes\n"
-            f"- Update the tax wallet\n"
-            f"- Adjust the fee thresholds\n"
-            f"- Renounce the contract\n\n"
-            f"Use the 'Token Contract' button below"
         )
-
-        loan_button = InlineKeyboardButton(text="View Loan", url=f"{urls.XCHANGE}lending/{chain_info.short_name}/{bot.LIVE_LOAN(chain, "name")}/{token_by_id}")
 
     elif launch_type == "launch_without_loan":
         launched = functions.deploy_token_without_loan(
@@ -741,19 +739,6 @@ async def function(update: Update, context: CallbackContext) -> int:
 
         token_address, pair_address = launched
 
-        message_text = (
-            f"Congratulations {status_text['ticker']} has been launched and liquidity has been added\n\n"
-            f"CA: `{token_address}`\n\n"
-            f"Your wallet:\n"
-            f"`{status_text['owner']}`\n\n"
-            f"Has the ability to:\n"
-            f"- Change the taxes\n"
-            f"- Update the tax wallet\n"
-            f"- Adjust the fee thresholds\n"
-            f"- Renounce the contract\n\n"
-            f"Use the 'Token Contract' button below"
-        )
-
     elif launch_type == "launch_uniswap":
         launched = functions.deploy_token(
             status_text["chain"],
@@ -775,19 +760,6 @@ async def function(update: Update, context: CallbackContext) -> int:
 
         token_address, pair_address = launched
 
-        message_text = (
-            f"Congratulations {status_text['ticker']} has been launched and liquidity has been added\n\n"
-            f"CA: `{token_address}`\n\n"
-            f"Your wallet:\n"
-            f"`{status_text['owner']}`\n\n"
-            f"Has the ability to:\n"
-            f"- Change the taxes\n"
-            f"- Update the tax wallet\n"
-            f"- Adjust the fee thresholds\n"
-            f"- Renounce the contract\n\n"
-            f"Use the 'Token Contract' button below"
-        )
-    
     refund = functions.transfer_balance(
         status_text["chain"],
         status_text["address"],
@@ -796,21 +768,36 @@ async def function(update: Update, context: CallbackContext) -> int:
     )
 
     if isinstance(refund, str) and refund.startswith("Error"):
-        refund_text = f"Error returning funds\n\nThis is likely because you sent close to the perfect amount for gas\n\nUse /withdraw to double check"
+        refund_text = f"No funds returned\n\nThis is likely because you sent close to the perfect amount for gas\n\nUse /withdraw to double check"
     else:
         refund_text = (
             "Funds returned\n\n"
             f"{chain_info.scan_tx}{refund}"
         )
+
+    message_text = (
+        f"Congratulations {status_text['ticker']} has been launched on {status_text['dex'].upper()} ({chain_info.name.upper()})\n\n"
+        f"CA: `{token_address}`\n\n"
+        f"Your wallet:\n"
+        f"`{status_text['owner']}`\n\n"
+        f"{loan_text}"
+        f"Has the ability to:\n"
+        f"- Change the taxes\n"
+        f"- Update the tax wallet\n"
+        f"- Adjust the fee thresholds\n"
+        f"- Renounce the contract\n\n"
+        f"Use the 'Token Contract' button below"
+    )
     
     buttons = [
         [InlineKeyboardButton(text="Token Contract", url=chain_info.scan_token + token_address)],
         [InlineKeyboardButton(text="Pair Contract", url=chain_info.scan_address + pair_address)],
+        [InlineKeyboardButton(text="Manage Liquidity", url=dex_info.url + dex_info.liq_link)],
         [InlineKeyboardButton(text="Buy Link", url=urls.XCHANGE_BUY(chain_info.id, token_address))],
         [InlineKeyboardButton(text="Chart", url=urls.DEX_TOOLS(chain_info.dext, token_address))]
     ]
 
-    if loan:
+    if loan_button:
         buttons.append([loan_button])
 
     message = await query.edit_message_text(
@@ -821,7 +808,7 @@ async def function(update: Update, context: CallbackContext) -> int:
 
     try:
         await context.bot.pin_chat_message(chat_id=update.effective_chat.id, message_id=message.id)
-    except Exception as e:
+    except Exception:
         pass
 
     await context.bot.send_message(

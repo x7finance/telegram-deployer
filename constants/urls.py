@@ -1,6 +1,8 @@
-# URLS
-
 import os
+
+
+UNISWAP = "https://app.uniswap.org/"
+XCHANGE = "https://x7finance.org/"
 
 
 def SCAN_API(chain):
@@ -65,26 +67,3 @@ def XCHANGE_BUY(chain_id, token1):
 
 def UNISWAP_BUY(chain_id, token1):
     return f"https://app.uniswap.org/swap?outputCurrency={token1}"
-
-
-
-# TG
-TG_MAIN = "t.me/x7portal"
-TG_ALERTS = "t.me/xchange_alerts"
-TG_ANNOUNCEMENTS = "t.me/x7announcements"
-TG_DAO = "https://telegram.me/collablandbot?start=VFBDI1RFTCNDT01NIy0xMDAyMTM5MTc4NTQx"
-
-
-# LINKS
-CA_DIRECTORY = "https://www.x7finance.org/en/docs/breakdowns/contracts"
-DISCORD = "https://discord.gg/x7finance"
-DUNE = "https://dune.com/mike_x7f/x7finance"
-GITHUB = "https://github.com/x7finance/"
-MEDIUM = "https://medium.com/@X7Finance"
-PIONEERS = "https://img.x7.finance/pioneers/"
-REDDIT = "https://www.reddit.com/r/x7finance"
-SNAPSHOT = "https://snapshot.org/#/x7finance.eth"
-TWITTER = "https://twitter.com/x7_finance/"
-WARPCAST = "https://warpcast.com/x7finance"
-WP_LINK = "https://x7.finance/wp/v1_1_0/X7FinanceWhitepaper.pdf"
-XCHANGE = "https://x7finance.org/"

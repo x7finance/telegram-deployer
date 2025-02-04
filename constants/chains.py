@@ -1,11 +1,7 @@
-# CHAINS
-
-import os
-from constants import urls
-
 from web3 import Web3
 
-dexes = ["uniswap", "xchange"]
+from constants import urls
+
 
 class ChainInfo:
     def __init__(
@@ -22,8 +18,6 @@ class ChainInfo:
         scan_tx: str,
         dext: str,
         w3: str,
-        api: str,
-        key: str,
     ):
         self.live = live
         self.name = name
@@ -37,12 +31,10 @@ class ChainInfo:
         self.scan_tx = scan_tx
         self.dext = dext
         self.w3 = Web3(Web3.HTTPProvider(w3))
-        self.api = api
-        self.key = key
 
 
 chains = {
-        "base": ChainInfo(
+    "base": ChainInfo(
         True,
         "Base",
         "base",
@@ -55,9 +47,7 @@ chains = {
         urls.SCAN_TX("base"),
         "base",
         urls.RPC("base"),
-        urls.SCAN_API("base"),
-        os.getenv('BASE'),
-    ),
+        ),
     "eth": ChainInfo(
         True,
         "ETH",
@@ -71,8 +61,6 @@ chains = {
         urls.SCAN_TX("eth"),
         "ether",
         urls.RPC("eth"),
-        urls.SCAN_API("eth"),
-        os.getenv('ETHER'),
     ),
         "base-sepolia": ChainInfo(
         True,
@@ -87,8 +75,6 @@ chains = {
         urls.SCAN_TX("base-sepolia"),
         "ether",
         urls.RPC("base-sepolia"),
-        urls.SCAN_API("base-sepolia"),
-        os.getenv('BASE'),
     ),
     "eth-sepolia": ChainInfo(
         True,
@@ -103,8 +89,28 @@ chains = {
         urls.SCAN_TX("eth-sepolia"),
         "ether",
         urls.RPC("eth-sepolia"),
-        urls.SCAN_API("eth-sepolia"),
-        os.getenv('ETHER'),
+    ),
+}
+
+
+class DexInfo:
+    def __init__(
+        self,
+        url: str,
+        liq_link: str
+    ):
+        self.url = url
+        self.liq_link = liq_link 
+
+dexes = {
+    "xchange": DexInfo(
+        urls.XCHANGE,
+        "liquidity"
+
+    ),
+    "uniswap": DexInfo(
+        urls.UNISWAP,
+        "positions"
     ),
 }
 

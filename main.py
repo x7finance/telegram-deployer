@@ -1,7 +1,16 @@
-from telegram import *
-from telegram.ext import *
+from telegram import Message, Update
+from telegram.ext import (
+    ApplicationBuilder, 
+    CallbackContext, 
+    CallbackQueryHandler, 
+    CommandHandler, 
+    ConversationHandler,
+    MessageHandler,
+    filters
+)
+import sentry_sdk
 
-import os, sentry_sdk
+import os
 
 from bot import admin, commands, launch
 
@@ -79,5 +88,6 @@ if __name__ == "__main__":
     application.add_handler(launch_handler)
     application.add_handler(CallbackQueryHandler(commands.reset_callback, pattern='^reset_'))
     application.add_handler(CallbackQueryHandler(launch.function, pattern=r'^(launch_uniswap|launch_with_loan|launch_without_loan)$'))
+    
     ## START ##
     application.run_polling(allowed_updates=Update.ALL_TYPES)

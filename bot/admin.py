@@ -1,5 +1,5 @@
-from telegram import *
-from telegram.ext import *
+from telegram import Update
+from telegram.ext import CallbackContext, ConversationHandler
 
 from datetime import datetime, timedelta
 
@@ -7,7 +7,7 @@ from constants import bot, chains
 from hooks import db, tools
 
 
-async def command(update: Update, context: CallbackContext) -> int:
+async def command(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -20,7 +20,7 @@ async def command(update: Update, context: CallbackContext) -> int:
             )
 
 
-async def delete(update: Update, context: CallbackContext) -> int:
+async def delete(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -41,7 +41,7 @@ async def delete(update: Update, context: CallbackContext) -> int:
 
 
 
-async def search(update: Update, context: CallbackContext) -> int:
+async def search(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -77,7 +77,7 @@ async def search(update: Update, context: CallbackContext) -> int:
                     )
 
 
-async def view(update: Update, context: CallbackContext) -> int:
+async def view(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
