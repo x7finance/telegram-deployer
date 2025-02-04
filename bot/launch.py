@@ -704,7 +704,7 @@ async def function(update: Update, context: CallbackContext):
             token_by_id = None
 
         loan_button = InlineKeyboardButton(
-            text="View Loan",
+            text="Manage Loan",
             url=f"{dex_info.url}lending/{chain_info.short_name}/{bot.LIVE_LOAN(chain, 'name')}/{token_by_id}"
         )
 
@@ -783,18 +783,18 @@ async def function(update: Update, context: CallbackContext):
         f"{loan_text}"
         f"Has the ability to:\n"
         f"- Change the taxes\n"
-        f"- Update the tax wallet\n"
-        f"- Adjust the fee thresholds\n"
+        f"- Change the tax wallet\n"
+        f"- Change the fee thresholds\n"
         f"- Renounce the contract\n\n"
-        f"Use the 'Token Contract' button below"
+        f"Use the 'Manage Token' button below"
     )
     
     buttons = [
-        [InlineKeyboardButton(text="Token Contract", url=chain_info.scan_token + token_address)],
-        [InlineKeyboardButton(text="Pair Contract", url=chain_info.scan_address + pair_address)],
-        [InlineKeyboardButton(text="Manage Liquidity", url=dex_info.url + dex_info.liq_link)],
         [InlineKeyboardButton(text="Buy Link", url=urls.XCHANGE_BUY(chain_info.id, token_address))],
-        [InlineKeyboardButton(text="Chart", url=urls.DEX_TOOLS(chain_info.dext, token_address))]
+        [InlineKeyboardButton(text="Chart Link", url=urls.DEX_TOOLS(chain_info.dext, token_address))],
+        [InlineKeyboardButton(text="Manage Token", url=f"{urls.XCHANGE}create?tab=manage")],
+        [InlineKeyboardButton(text="Manage Liquidity", url=dex_info.url + dex_info.liq_link)],
+
     ]
 
     if loan_button:
