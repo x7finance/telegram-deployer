@@ -52,10 +52,15 @@ async def stage_dex(update: Update, context: CallbackContext):
         for chain in chains.live
     ]
     keyboard = InlineKeyboardMarkup(buttons)
+    if context.user_data['dex'] != "xchange":
+        dex_text = "The only fee you need to pay to launch is 1% of token supply"
+    else:
+        dex_text = "You can launch on Xchange, with or without a Initial Liquidity Loan"
     await context.bot.send_message(
     chat_id=query.message.chat_id,
     text=
-        f"Launching on {dex}\n\n"
+        f"Launching on {dex.capitalize()}\n\n"
+        f"{dex_text}\n\n"
         f"Now, select your chain:",
         reply_markup=keyboard
     )
@@ -67,17 +72,10 @@ async def stage_chain(update: Update, context: CallbackContext):
     await query.answer()
     chain = query.data.split('_')[1].lower()
     context.user_data['chain'] = chain
-    if context.user_data['dex'] == "xchange":
-        chain_native = chains.chains[chain.lower()].native
-        funds = functions.get_pool_funds(chain.lower())
-        dex_text = f"There's currently {funds} {chain_native.upper()} in the lending pool ready to be deployed, so let's get your project launched!\n\n"
-    else:
-        dex_text = "The only fee you need to pay to launch is 1% of token supply"
     await context.bot.send_message(
         chat_id=query.message.chat_id,
         text=
             f"{context.user_data['chain'].upper()} Chain Selected.\n\n"
-            f"{dex_text}"
             "What's the project's token ticker?"
         )
     return STAGE_TICKER
@@ -275,8 +273,13 @@ async def stage_supply(update: Update, context: CallbackContext):
         [InlineKeyboardButton("25%", callback_data=f'amount_25')]
     ]
     keyboard = InlineKeyboardMarkup(buttons)
+    if context.user_data['dex'] != "xchange":
+        supply_fee = supply_float * 0.01
+        dex_text = f"{supply_fee:,.0f} (1%) of tokens will be taken as a fee for launching\n\n"
+    else:
+        dex_text = ""
     await update.message.reply_text(
-        f"{supply_float:,.0f} Total Supply\n\nWhat percentage of tokens (if any) do you want to keep back from the LP?\n\n"
+        f"{supply_float:,.0f} Total Supply\n\n{dex_text}What percentage of tokens (if any) do you want to keep back from the LP?\n\n"
         "These tokens will not be added to initial liquidity",
         reply_markup=keyboard
     )
@@ -287,23 +290,25 @@ async def stage_amount(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     percent = query.data.split('_')[1]
-    chain = context.user_data['chain'].lower()
-    chain_native = chains.chains[chain].native
     context.user_data['percent'] = percent
-    pool = functions.get_pool_funds(chain)
 
+    chain_info = chains.chains[context.user_data['chain']]
+    
     if percent == "0":
-        percent_str = "No tokens will be held, and 100% of tokens will go into the liquidity"
+        percent_str = "No tokens will be held by the team"
     else:
-        percent_str = f"{percent}% of tokens will be held as team supply"
+        team_amount = float(context.user_data['supply']) * float(percent) / 100
+        percent_str = f"{percent}% of tokens ({team_amount:,.0f}) will be reserved as team supply"
+
     if context.user_data['dex'] == "xchange":
+        pool = functions.get_pool_funds(context.user_data['chain'].lower())
         await context.bot.send_message(
             chat_id=query.message.chat_id,
             text=
                 f"{percent_str}\n\n"
-                f"How much {chain_native.upper()} (if any) do you want to borrow in initial liquidity?\n\n"
-                f"Currently available to borrow: {pool} {chain_native.upper()}.\n\n"
-                f"You can launch without a loan and supply the {chain_native.upper()} yourself by typing 0\n\n"
+                f"How much {chain_info.native.upper()} (if any) do you want to borrow in initial liquidity?\n\n"
+                f"Currently available to borrow: {pool} {chain_info.native.upper()}.\n\n"
+                f"You can launch without a loan and supply the {chain_info.native.upper()} yourself by typing 0\n\n"
                 "Please enter the amount as a number (e.g., 0, 1, 2.5):"   
         )
         return STAGE_LOAN
@@ -312,7 +317,7 @@ async def stage_amount(update: Update, context: CallbackContext):
             chat_id=query.message.chat_id,
             text=
                 f"{percent_str}\n\n"
-                f"How much {chain_native.upper()} do you want to provide in initial liquidity?\n\n"
+                f"How much {chain_info.native.upper()} do you want to provide in initial liquidity?\n\n"
                 "Please enter the amount as a number (e.g., 0.5, 1, 2.5):"
             )
         return STAGE_CONTRIBUTE
@@ -321,26 +326,26 @@ async def stage_amount(update: Update, context: CallbackContext):
 async def stage_loan(update: Update, context: CallbackContext):
     loan_input = update.message.text.strip()
     chain = context.user_data['chain'].lower()
-    chain_native = chains.chains[chain].native
+    chain_info = chains.chains[chain]
     pool = functions.get_pool_funds(chain)
 
     try:
         loan_amount = Decimal(loan_input)
     except InvalidOperation:
         await update.message.reply_text(
-            f"Error: Please enter a valid number in {chain_native.upper()}. Try again."
+            f"Error: Please enter a valid number in {chain_info.native.upper()}. Try again."
         )
         return STAGE_LOAN
 
     if loan_amount < 0 or loan_amount > pool:
         await update.message.reply_text(
-            f"Error: Loan amount must be between 0 and {pool} {chain_native.upper()}. Please try again."
+            f"Error: Loan amount must be between 0 and {pool} {chain_info.native.upper()}. Please try again."
         )
         return STAGE_LOAN
 
     if loan_amount > bot.MAX_LOAN_AMOUNT:
         await update.message.reply_text(
-            f"Error: Maximum loan amount is {bot.MAX_LOAN_AMOUNT} {chain_native.upper()}. "
+            f"Error: Maximum loan amount is {bot.MAX_LOAN_AMOUNT} {chain_info.native.upper()}. "
             f"Please enter an amount less than or equal to {bot.MAX_LOAN_AMOUNT}."
         )
         return STAGE_LOAN 
@@ -348,7 +353,7 @@ async def stage_loan(update: Update, context: CallbackContext):
     if loan_amount == 0:
         await update.message.reply_text(
             text=f"No Loan. You'll front the liquidity yourself.\n\n"
-                 f"Please enter the amount of {chain_native.upper()} you want to contribute to liquidity:"
+                 f"Please enter the amount of {chain_info.native.upper()} you want to contribute to liquidity:"
         )
         return STAGE_CONTRIBUTE
     
@@ -356,7 +361,7 @@ async def stage_loan(update: Update, context: CallbackContext):
 
     await update.message.reply_text(
         text=(
-            f"{loan_amount} {chain_native.upper()} will be borrowed for initial liquidity.\n\n"
+            f"{loan_amount} {chain_info.native.upper()} will be borrowed for initial liquidity.\n\n"
             f"Please enter the loan duration (in days) as a number no higher than {bot.MAX_LOAN_LENGTH}:"
         )
     )
@@ -406,10 +411,10 @@ async def stage_contribute(update: Update, context: CallbackContext):
         return STAGE_CONTRIBUTE
 
     context.user_data['contribution'] = contribution
-    chain_native = chains.chains[context.user_data["chain"]].native
+    chain_info = chains.chains[context.user_data['chain']]
 
     await update.message.reply_text(
-        f"{contribution} {chain_native.upper()} will be allocated for initial liquidity\n\n"
+        f"{contribution} {chain_info.native.upper()} will be allocated for initial liquidity\n\n"
         "Please provide the address you want ownership transferred to\n\n"
         "This address will be the owner of the token and liquidity tokens\n\n"
         "You can renounce the contract after deployment"
@@ -419,15 +424,16 @@ async def stage_contribute(update: Update, context: CallbackContext):
 
 async def stage_owner(update: Update, context: CallbackContext):
     context.user_data['owner'] = update.message.text
+
     if not is_checksum_address(context.user_data['owner']) \
         or context.user_data['owner'] == ca.DEAD or context.user_data['owner'] == ca.ZERO:
         await update.message.reply_text("Error: Invalid address - Please enter a valid checksum address")
         return STAGE_OWNER
-    
-    chain_info = chains.chains[context.user_data['chain']]
 
     user_data = context.user_data
+    chain_info = chains.chains.get(user_data.get('chain'))
 
+    dex = user_data.get('dex')
     ticker = user_data.get('ticker')
     name = user_data.get('name')
     chain = user_data.get('chain')
@@ -447,9 +453,6 @@ async def stage_owner(update: Update, context: CallbackContext):
 
     if 'contribution' in user_data:
         liquidity = user_data['contribution']
-        loan_text  = ""
-        duration = 0
-            
     else:
         liquidity = user_data.get('loan')
         duration = user_data.get('duration')
@@ -463,26 +466,34 @@ async def stage_owner(update: Update, context: CallbackContext):
 
     if context.user_data['dex'] == "xchange":
         token_text = (
-                f"Description: {description}\n"
-                f"Twitter: {twitter}\n"
-                f"Telegram: {telegram}\n"
-                f"Website: {website}\n"
-            )
+            f"Description: {description}\n"
+            f"Twitter: {twitter}\n"
+            f"Telegram: {telegram}\n"
+            f"Website: {website}\n"
+        )
 
-        fee, _ = tools.generate_loan_terms(chain, liquidity)
-        context.user_data['fee'] = fee
-        loan_text = (    
+        if 'loan' in user_data:
+            fee, _ = tools.generate_loan_terms(chain, liquidity)
+            context.user_data['fee'] = fee
+
+            loan_text = (
                 f"Loan Amount: {liquidity} {chain_info.native.upper()}\n"
                 f"Loan Duration: {duration} Days\n"
                 f"Cost: {chain_info.w3.from_wei(fee, 'ether')} {chain_info.native.upper()}\n\n"
-                )
+            )
+        else:
+            loan_text = f"Liquidity Amount: {liquidity} {chain_info.native.upper()}\n"
+            context.user_data['fee'] = liquidity * 10 ** 18
+
     else:
         token_text = ""
-        loan_text  = ""
+        loan_text = "\n"
+        context.user_data['fee'] = liquidity * 10 ** 18
 
     await update.message.reply_text(
         f"Thank you! Please check the values below:\n\n"
-        f"Chain: {chain.upper()}\n"
+        f"DEX: {dex.capitalize()}\n"
+        f"Chain: {chain.capitalize()}\n"
         f"Ticker: {ticker}\n"
         f"Project Name: {name}\n"
         f"{token_text}"
