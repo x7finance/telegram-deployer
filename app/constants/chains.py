@@ -47,7 +47,7 @@ chains = {
         urls.SCAN_TX("base"),
         "base",
         urls.RPC("base"),
-        ),
+    ),
     "eth": ChainInfo(
         True,
         "ETH",
@@ -62,7 +62,7 @@ chains = {
         "ether",
         urls.RPC("eth"),
     ),
-        "base-sepolia": ChainInfo(
+    "base-sepolia": ChainInfo(
         True,
         "Base Sepolia",
         "base-testnet",
@@ -94,24 +94,14 @@ chains = {
 
 
 class DexInfo:
-    def __init__(
-        self,
-        url: str,
-        liq_link: str
-    ):
+    def __init__(self, url: str, liq_link: str):
         self.url = url
-        self.liq_link = liq_link 
+        self.liq_link = liq_link
+
 
 dexes = {
-    "xchange": DexInfo(
-        urls.XCHANGE,
-        "liquidity"
-
-    ),
-    "uniswap": DexInfo(
-        urls.UNISWAP,
-        "positions"
-    ),
+    "xchange": DexInfo(urls.XCHANGE, "liquidity"),
+    "uniswap": DexInfo(urls.UNISWAP, "positions"),
 }
 
 

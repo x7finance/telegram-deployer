@@ -6,6 +6,7 @@ from hooks import api, db, functions, tools
 
 chainscan = api.ChainScan()
 
+
 async def test(update: Update, context: CallbackContext):
     return
 
@@ -16,8 +17,8 @@ async def id(update: Update, context: CallbackContext):
         user_id = update.effective_user.id
         await update.message.reply_text(
             f"{update.effective_user.username}, Your user ID is: `{update.effective_user.id}`",
-        parse_mode="Markdown"
-    )
+            parse_mode="Markdown",
+        )
 
 
 async def reset(update: Update, context: CallbackContext):
@@ -25,7 +26,7 @@ async def reset(update: Update, context: CallbackContext):
     if chat_type == "private":
         user_id = update.effective_user.id
         status_text = db.search_entry(user_id)
-        
+
         if not status_text:
             await update.message.reply_text(
                 "No projects waiting, please use /launch to start"
@@ -33,28 +34,28 @@ async def reset(update: Update, context: CallbackContext):
             return
     keyboard = [
         [
-            InlineKeyboardButton("Yes", callback_data='reset_yes'),
-            InlineKeyboardButton("No", callback_data='reset_no')
+            InlineKeyboardButton("Yes", callback_data="reset_yes"),
+            InlineKeyboardButton("No", callback_data="reset_no"),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     await update.message.reply_text(
         "Are you sure you want to reset your project?\n\nPlease ensure you have no remaining "
         "funds in the designated deployer address or you have saved the address and private "
         "key\n\n*This action cannot be undone*",
-    parse_mode="Markdown",
-    reply_markup=reply_markup
+        parse_mode="Markdown",
+        reply_markup=reply_markup,
     )
 
 
 async def reset_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
-    
+
     user_id = update.effective_user.id
-    
-    if query.data == 'reset_yes':
+
+    if query.data == "reset_yes":
         delete_text = db.delete_entry(user_id)
         if delete_text:
             await query.edit_message_text(
@@ -64,7 +65,7 @@ async def reset_callback(update: Update, context: CallbackContext):
             await query.edit_message_text(
                 "No projects waiting, please use /launch to start"
             )
-    elif query.data == 'reset_no':
+    elif query.data == "reset_no":
         await query.edit_message_text("Reset canceled.")
 
 
@@ -90,7 +91,7 @@ async def start(update: Update, context: CallbackContext):
             f"Join the innovators—{count} tokens launched and counting!\n\n"
             "*Ready to launch your project?\n*"
             "use /launch to start your project now!",
-        parse_mode="Markdown"
+            parse_mode="Markdown",
         )
 
 
@@ -99,12 +100,12 @@ async def status(update: Update, context: CallbackContext):
     if chat_type == "private":
         user_id = update.effective_user.id
         status_text = db.search_entry(user_id)
-        
+
         if status_text:
             chain_info = chains.chains[status_text["chain"]]
             balance_wei = chain_info.w3.eth.get_balance(status_text["address"])
-            balance = chain_info.w3.from_wei(balance_wei, 'ether')
-            balance_str = format(balance, '.18f')
+            balance = chain_info.w3.from_wei(balance_wei, "ether")
+            balance_str = format(balance, ".18f")
             if status_text["dex"] == "xchange":
                 token_text = (
                     f"Description: {status_text['description']}\n"
@@ -123,8 +124,8 @@ async def status(update: Update, context: CallbackContext):
                         status_text["buy_tax"],
                         status_text["sell_tax"],
                         status_text["owner"],
-                        int(status_text["fee"])
-                        )
+                        int(status_text["fee"]),
+                    )
                 else:
                     callback_data = "launch_with_loan"
                     gas_estimate = functions.estimate_gas_with_loan(
@@ -135,25 +136,25 @@ async def status(update: Update, context: CallbackContext):
                         int(status_text["percent"]),
                         status_text["buy_tax"],
                         status_text["sell_tax"],
-                        chain_info.w3.to_wei(status_text["loan"], 'ether'),
+                        chain_info.w3.to_wei(status_text["loan"], "ether"),
                         int(status_text["duration"]) * 60 * 60 * 24,
                         status_text["owner"],
-                        int(status_text["fee"])
-                        )
+                        int(status_text["fee"]),
+                    )
             else:
                 callback_data = "launch_uniswap"
                 gas_estimate = functions.estimate_gas_uniswap(
-                    status_text['chain'],
-                    status_text['name'],
-                    status_text['ticker'],
-                    status_text['supply'],
-                    status_text['percent'],
-                    status_text['buy_tax'],
-                    status_text['sell_tax'],
-                    status_text['owner'],
-                    int(status_text["fee"])
-                    )
-                token_text =  ""
+                    status_text["chain"],
+                    status_text["name"],
+                    status_text["ticker"],
+                    status_text["supply"],
+                    status_text["percent"],
+                    status_text["buy_tax"],
+                    status_text["sell_tax"],
+                    status_text["owner"],
+                    int(status_text["fee"]),
+                )
+                token_text = ""
 
             if status_text["complete"] == 0:
                 total_cost = int(status_text["fee"]) + gas_estimate
@@ -161,7 +162,11 @@ async def status(update: Update, context: CallbackContext):
 
                     button = InlineKeyboardMarkup(
                         [
-                            [InlineKeyboardButton(text="LAUNCH", callback_data=callback_data)],
+                            [
+                                InlineKeyboardButton(
+                                    text="LAUNCH", callback_data=callback_data
+                                )
+                            ],
                         ]
                     )
                     message = "Ready to launch, hit the button below!"
@@ -183,12 +188,16 @@ async def status(update: Update, context: CallbackContext):
                 message = "use /withdraw to return any un-used funds\nuse /reset to clear this launch"
                 header = f"*{status_text['dex'].upper()} ({status_text['chain'].upper()}) LAUNCH STATUS - CONFIRMED*"
                 was_will_be = "was"
-            
-            team_tokens = int(status_text["supply"]) * (int(status_text["percent"]) / 100)
+
+            team_tokens = int(status_text["supply"]) * (
+                int(status_text["percent"]) / 100
+            )
             liquidity_tokens = int(status_text["supply"]) - team_tokens
             if callback_data == "launch_with_loan":
                 price_native = float(status_text["loan"]) / liquidity_tokens
-                price_usd = price_native * chainscan.get_native_price(status_text["chain"]) * 2
+                price_usd = (
+                    price_native * chainscan.get_native_price(status_text["chain"]) * 2
+                )
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
 
                 supply_float = float(status_text["supply"])
@@ -201,8 +210,10 @@ async def status(update: Update, context: CallbackContext):
                     f"Loan Duration: {status_text['duration']} Days\n"
                 )
             else:
-                price_native = (int(status_text["fee"]) / 10 ** 18) / liquidity_tokens
-                price_usd = price_native * chainscan.get_native_price(status_text["chain"]) * 2
+                price_native = (int(status_text["fee"]) / 10**18) / liquidity_tokens
+                price_usd = (
+                    price_native * chainscan.get_native_price(status_text["chain"]) * 2
+                )
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
                 loan_info = ""
             await update.message.reply_text(
@@ -220,11 +231,13 @@ async def status(update: Update, context: CallbackContext):
                 f"{message}\n\n"
                 f"Current Deployer Wallet Balance:\n"
                 f"{float(balance_str):,.6f} {chain_info.native.upper()}\n\n",
-            parse_mode="Markdown",
-            reply_markup=button
+                parse_mode="Markdown",
+                reply_markup=button,
             )
         else:
-            await update.message.reply_text("No projects waiting, please use /launch to start")
+            await update.message.reply_text(
+                "No projects waiting, please use /launch to start"
+            )
 
 
 async def stuck(update: Update, context: CallbackContext):
@@ -232,9 +245,11 @@ async def stuck(update: Update, context: CallbackContext):
     if chat_type == "private":
         user_id = update.effective_user.id
         status_text = db.search_entry(user_id)
-        data = functions.cancel_tx(status_text["chain"], status_text["address"], status_text["secret_key"])
+        data = functions.cancel_tx(
+            status_text["chain"], status_text["address"], status_text["secret_key"]
+        )
         await update.message.reply_text(data)
-                                   
+
 
 async def withdraw(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
@@ -246,22 +261,21 @@ async def withdraw(update: Update, context: CallbackContext):
                 status_text["chain"],
                 status_text["address"],
                 status_text["owner"],
-                status_text["secret_key"]
-                )
+                status_text["secret_key"],
+            )
             if result.startswith("Error"):
                 await update.message.reply_text(
                     f"Error\n\n{result}\n\n"
                     "If this is unexpected use your saved private key from setup to withdraw funds",
-        )
+                )
             else:
                 chain_link = chains.chains[status_text["chain"]].scan_tx
                 await update.message.reply_text(
                     f"Balance withdrawn\n\n{chain_link}{result}\n\n"
-                    "You can now safely use /reset to reset your project")
+                    "You can now safely use /reset to reset your project"
+                )
 
         else:
-            await update.message.reply_text("No projects waiting, please use /launch to start")
-
-
-
-
+            await update.message.reply_text(
+                "No projects waiting, please use /launch to start"
+            )

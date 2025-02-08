@@ -9,17 +9,17 @@ chainscan = api.ChainScan()
 
 def datetime_to_timestamp(datetime_str):
     try:
-        datetime_obj = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
+        datetime_obj = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
         timestamp = datetime_obj.timestamp()
         return timestamp
     except ValueError:
         return "Invalid datetime format. Please use YYYY-MM-DD HH:MM."
-    
+
 
 def escape_markdown(text):
-    characters_to_escape = ['*', '_', '`']
+    characters_to_escape = ["*", "_", "`"]
     for char in characters_to_escape:
-        text = text.replace(char, '\\' + char)
+        text = text.replace(char, "\\" + char)
     return text
 
 
@@ -53,7 +53,10 @@ def format_schedule(schedule1, schedule2, native_token):
         schedule_list.append(sch)
 
         if datetime.fromtimestamp(date) > current_datetime:
-            if next_payment_datetime is None or datetime.fromtimestamp(date) < next_payment_datetime:
+            if (
+                next_payment_datetime is None
+                or datetime.fromtimestamp(date) < next_payment_datetime
+            ):
                 next_payment_datetime = datetime.fromtimestamp(date)
                 next_payment_value = formatted_value
 
@@ -61,29 +64,31 @@ def format_schedule(schedule1, schedule2, native_token):
         time_until_next_payment = next_payment_datetime - current_datetime
         time_remaining_str = calculate_time_remaining_str(time_until_next_payment)
 
-        schedule_list.append(f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}")
+        schedule_list.append(
+            f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}"
+        )
 
     return "\n".join(schedule_list)
 
 
 def generate_loan_terms(chain, loan_amount):
     chain_info = chains.chains[chain]
-    
-    loan_in_wei = chain_info.w3.to_wei(loan_amount, 'ether')
-    
+
+    loan_in_wei = chain_info.w3.to_wei(loan_amount, "ether")
+
     loan_contract_address = bot.LIVE_LOAN(chain, "address")
-    
+
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(loan_contract_address),
-        abi=chainscan.get_abi(loan_contract_address, chain)
+        abi=chainscan.get_abi(loan_contract_address, chain),
     )
-    
+
     quote = contract.functions.getQuote(loan_in_wei).call()
     origination_fee = quote[1]
-    
-    loan_deposit = chain_info.w3.to_wei(bot.LIQUIDATION_DEPOSIT, 'ether')
+
+    loan_deposit = chain_info.w3.to_wei(bot.LIQUIDATION_DEPOSIT, "ether")
     total_fee = origination_fee + loan_deposit
-    
+
     text = (
         f"Borrow up to {bot.MAX_LOAN_AMOUNT} {chain_info.native.upper()} liquidity for "
         f"{chain_info.w3.from_wei(origination_fee, 'ether')} + {bot.LIQUIDATION_DEPOSIT} {chain_info.native.upper()} deposit"
@@ -109,7 +114,7 @@ def get_duration_days(duration):
 
 def detect_emojis(text):
     for char in text:
-        if unicodedata.category(char) in {'Ll', 'Lu', 'Nd'}:
+        if unicodedata.category(char) in {"Ll", "Lu", "Nd"}:
             return False
     return True
 
@@ -117,9 +122,9 @@ def detect_emojis(text):
 def split_message(message: str, max_length: int = 4096) -> list:
     parts = []
     while len(message) > max_length:
-        split_at = message.rfind('\n', 0, max_length)
+        split_at = message.rfind("\n", 0, max_length)
         if split_at == -1:
-            split_at = message.rfind(' ', 0, max_length)
+            split_at = message.rfind(" ", 0, max_length)
         if split_at == -1:
             split_at = max_length
 
@@ -141,7 +146,7 @@ def timestamp_deadline():
 def timestamp_to_datetime(timestamp):
     try:
         datetime_obj = datetime.fromtimestamp(timestamp)
-        datetime_str = datetime_obj.strftime('%Y-%m-%d %H:%M')
+        datetime_str = datetime_obj.strftime("%Y-%m-%d %H:%M")
         return datetime_str
     except ValueError:
         return "Invalid timestamp."

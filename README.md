@@ -46,13 +46,13 @@ pip install -r requirements.txt
 First, clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/yourusername/your-repo-name.git
+git clone https://github.com/x7finance/telegram-deployer
 ```
 
 Next, navigate to the project folder:
 
 ```bash
-cd your-repo-name
+cd telegram-deployer
 ```
 
 Then, set up a Python virtual environment to manage your project's dependencies. First, create the virtual environment:
@@ -75,18 +75,36 @@ source myenv/bin/activate
 source myenv/bin/activate.fish
 ```
 
+- For Windows (PowerShell):
+```powershell
+myenv\Scripts\Activate
+```
+
+- For Windows (Command Prompt - cmd):
+```cmd
+myenv\Scripts\activate.bat
+```
+
 After activating the virtual environment, install the project's dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
+### Setting Up Environment Variables
+
+Copy `.env.example` to `.env`
+
+```bash
+cp .env.example .env
+```
+
+Fill in the required values in `.env`
+
 ### Running the Project
 
 With the virtual environment activated and all dependencies installed, you can now run your project with:
 
 ```bash
-python main.py
+python app/main.py
 ```
-
-Remember to replace `main.py` with the actual name of your Python script.

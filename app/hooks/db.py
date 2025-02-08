@@ -5,11 +5,11 @@ import os
 
 def create_connection():
     return mysql.connector.connect(
-        host = os.getenv("DB_HOST"),
-        user = os.getenv("DB_USER"),
-        password = os.getenv("DB_PASSWORD"),
-        database = os.getenv("DB_NAME"),
-        port = os.getenv("DB_PORT")
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME"),
+        port=os.getenv("DB_PORT"),
     )
 
 
@@ -19,28 +19,28 @@ def close_connection(connection, cursor):
 
 
 def add_entry(
-        timedate, 
-        user_name, 
-        user_id, 
-        address, 
-        secret_key,
-        dex,
-        chain, 
-        ticker, 
-        name, 
-        supply,
-        percent,
-        description,
-        twitter,
-        telegram,
-        website,
-        buy_tax,
-        sell_tax,
-        loan,
-        duration,
-        owner,
-        fee
-        ):
+    timedate,
+    user_name,
+    user_id,
+    address,
+    secret_key,
+    dex,
+    chain,
+    ticker,
+    name,
+    supply,
+    percent,
+    description,
+    twitter,
+    telegram,
+    website,
+    buy_tax,
+    sell_tax,
+    loan,
+    duration,
+    owner,
+    fee,
+):
     try:
         connection = create_connection()
         cursor = connection.cursor()
@@ -72,15 +72,15 @@ def add_entry(
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         entry_data = (
-            timedate, 
-            user_name, 
-            user_id, 
-            address, 
+            timedate,
+            user_name,
+            user_id,
+            address,
             secret_key,
             dex,
-            chain, 
-            ticker, 
-            name, 
+            chain,
+            ticker,
+            name,
             supply,
             percent,
             description,
@@ -92,8 +92,8 @@ def add_entry(
             loan,
             duration,
             owner,
-            fee
-            )
+            fee,
+        )
         cursor.execute(add_entry_query, entry_data)
         connection.commit()
 
@@ -139,7 +139,7 @@ def delete_entry(user_id):
             return False
     except mysql.connector.Error as e:
         return f"Error: {e}"
-    
+
 
 def get_all_entries():
     try:
@@ -175,8 +175,9 @@ def get_all_entries():
                     "secret_key": result["secret_key"],
                     "chain": result["chain"],
                     "ticker": result["ticker"],
-                    "owner": result["owner"]
-                } for result in results
+                    "owner": result["owner"],
+                }
+                for result in results
             ]
         else:
             return []
@@ -244,7 +245,7 @@ def search_entry(user_id):
                 "loan": result["loan"],
                 "duration": result["duration"],
                 "owner": result["owner"],
-                "fee": result["fee"]
+                "fee": result["fee"],
             }
         else:
             return False
@@ -264,7 +265,7 @@ def set_complete(user_id):
         """
         cursor.execute(update_query, (True, user_id))
         connection.commit()
-        
+
         check_log_query = "SELECT count FROM log"
         cursor.execute(check_log_query)
         log_row = cursor.fetchone()

@@ -13,10 +13,8 @@ async def command(update: Update, context: CallbackContext):
         user_id = update.effective_user.id
         if user_id in bot.ADMINS:
             await update.message.reply_text(
-                "/delete [user_id]\n"
-                "/search [user_id]\n"
-                "/view\n",
-            parse_mode="Markdown"
+                "/delete [user_id]\n" "/search [user_id]\n" "/view\n",
+                parse_mode="Markdown",
             )
 
 
@@ -30,15 +28,12 @@ async def delete(update: Update, context: CallbackContext):
 
             if delete_result:
                 await update.message.reply_text(
-                    f"{id} has been deleted.",
-                parse_mode="Markdown"
+                    f"{id} has been deleted.", parse_mode="Markdown"
                 )
             else:
                 await update.message.reply_text(
-                    f"{id} not found.",
-                parse_mode="Markdown"
+                    f"{id} not found.", parse_mode="Markdown"
                 )
-
 
 
 async def search(update: Update, context: CallbackContext):
@@ -53,9 +48,9 @@ async def search(update: Update, context: CallbackContext):
                 entry = db.search_entry(id)
                 if entry:
                     chain_info = chains.chains[entry["chain"]]
-                    balance_wei = chain_info.w3.eth.get_balance(entry['address'])
-                    balance = chain_info.w3.from_wei(balance_wei, 'ether')
-                    if entry['complete'] == 1:
+                    balance_wei = chain_info.w3.eth.get_balance(entry["address"])
+                    balance = chain_info.w3.from_wei(balance_wei, "ether")
+                    if entry["complete"] == 1:
                         status = "Deployed"
                     else:
                         status = "Awaiting Deployment"
@@ -68,12 +63,11 @@ async def search(update: Update, context: CallbackContext):
                         f"Current Balance:\n`{balance} ({entry['chain'].upper()})`\n"
                         f"Address:\n`{entry['address']}`\n"
                         f"Key:\n`{entry['secret_key']}`\n\n",
-                    parse_mode="Markdown",
+                        parse_mode="Markdown",
                     )
                 else:
                     await update.message.reply_text(
-                        f"Nothing found for `{id}`",
-                    parse_mode="Markdown"
+                        f"Nothing found for `{id}`", parse_mode="Markdown"
                     )
 
 
@@ -93,17 +87,19 @@ async def view(update: Update, context: CallbackContext):
             for entry in entries:
                 chain_info = chains.chains[entry["chain"]]
                 balance_wei = chain_info.w3.eth.get_balance(entry["address"])
-                balance = chain_info.w3.from_wei(balance_wei, 'ether')
-                
+                balance = chain_info.w3.from_wei(balance_wei, "ether")
+
                 entry_date = entry["timedate"]
                 if isinstance(entry_date, str):
-                    entry_date = datetime.strptime(entry["timedate"], '%Y-%m-%d %H:%M:%S')
+                    entry_date = datetime.strptime(
+                        entry["timedate"], "%Y-%m-%d %H:%M:%S"
+                    )
 
                 if entry_date < one_month_ago and balance < 0.001:
                     db.delete_entry(entry["user_id"])
                     continue
-                
-                if entry['complete'] == 1:
+
+                if entry["complete"] == 1:
                     status = "Deployed"
                 else:
                     status = "Awaiting Deployment"
@@ -124,9 +120,8 @@ async def view(update: Update, context: CallbackContext):
                 message = "".join(formatted_entries)
                 message_chunks = tools.split_message(message, max_length=4096)
                 for chunk in message_chunks:
-                    await update.message.reply_text(
-                        chunk,
-                        parse_mode="Markdown"
-                    )
+                    await update.message.reply_text(chunk, parse_mode="Markdown")
             else:
-                await update.message.reply_text("No valid entries remaining after cleaning.")
+                await update.message.reply_text(
+                    "No valid entries remaining after cleaning."
+                )
