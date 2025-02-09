@@ -9,11 +9,14 @@ from telegram.ext import (
     filters,
 )
 
-import os, sentry_sdk
+import os
+import sentry_sdk
 
 from bot import admin, commands, launch
 
-application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+application = (
+    ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+)
 
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
 
@@ -35,7 +38,9 @@ async def error(update: Update, context: CallbackContext):
             )
         else:
             sentry_sdk.capture_exception(
-                Exception(f"Error occurred without a valid message: {context.error}")
+                Exception(
+                    f"Error occurred without a valid message: {context.error}"
+                )
             )
 
 
@@ -57,15 +62,21 @@ if __name__ == "__main__":
     launch_handler = ConversationHandler(
         entry_points=[CommandHandler("launch", launch.command)],
         states={
-            launch.STAGE_DEX: [CallbackQueryHandler(launch.stage_dex, pattern="^dex_")],
+            launch.STAGE_DEX: [
+                CallbackQueryHandler(launch.stage_dex, pattern="^dex_")
+            ],
             launch.STAGE_CHAIN: [
                 CallbackQueryHandler(launch.stage_chain, pattern="^chain_")
             ],
             launch.STAGE_TICKER: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_ticker)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_ticker
+                )
             ],
             launch.STAGE_NAME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_name)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_name
+                )
             ],
             launch.STAGE_DESCRIPTION: [
                 MessageHandler(
@@ -73,37 +84,57 @@ if __name__ == "__main__":
                 )
             ],
             launch.STAGE_TWITTER: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_twitter)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_twitter
+                )
             ],
             launch.STAGE_TELEGRAM: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_telegram)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_telegram
+                )
             ],
             launch.STAGE_WEBSITE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_website)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_website
+                )
             ],
             launch.STAGE_BUY_TAX: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_buy_tax)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_buy_tax
+                )
             ],
             launch.STAGE_SELL_TAX: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_sell_tax)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_sell_tax
+                )
             ],
             launch.STAGE_SUPPLY: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_supply)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_supply
+                )
             ],
             launch.STAGE_AMOUNT: [
                 CallbackQueryHandler(launch.stage_amount, pattern="^amount_")
             ],
             launch.STAGE_LOAN: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_loan)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_loan
+                )
             ],
             launch.STAGE_DURATION: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_duration)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_duration
+                )
             ],
             launch.STAGE_CONTRIBUTE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_contribute)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_contribute
+                )
             ],
             launch.STAGE_OWNER: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, launch.stage_owner)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, launch.stage_owner
+                )
             ],
             launch.STAGE_CONFIRM: [
                 CallbackQueryHandler(launch.stage_confirm, pattern="^confirm_")

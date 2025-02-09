@@ -115,7 +115,7 @@ def count_launches():
 
         close_connection(connection, cursor)
         return count
-    except mysql.connector.Error as e:
+    except mysql.connector.Error:
         return "N/A"
 
 

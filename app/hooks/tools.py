@@ -42,8 +42,12 @@ def format_schedule(schedule1, schedule2, native_token):
     schedule_list = []
 
     for date in all_dates:
-        value1 = next((v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0)
-        value2 = next((v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0)
+        value1 = next(
+            (v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0
+        )
+        value2 = next(
+            (v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0
+        )
 
         total_value = value1 + value2
 
@@ -62,7 +66,9 @@ def format_schedule(schedule1, schedule2, native_token):
 
     if next_payment_datetime:
         time_until_next_payment = next_payment_datetime - current_datetime
-        time_remaining_str = calculate_time_remaining_str(time_until_next_payment)
+        time_remaining_str = calculate_time_remaining_str(
+            time_until_next_payment
+        )
 
         schedule_list.append(
             f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}"

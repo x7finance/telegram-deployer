@@ -13,7 +13,7 @@ async def command(update: Update, context: CallbackContext):
         user_id = update.effective_user.id
         if user_id in bot.ADMINS:
             await update.message.reply_text(
-                "/delete [user_id]\n" "/search [user_id]\n" "/view\n",
+                "/delete [user_id]\n/search [user_id]\n/view\n",
                 parse_mode="Markdown",
             )
 
@@ -48,7 +48,9 @@ async def search(update: Update, context: CallbackContext):
                 entry = db.search_entry(id)
                 if entry:
                     chain_info = chains.chains[entry["chain"]]
-                    balance_wei = chain_info.w3.eth.get_balance(entry["address"])
+                    balance_wei = chain_info.w3.eth.get_balance(
+                        entry["address"]
+                    )
                     balance = chain_info.w3.from_wei(balance_wei, "ether")
                     if entry["complete"] == 1:
                         status = "Deployed"
@@ -120,7 +122,9 @@ async def view(update: Update, context: CallbackContext):
                 message = "".join(formatted_entries)
                 message_chunks = tools.split_message(message, max_length=4096)
                 for chunk in message_chunks:
-                    await update.message.reply_text(chunk, parse_mode="Markdown")
+                    await update.message.reply_text(
+                        chunk, parse_mode="Markdown"
+                    )
             else:
                 await update.message.reply_text(
                     "No valid entries remaining after cleaning."

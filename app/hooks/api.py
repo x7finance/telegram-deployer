@@ -1,4 +1,5 @@
-import os, requests
+import os
+import requests
 
 from constants import chains
 
@@ -34,7 +35,7 @@ class ChainScan:
         response = requests.get(url)
         data = response.json()
         amount_raw = float(data["result"][0]["balance"])
-        return f"{amount_raw / 10 ** 18}"
+        return f"{amount_raw / 10**18}"
 
     def get_native_price(self, chain):
         chain_info = chains.chains[chain]
@@ -47,4 +48,4 @@ class ChainScan:
         response = requests.get(url)
         data = response.json()
 
-        return float(data["result"]["ethusd"]) / 1**18
+        return float(data["result"][field]) / 1**18

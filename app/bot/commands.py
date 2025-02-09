@@ -14,7 +14,6 @@ async def test(update: Update, context: CallbackContext):
 async def id(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
-        user_id = update.effective_user.id
         await update.message.reply_text(
             f"{update.effective_user.username}, Your user ID is: `{update.effective_user.id}`",
             parse_mode="Markdown",
@@ -159,7 +158,6 @@ async def status(update: Update, context: CallbackContext):
             if status_text["complete"] == 0:
                 total_cost = int(status_text["fee"]) + gas_estimate
                 if balance_wei >= total_cost:
-
                     button = InlineKeyboardMarkup(
                         [
                             [
@@ -174,7 +172,7 @@ async def status(update: Update, context: CallbackContext):
                     was_will_be = "will be"
                 else:
                     message = (
-                        f"On {chain_info.name} send {round(chain_info.w3.from_wei(total_cost, "ether"), 4)} {chain_info.native.upper()} (This includes gas fees) to:\n"
+                        f"On {chain_info.name} send {round(chain_info.w3.from_wei(total_cost, 'ether'), 4)} {chain_info.native.upper()} (This includes gas fees) to:\n"
                         f"`{status_text['address']}`\n\n"
                         "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"
                         "use /withdraw to return any un-used funds\n"
@@ -196,7 +194,9 @@ async def status(update: Update, context: CallbackContext):
             if callback_data == "launch_with_loan":
                 price_native = float(status_text["loan"]) / liquidity_tokens
                 price_usd = (
-                    price_native * chainscan.get_native_price(status_text["chain"]) * 2
+                    price_native
+                    * chainscan.get_native_price(status_text["chain"])
+                    * 2
                 )
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
 
@@ -210,9 +210,13 @@ async def status(update: Update, context: CallbackContext):
                     f"Loan Duration: {status_text['duration']} Days\n"
                 )
             else:
-                price_native = (int(status_text["fee"]) / 10**18) / liquidity_tokens
+                price_native = (
+                    int(status_text["fee"]) / 10**18
+                ) / liquidity_tokens
                 price_usd = (
-                    price_native * chainscan.get_native_price(status_text["chain"]) * 2
+                    price_native
+                    * chainscan.get_native_price(status_text["chain"])
+                    * 2
                 )
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
                 loan_info = ""
@@ -246,7 +250,9 @@ async def stuck(update: Update, context: CallbackContext):
         user_id = update.effective_user.id
         status_text = db.search_entry(user_id)
         data = functions.cancel_tx(
-            status_text["chain"], status_text["address"], status_text["secret_key"]
+            status_text["chain"],
+            status_text["address"],
+            status_text["secret_key"],
         )
         await update.message.reply_text(data)
 

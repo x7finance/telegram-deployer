@@ -43,7 +43,15 @@ pip install -r requirements.txt
 
 ### Installation
 
-First, clone the repository to your local machine:
+#### **For Contributors (Fork First)**
+If you plan to contribute to the project, **fork the repository first** and then clone your fork:
+
+```bash
+git clone https://github.com/your-username/telegram-bot
+```
+
+#### **For Maintainers (Direct Clone)**
+If you're an internal maintainer, you can **clone the repository directly**:
 
 ```bash
 git clone https://github.com/x7finance/telegram-deployer
@@ -52,7 +60,7 @@ git clone https://github.com/x7finance/telegram-deployer
 Next, navigate to the project folder:
 
 ```bash
-cd telegram-deployer
+cd your-project-name
 ```
 
 Then, set up a Python virtual environment to manage your project's dependencies. First, create the virtual environment:
