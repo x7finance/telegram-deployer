@@ -1,15 +1,18 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, ConversationHandler
 
-from eth_utils import is_checksum_address
 from eth_account import Account
+from eth_utils import is_checksum_address
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
-from constants import ca, bot, chains, urls
-from hooks import api, db, functions, tools
+from constants.bot import settings, urls
+from constants.protocol import ca, chains
+from utils import onchain, tools
+from services import get_dbmanager, get_etherscan
 
-chainscan = api.ChainScan()
+db = get_dbmanager()
+etherscan = get_etherscan()
 
 (
     STAGE_DEX,
@@ -50,7 +53,7 @@ async def command(update: Update, context: CallbackContext):
                         dex.upper(), callback_data=f"dex_{dex.lower()}"
                     )
                 ]
-                for dex in chains.dexes
+                for dex in chains.DEXES
             ]
             keyboard = InlineKeyboardMarkup(buttons)
             await update.message.reply_text(
@@ -75,7 +78,7 @@ async def stage_dex(update: Update, context: CallbackContext):
                 chain.upper(), callback_data=f"chain_{chain.lower()}"
             )
         ]
-        for chain in chains.live
+        for chain in chains.get_active_chains().keys()
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     if context.user_data["dex"] != "xchange":
@@ -322,7 +325,7 @@ async def stage_amount(update: Update, context: CallbackContext):
     percent = query.data.split("_")[1]
     context.user_data["percent"] = percent
 
-    chain_info = chains.chains[context.user_data["chain"]]
+    chain_info = chains.get_active_chains()[context.user_data["chain"]]
 
     if percent == "0":
         percent_str = "No tokens will be held by the team"
@@ -331,7 +334,7 @@ async def stage_amount(update: Update, context: CallbackContext):
         percent_str = f"{percent}% of tokens ({team_amount:,.0f}) will be reserved as team supply"
 
     if context.user_data["dex"] == "xchange":
-        pool = functions.get_pool_funds(context.user_data["chain"].lower())
+        pool = onchain.get_pool_funds(context.user_data["chain"].lower())
         await context.bot.send_message(
             chat_id=query.message.chat_id,
             text=f"{percent_str}\n\n"
@@ -354,8 +357,8 @@ async def stage_amount(update: Update, context: CallbackContext):
 async def stage_loan(update: Update, context: CallbackContext):
     loan_input = update.message.text.strip()
     chain = context.user_data["chain"].lower()
-    chain_info = chains.chains[chain]
-    pool = functions.get_pool_funds(chain)
+    chain_info = chains.get_active_chains()[chain]
+    pool = onchain.get_pool_funds(chain)
 
     try:
         loan_amount = Decimal(loan_input)
@@ -371,10 +374,10 @@ async def stage_loan(update: Update, context: CallbackContext):
         )
         return STAGE_LOAN
 
-    if loan_amount > bot.MAX_LOAN_AMOUNT:
+    if loan_amount > settings.MAX_LOAN_AMOUNT:
         await update.message.reply_text(
-            f"Error: Maximum loan amount is {bot.MAX_LOAN_AMOUNT} {chain_info.native.upper()}. "
-            f"Please enter an amount less than or equal to {bot.MAX_LOAN_AMOUNT}."
+            f"Error: Maximum loan amount is {settings.MAX_LOAN_AMOUNT} {chain_info.native.upper()}. "
+            f"Please enter an amount less than or equal to {settings.MAX_LOAN_AMOUNT}."
         )
         return STAGE_LOAN
 
@@ -390,7 +393,7 @@ async def stage_loan(update: Update, context: CallbackContext):
     await update.message.reply_text(
         text=(
             f"{loan_amount} {chain_info.native.upper()} will be borrowed for initial liquidity.\n\n"
-            f"Please enter the loan duration (in days) as a number no higher than {bot.MAX_LOAN_LENGTH}:"
+            f"Please enter the loan duration (in days) as a number no higher than {settings.MAX_LOAN_LENGTH}:"
         )
     )
     return STAGE_DURATION
@@ -401,10 +404,10 @@ async def stage_duration(update: Update, context: CallbackContext):
 
     if not (
         duration_input.isdigit()
-        and 1 <= int(duration_input) <= bot.MAX_LOAN_LENGTH
+        and 1 <= int(duration_input) <= settings.MAX_LOAN_LENGTH
     ):
         await update.message.reply_text(
-            f"Error: Loan duration must be a whole number between 1 and {bot.MAX_LOAN_LENGTH}. Please try again."
+            f"Error: Loan duration must be a whole number between 1 and {settings.MAX_LOAN_LENGTH}. Please try again."
         )
         return STAGE_DURATION
 
@@ -446,7 +449,7 @@ async def stage_contribute(update: Update, context: CallbackContext):
         return STAGE_CONTRIBUTE
 
     context.user_data["contribution"] = contribution
-    chain_info = chains.chains[context.user_data["chain"]]
+    chain_info = chains.get_active_chains()[context.user_data["chain"]]
 
     await update.message.reply_text(
         f"{contribution} {chain_info.native.upper()} will be allocated for initial liquidity\n\n"
@@ -471,7 +474,7 @@ async def stage_owner(update: Update, context: CallbackContext):
         return STAGE_OWNER
 
     user_data = context.user_data
-    chain_info = chains.chains.get(user_data.get("chain"))
+    chain_info = chains.get_active_chains()[user_data.get("chain")]
 
     dex = user_data.get("dex")
     ticker = user_data.get("ticker")
@@ -501,7 +504,7 @@ async def stage_owner(update: Update, context: CallbackContext):
     liquidity_tokens = int(supply) - team_tokens
 
     price_native = float(liquidity) / liquidity_tokens
-    price_usd = price_native * chainscan.get_native_price(chain.lower()) * 2
+    price_usd = price_native * etherscan.get_native_price(chain.lower()) * 2
     market_cap_usd = price_usd * int(supply) * 2
 
     if context.user_data["dex"] == "xchange":
@@ -570,7 +573,7 @@ async def stage_confirm(update: Update, context: CallbackContext):
         now = datetime.now()
 
         chain = user_data.get("chain")
-        chain_info = chains.chains[chain]
+        chain_info = chains.get_active_chains()[chain]
 
         def message(total_cost):
             return (
@@ -586,7 +589,7 @@ async def stage_confirm(update: Update, context: CallbackContext):
         if context.user_data["dex"] == "xchange":
             if "contribution" in user_data:
                 fee = user_data.get("contribution") * 10**18
-                gas_estimate = functions.estimate_gas_without_loan(
+                gas_estimate = onchain.estimate_gas_without_loan(
                     user_data.get("chain"),
                     user_data.get("name"),
                     user_data.get("ticker"),
@@ -605,7 +608,7 @@ async def stage_confirm(update: Update, context: CallbackContext):
 
             else:
                 fee = user_data.get("fee")
-                gas_estimate = functions.estimate_gas_with_loan(
+                gas_estimate = onchain.estimate_gas_with_loan(
                     user_data.get("chain"),
                     user_data.get("name"),
                     user_data.get("ticker"),
@@ -626,7 +629,7 @@ async def stage_confirm(update: Update, context: CallbackContext):
 
         else:
             fee = user_data.get("contribution") * 10**18
-            gas_estimate = functions.estimate_gas_uniswap(
+            gas_estimate = onchain.estimate_gas_uniswap(
                 user_data.get("chain"),
                 user_data.get("name"),
                 user_data.get("ticker"),
@@ -698,8 +701,8 @@ async def function(update: Update, context: CallbackContext):
         return
 
     chain = status_text["chain"]
-    chain_info = chains.chains[chain]
-    dex_info = chains.dexes[status_text["dex"]]
+    chain_info = chains.get_active_chains()[chain]
+    dex_info = chains.DEXES[status_text["dex"]]
 
     await query.edit_message_text(
         f"Deploying {status_text['ticker']} on {status_text['dex'].upper()} ({chain_info.name.upper()})...."
@@ -709,9 +712,9 @@ async def function(update: Update, context: CallbackContext):
     loan_text = ""
 
     if launch_type == "launch_with_loan":
-        loan_contract = bot.LIVE_LOAN(chain, "address")
+        loan_contract = settings.LIVE_LOAN(chain, "address")
 
-        loan = functions.deploy_token_with_loan(
+        loan = onchain.deploy_token_with_loan(
             status_text["chain"],
             status_text["name"],
             status_text["ticker"],
@@ -742,7 +745,7 @@ async def function(update: Update, context: CallbackContext):
         try:
             contract = chain_info.w3.eth.contract(
                 address=chain_info.w3.to_checksum_address(loan_contract),
-                abi=chainscan.get_abi(loan_contract, chain),
+                abi=etherscan.get_abi(loan_contract, chain),
             )
             schedule1 = contract.functions.getPremiumPaymentSchedule(
                 int(loan_id)
@@ -776,7 +779,7 @@ async def function(update: Update, context: CallbackContext):
 
         loan_button = InlineKeyboardButton(
             text="Manage Loan",
-            url=f"{dex_info.url}lending/{chain_info.short_name}/{bot.LIVE_LOAN(chain, 'name')}/{token_by_id}",
+            url=f"{dex_info.url}lending/{chain_info.short_name}/{settings.LIVE_LOAN(chain, 'name')}/{token_by_id}",
         )
 
         loan_text = (
@@ -784,7 +787,7 @@ async def function(update: Update, context: CallbackContext):
         )
 
     elif launch_type == "launch_without_loan":
-        launched = functions.deploy_token_without_loan(
+        launched = onchain.deploy_token_without_loan(
             status_text["chain"],
             status_text["name"],
             status_text["ticker"],
@@ -811,7 +814,7 @@ async def function(update: Update, context: CallbackContext):
         token_address, pair_address = launched
 
     elif launch_type == "launch_uniswap":
-        launched = functions.deploy_token(
+        launched = onchain.deploy_token(
             status_text["chain"],
             status_text["name"],
             status_text["ticker"],
@@ -833,7 +836,7 @@ async def function(update: Update, context: CallbackContext):
 
         token_address, pair_address = launched
 
-    refund = functions.transfer_balance(
+    refund = onchain.transfer_balance(
         status_text["chain"],
         status_text["address"],
         status_text["owner"],

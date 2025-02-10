@@ -1,4 +1,4 @@
-from constants import ca
+from constants.protocol import ca
 
 
 ADMINS = [1667971437]

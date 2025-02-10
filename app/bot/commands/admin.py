@@ -3,15 +3,19 @@ from telegram.ext import CallbackContext, ConversationHandler
 
 from datetime import datetime, timedelta
 
-from constants import bot, chains
-from hooks import db, tools
+from constants.bot import settings
+from constants.protocol import chains
+from utils import tools
+from services import get_dbmanager
+
+db = get_dbmanager()
 
 
 async def command(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        if user_id in bot.ADMINS:
+        if user_id in settings.ADMINS:
             await update.message.reply_text(
                 "/delete [user_id]\n/search [user_id]\n/view\n",
                 parse_mode="Markdown",
@@ -22,7 +26,7 @@ async def delete(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        if user_id in bot.ADMINS:
+        if user_id in settings.ADMINS:
             id = " ".join(context.args)
             delete_result = db.delete_entry(id)
 
@@ -40,14 +44,14 @@ async def search(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        if user_id in bot.ADMINS:
+        if user_id in settings.ADMINS:
             id = " ".join(context.args)
             if id == "":
                 await update.message.reply_text("Provide user ID")
             else:
                 entry = db.search_entry(id)
                 if entry:
-                    chain_info = chains.chains[entry["chain"]]
+                    chain_info = chains.get_active_chains()[entry["chain"]]
                     balance_wei = chain_info.w3.eth.get_balance(
                         entry["address"]
                     )
@@ -77,7 +81,7 @@ async def view(update: Update, context: CallbackContext):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        if user_id in bot.ADMINS:
+        if user_id in settings.ADMINS:
             entries = db.get_all_entries()
 
             if not entries:
@@ -87,7 +91,7 @@ async def view(update: Update, context: CallbackContext):
             one_month_ago = datetime.now() - timedelta(days=30)
             formatted_entries = []
             for entry in entries:
-                chain_info = chains.chains[entry["chain"]]
+                chain_info = chains.get_active_chains()[entry["chain"]]
                 balance_wei = chain_info.w3.eth.get_balance(entry["address"])
                 balance = chain_info.w3.from_wei(balance_wei, "ether")
 

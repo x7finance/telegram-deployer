@@ -1,10 +1,13 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext
 
-from constants import chains, bot
-from hooks import api, db, functions, tools
+from constants.bot import settings
+from constants.protocol import chains
+from utils import onchain, tools
+from services import get_dbmanager, get_etherscan
 
-chainscan = api.ChainScan()
+db = get_dbmanager()
+etherscan = get_etherscan()
 
 
 async def test(update: Update, context: CallbackContext):
@@ -76,7 +79,7 @@ async def start(update: Update, context: CallbackContext):
     _, loan_fees = tools.generate_loan_terms("base", 1)
     if chat_type == "private":
         await update.message.reply_text(
-            f"Welcome to {tools.escape_markdown(bot.BOT_NAME)}, {tools.escape_markdown(user_name)}!\n"
+            f"Welcome to {tools.escape_markdown(settings.BOT_NAME)}, {tools.escape_markdown(user_name)}!\n"
             f"Your gateway to creating and launching tokens in just minutes.\n\n"
             f"*Here's what you can do:*\n"
             "- Launch a Token: Seamlessly create and deploy your token and trade instantly.\n"
@@ -85,7 +88,7 @@ async def start(update: Update, context: CallbackContext):
             "*Loan Terms:*\n"
             "- Choose your preferred loan duration. If unpaid by the expiry date, "
             "repayment will occur through pair liquidity.\n"
-            f"- Refundable Deposit: The {bot.LIQUIDATION_DEPOSIT} ETH liquidation deposit is fully "
+            f"- Refundable Deposit: The {settings.LIQUIDATION_DEPOSIT} ETH liquidation deposit is fully "
             "returned once your loan is settled.\n\n"
             f"Join the innovators—{count} tokens launched and counting!\n\n"
             "*Ready to launch your project?\n*"
@@ -101,7 +104,7 @@ async def status(update: Update, context: CallbackContext):
         status_text = db.search_entry(user_id)
 
         if status_text:
-            chain_info = chains.chains[status_text["chain"]]
+            chain_info = chains.get_active_chains()[status_text["chain"]]
             balance_wei = chain_info.w3.eth.get_balance(status_text["address"])
             balance = chain_info.w3.from_wei(balance_wei, "ether")
             balance_str = format(balance, ".18f")
@@ -114,7 +117,7 @@ async def status(update: Update, context: CallbackContext):
                 )
                 if not status_text["loan"]:
                     callback_data = "launch_without_loan"
-                    gas_estimate = functions.estimate_gas_without_loan(
+                    gas_estimate = onchain.estimate_gas_without_loan(
                         status_text["chain"],
                         status_text["name"],
                         status_text["ticker"],
@@ -127,7 +130,7 @@ async def status(update: Update, context: CallbackContext):
                     )
                 else:
                     callback_data = "launch_with_loan"
-                    gas_estimate = functions.estimate_gas_with_loan(
+                    gas_estimate = onchain.estimate_gas_with_loan(
                         status_text["chain"],
                         status_text["name"],
                         status_text["ticker"],
@@ -142,7 +145,7 @@ async def status(update: Update, context: CallbackContext):
                     )
             else:
                 callback_data = "launch_uniswap"
-                gas_estimate = functions.estimate_gas_uniswap(
+                gas_estimate = onchain.estimate_gas_uniswap(
                     status_text["chain"],
                     status_text["name"],
                     status_text["ticker"],
@@ -195,7 +198,7 @@ async def status(update: Update, context: CallbackContext):
                 price_native = float(status_text["loan"]) / liquidity_tokens
                 price_usd = (
                     price_native
-                    * chainscan.get_native_price(status_text["chain"])
+                    * etherscan.get_native_price(status_text["chain"])
                     * 2
                 )
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
@@ -215,7 +218,7 @@ async def status(update: Update, context: CallbackContext):
                 ) / liquidity_tokens
                 price_usd = (
                     price_native
-                    * chainscan.get_native_price(status_text["chain"])
+                    * etherscan.get_native_price(status_text["chain"])
                     * 2
                 )
                 market_cap_usd = price_usd * int(status_text["supply"]) * 2
@@ -249,7 +252,7 @@ async def stuck(update: Update, context: CallbackContext):
     if chat_type == "private":
         user_id = update.effective_user.id
         status_text = db.search_entry(user_id)
-        data = functions.cancel_tx(
+        data = onchain.cancel_tx(
             status_text["chain"],
             status_text["address"],
             status_text["secret_key"],
@@ -263,7 +266,7 @@ async def withdraw(update: Update, context: CallbackContext):
         user_id = update.effective_user.id
         status_text = db.search_entry(user_id)
         if status_text:
-            result = functions.transfer_balance(
+            result = onchain.transfer_balance(
                 status_text["chain"],
                 status_text["address"],
                 status_text["owner"],
@@ -275,7 +278,9 @@ async def withdraw(update: Update, context: CallbackContext):
                     "If this is unexpected use your saved private key from setup to withdraw funds",
                 )
             else:
-                chain_link = chains.chains[status_text["chain"]].scan_tx
+                chain_link = chains.get_active_chains()[
+                    status_text["chain"]
+                ].scan_tx
                 await update.message.reply_text(
                     f"Balance withdrawn\n\n{chain_link}{result}\n\n"
                     "You can now safely use /reset to reset your project"

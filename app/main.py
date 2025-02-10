@@ -12,7 +12,7 @@ from telegram.ext import (
 import os
 import sentry_sdk
 
-from bot import admin, commands, launch
+from bot.commands import admin, general, launch
 
 application = (
     ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
@@ -46,19 +46,19 @@ async def error(update: Update, context: CallbackContext):
 
 if __name__ == "__main__":
     application.add_error_handler(error)
-    application.add_handler(CommandHandler("test", commands.test))
+    application.add_handler(CommandHandler("test", general.test))
 
     application.add_handler(CommandHandler("admin", admin.command))
     application.add_handler(CommandHandler("delete", admin.delete))
     application.add_handler(CommandHandler("search", admin.search))
     application.add_handler(CommandHandler("view", admin.view))
 
-    application.add_handler(CommandHandler("id", commands.id))
-    application.add_handler(CommandHandler("reset", commands.reset))
-    application.add_handler(CommandHandler("start", commands.start))
-    application.add_handler(CommandHandler("status", commands.status))
-    application.add_handler(CommandHandler("stuck", commands.stuck))
-    application.add_handler(CommandHandler("withdraw", commands.withdraw))
+    application.add_handler(CommandHandler("id", general.id))
+    application.add_handler(CommandHandler("reset", general.reset))
+    application.add_handler(CommandHandler("start", general.start))
+    application.add_handler(CommandHandler("status", general.status))
+    application.add_handler(CommandHandler("stuck", general.stuck))
+    application.add_handler(CommandHandler("withdraw", general.withdraw))
     launch_handler = ConversationHandler(
         entry_points=[CommandHandler("launch", launch.command)],
         states={
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     )
     application.add_handler(launch_handler)
     application.add_handler(
-        CallbackQueryHandler(commands.reset_callback, pattern="^reset_")
+        CallbackQueryHandler(general.reset_callback, pattern="^reset_")
     )
     application.add_handler(
         CallbackQueryHandler(

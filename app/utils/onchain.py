@@ -1,5 +1,10 @@
-from constants import bot, ca, chains
-from hooks import api, tools
+from constants.bot import settings
+from constants.protocol import ca, chains
+from utils import tools
+from services import get_dbmanager, get_etherscan
+
+db = get_dbmanager()
+etherscan = get_etherscan()
 
 
 def deploy_token_without_loan(
@@ -19,15 +24,15 @@ def deploy_token_without_loan(
     key,
     loan_fee,
 ):
-    if chain not in chains.chains:
+    if chain not in chains.get_active_chains():
         raise ValueError(f"Invalid chain: {chain}")
 
-    chain_info = chains.chains[chain]
+    chain_info = chains.get_active_chains()[chain]
     deployer_address = ca.DEPLOYER(chain)
     factory_address = ca.FACTORY(chain)
 
-    deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
-    factory_abi = api.ChainScan().get_abi(factory_address, chain)
+    deployer_abi = etherscan.get_abi(deployer_address, chain)
+    factory_abi = etherscan.get_abi(factory_address, chain)
 
     deployer_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(deployer_address),
@@ -132,17 +137,17 @@ def deploy_token_with_loan(
     key,
     loan_fee,
 ):
-    if chain not in chains.chains:
+    if chain not in chains.get_active_chains():
         raise ValueError(f"Invalid chain: {chain}")
 
-    loan_contract = bot.LIVE_LOAN(chain, "address")
+    loan_contract = settings.LIVE_LOAN(chain, "address")
 
-    chain_info = chains.chains[chain]
+    chain_info = chains.get_active_chains()[chain]
     deployer_address = ca.DEPLOYER(chain)
     factory_address = ca.FACTORY(chain)
 
-    deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
-    factory_abi = api.ChainScan().get_abi(factory_address, chain)
+    deployer_abi = etherscan.get_abi(deployer_address, chain)
+    factory_abi = etherscan.get_abi(factory_address, chain)
 
     deployer_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(deployer_address),
@@ -246,15 +251,15 @@ def deploy_token(
     key,
     contribution,
 ):
-    if chain not in chains.chains:
+    if chain not in chains.get_active_chains():
         raise ValueError(f"Invalid chain: {chain}")
 
-    chain_info = chains.chains[chain]
+    chain_info = chains.get_active_chains()[chain]
     deployer_address = ca.DEPLOYER_UNISWAP(chain)
     factory_address = ca.FACTORY_UNISWAP(chain)
 
-    deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
-    factory_abi = api.ChainScan().get_abi(factory_address, chain)
+    deployer_abi = etherscan.get_abi(deployer_address, chain)
+    factory_abi = etherscan.get_abi(factory_address, chain)
 
     deployer_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(deployer_address),
@@ -337,10 +342,7 @@ def deploy_token(
 
 def cancel_tx(chain, address, key, gas_multiplier=1.5):
     try:
-        if chain not in chains.chains:
-            raise ValueError(f"Invalid chain: {chain}")
-
-        chain_info = chains.chains[chain]
+        chain_info = chains.get_active_chains()[chain]
         latest_nonce = chain_info.w3.eth.get_transaction_count(
             address, "latest"
         )
@@ -386,9 +388,9 @@ def estimate_gas_without_loan(
     chain, name, symbol, supply, percent, buy_tax, sell_tax, owner, loan_fee
 ):
     try:
-        chain_info = chains.chains[chain]
+        chain_info = chains.get_active_chains()[chain]
         deployer_address = ca.DEPLOYER(chain)
-        deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
+        deployer_abi = etherscan.get_abi(deployer_address, chain)
         deployer_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(deployer_address),
             abi=deployer_abi,
@@ -446,9 +448,9 @@ def estimate_gas_with_loan(
     loan_fee,
 ):
     try:
-        chain_info = chains.chains[chain]
+        chain_info = chains.get_active_chains()[chain]
         deployer_address = ca.DEPLOYER(chain)
-        deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
+        deployer_abi = etherscan.get_abi(deployer_address, chain)
         deployer_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(deployer_address),
             abi=deployer_abi,
@@ -456,7 +458,7 @@ def estimate_gas_with_loan(
         deadline = tools.timestamp_deadline()
         gas_price = chain_info.w3.eth.gas_price
         nonce = chain_info.w3.eth.get_transaction_count(ca.DEAD)
-        loan_contract = bot.LIVE_LOAN(chain, "address")
+        loan_contract = settings.LIVE_LOAN(chain, "address")
 
         params = {
             "name": name,
@@ -509,9 +511,9 @@ def estimate_gas_uniswap(
     contribution,
 ):
     try:
-        chain_info = chains.chains[chain]
+        chain_info = chains.get_active_chains()[chain]
         deployer_address = ca.DEPLOYER_UNISWAP(chain)
-        deployer_abi = api.ChainScan().get_abi(deployer_address, chain)
+        deployer_abi = etherscan.get_abi(deployer_address, chain)
         deployer_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(deployer_address),
             abi=deployer_abi,
@@ -551,11 +553,11 @@ def estimate_gas_uniswap(
 
 
 def get_pool_funds(chain):
-    if chain not in chains.chains:
+    if chain not in chains.get_active_chains():
         raise ValueError(f"Invalid chain: {chain}")
 
-    chain_info = chains.chains[chain]
-    contract_abi = api.ChainScan().get_abi(ca.LPOOL(chain), chain)
+    chain_info = chains.get_active_chains()[chain]
+    contract_abi = etherscan.get_abi(ca.LPOOL(chain), chain)
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
         abi=contract_abi,
@@ -573,10 +575,10 @@ def get_pool_funds(chain):
 
 
 def transfer_balance(chain, address, owner, key):
-    if chain not in chains.chains:
+    if chain not in chains.get_active_chains():
         raise ValueError(f"Invalid chain: {chain}")
 
-    chain_info = chains.chains[chain]
+    chain_info = chains.get_active_chains()[chain]
 
     try:
         checksum_address = chain_info.w3.to_checksum_address(address)

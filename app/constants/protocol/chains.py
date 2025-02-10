@@ -1,6 +1,7 @@
 from web3 import Web3
 
-from constants import urls
+from constants.bot import urls
+from utils import tools
 
 
 class ChainInfo:
@@ -33,7 +34,7 @@ class ChainInfo:
         self.w3 = Web3(Web3.HTTPProvider(w3))
 
 
-chains = {
+MAINNETS = {
     "base": ChainInfo(
         True,
         "Base",
@@ -62,6 +63,9 @@ chains = {
         "ether",
         urls.RPC("eth"),
     ),
+}
+
+TESTNETS = {
     "base-sepolia": ChainInfo(
         True,
         "Base Sepolia",
@@ -99,21 +103,23 @@ class DexInfo:
         self.liq_link = liq_link
 
 
-dexes = {
+DEXES = {
     "xchange": DexInfo(urls.XCHANGE, "liquidity"),
     "uniswap": DexInfo(urls.UNISWAP, "positions"),
 }
 
 
-def full_names():
-    chain_names = [chain.name for chain in chains.values()]
+def get_active_chains():
+    if tools.is_local():
+        return {**MAINNETS, **TESTNETS}
+    return {**MAINNETS}
+
+
+def get_full_names():
+    chain_names = [chain.name for chain in get_active_chains().values()]
     return "\n".join(chain_names)
 
 
-def short_names():
-    chain_list = list(chains.keys())
+def get_short_names():
+    chain_list = [key.upper() for key in get_active_chains().keys()]
     return "\n".join(chain_list)
-
-
-live = {key: value for key, value in chains.items() if value.live}
-live_list = "\n".join([key.upper() for key in live.keys()])

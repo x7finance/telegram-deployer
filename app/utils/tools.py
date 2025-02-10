@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
+import socket
 import unicodedata
 
-from constants import bot, chains
-from hooks import api
+from constants.bot import settings
+from constants.protocol import chains
+from services import get_etherscan
 
-chainscan = api.ChainScan()
+etherscan = get_etherscan()
 
 
 def datetime_to_timestamp(datetime_str):
@@ -78,26 +80,26 @@ def format_schedule(schedule1, schedule2, native_token):
 
 
 def generate_loan_terms(chain, loan_amount):
-    chain_info = chains.chains[chain]
+    chain_info = chains.get_active_chains()[chain]
 
     loan_in_wei = chain_info.w3.to_wei(loan_amount, "ether")
 
-    loan_contract_address = bot.LIVE_LOAN(chain, "address")
+    loan_contract_address = settings.LIVE_LOAN(chain, "address")
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(loan_contract_address),
-        abi=chainscan.get_abi(loan_contract_address, chain),
+        abi=etherscan.get_abi(loan_contract_address, chain),
     )
 
     quote = contract.functions.getQuote(loan_in_wei).call()
     origination_fee = quote[1]
 
-    loan_deposit = chain_info.w3.to_wei(bot.LIQUIDATION_DEPOSIT, "ether")
+    loan_deposit = chain_info.w3.to_wei(settings.LIQUIDATION_DEPOSIT, "ether")
     total_fee = origination_fee + loan_deposit
 
     text = (
-        f"Borrow up to {bot.MAX_LOAN_AMOUNT} {chain_info.native.upper()} liquidity for "
-        f"{chain_info.w3.from_wei(origination_fee, 'ether')} + {bot.LIQUIDATION_DEPOSIT} {chain_info.native.upper()} deposit"
+        f"Borrow up to {settings.MAX_LOAN_AMOUNT} {chain_info.native.upper()} liquidity for "
+        f"{chain_info.w3.from_wei(origination_fee, 'ether')} + {settings.LIQUIDATION_DEPOSIT} {chain_info.native.upper()} deposit"
     )
 
     return total_fee, text
@@ -156,3 +158,10 @@ def timestamp_to_datetime(timestamp):
         return datetime_str
     except ValueError:
         return "Invalid timestamp."
+
+
+def is_local():
+    ip = socket.gethostbyname(socket.gethostname())
+    return (
+        ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
+    )
