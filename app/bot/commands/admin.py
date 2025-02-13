@@ -1,5 +1,5 @@
 from telegram import Update
-from telegram.ext import CallbackContext, ConversationHandler
+from telegram.ext import ContextTypes, ConversationHandler
 
 from datetime import datetime, timedelta
 
@@ -11,7 +11,7 @@ from services import get_dbmanager
 db = get_dbmanager()
 
 
-async def command(update: Update, context: CallbackContext):
+async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -22,7 +22,7 @@ async def command(update: Update, context: CallbackContext):
             )
 
 
-async def delete(update: Update, context: CallbackContext):
+async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -40,7 +40,7 @@ async def delete(update: Update, context: CallbackContext):
                 )
 
 
-async def search(update: Update, context: CallbackContext):
+async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -77,7 +77,7 @@ async def search(update: Update, context: CallbackContext):
                     )
 
 
-async def view(update: Update, context: CallbackContext):
+async def view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -133,3 +133,14 @@ async def view(update: Update, context: CallbackContext):
                 await update.message.reply_text(
                     "No valid entries remaining after cleaning."
                 )
+
+
+HANDLERS = [
+    (func.__name__.split("_")[0], func, description)
+    for func, description in [
+        (admin_command, "Admin commands"),
+        (delete, "Delete an entry"),
+        (search, "Search for an entry"),
+        (view, "View an entry"),
+    ]
+]

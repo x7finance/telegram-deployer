@@ -1,12 +1,19 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import CallbackContext, ConversationHandler
+from telegram.ext import (
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    filters,
+    MessageHandler,
+)
 
 from eth_account import Account
 from eth_utils import is_checksum_address
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
-from constants.bot import settings, urls
+from constants.bot import settings
 from constants.protocol import ca, chains
 from utils import onchain, tools
 from services import get_dbmanager, get_etherscan
@@ -35,7 +42,7 @@ etherscan = get_etherscan()
 ) = range(17)
 
 
-async def command(update: Update, context: CallbackContext):
+async def start_launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -67,7 +74,7 @@ async def command(update: Update, context: CallbackContext):
             return STAGE_DEX
 
 
-async def stage_dex(update: Update, context: CallbackContext):
+async def stage_dex(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     dex = query.data.split("_")[1].lower()
@@ -97,7 +104,7 @@ async def stage_dex(update: Update, context: CallbackContext):
     return STAGE_CHAIN
 
 
-async def stage_chain(update: Update, context: CallbackContext):
+async def stage_chain(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     chain = query.data.split("_")[1].lower()
@@ -110,7 +117,7 @@ async def stage_chain(update: Update, context: CallbackContext):
     return STAGE_TICKER
 
 
-async def stage_ticker(update: Update, context: CallbackContext):
+async def stage_ticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(update.message.text) > 6 or tools.detect_emojis(
         update.message.text
     ):
@@ -126,7 +133,7 @@ async def stage_ticker(update: Update, context: CallbackContext):
     return STAGE_NAME
 
 
-async def stage_name(update: Update, context: CallbackContext):
+async def stage_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(update.message.text) > 30 or tools.detect_emojis(
         update.message.text
     ):
@@ -152,7 +159,9 @@ async def stage_name(update: Update, context: CallbackContext):
         return STAGE_BUY_TAX
 
 
-async def stage_description(update: Update, context: CallbackContext):
+async def stage_description(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+):
     if len(update.message.text) > 200:
         await update.message.reply_text(
             "Error: The description must be 200 characters or fewer. Please try again"
@@ -166,7 +175,7 @@ async def stage_description(update: Update, context: CallbackContext):
     return STAGE_TWITTER
 
 
-async def stage_twitter(update: Update, context: CallbackContext):
+async def stage_twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.strip()
     if user_input.lower() == "none":
         context.user_data["twitter"] = ""
@@ -188,7 +197,7 @@ async def stage_twitter(update: Update, context: CallbackContext):
     return STAGE_TELEGRAM
 
 
-async def stage_telegram(update: Update, context: CallbackContext):
+async def stage_telegram(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.strip()
     if user_input.lower() == "none":
         context.user_data["telegram"] = ""
@@ -210,7 +219,7 @@ async def stage_telegram(update: Update, context: CallbackContext):
     return STAGE_WEBSITE
 
 
-async def stage_website(update: Update, context: CallbackContext):
+async def stage_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.strip()
     if user_input.lower() == "none":
         context.user_data["website"] = ""
@@ -239,7 +248,7 @@ async def stage_website(update: Update, context: CallbackContext):
     return STAGE_BUY_TAX
 
 
-async def stage_buy_tax(update: Update, context: CallbackContext):
+async def stage_buy_tax(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.strip()
 
     if user_input.isdigit():
@@ -264,7 +273,7 @@ async def stage_buy_tax(update: Update, context: CallbackContext):
         return STAGE_BUY_TAX
 
 
-async def stage_sell_tax(update: Update, context: CallbackContext):
+async def stage_sell_tax(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.strip()
 
     if user_input.isdigit():
@@ -289,7 +298,7 @@ async def stage_sell_tax(update: Update, context: CallbackContext):
         return STAGE_SELL_TAX
 
 
-async def stage_supply(update: Update, context: CallbackContext):
+async def stage_supply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     supply_input = update.message.text.strip()
     if not (supply_input.isdigit() and int(supply_input) > 1000):
         await update.message.reply_text(
@@ -319,7 +328,7 @@ async def stage_supply(update: Update, context: CallbackContext):
     return STAGE_AMOUNT
 
 
-async def stage_amount(update: Update, context: CallbackContext):
+async def stage_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     percent = query.data.split("_")[1]
@@ -354,7 +363,7 @@ async def stage_amount(update: Update, context: CallbackContext):
         return STAGE_CONTRIBUTE
 
 
-async def stage_loan(update: Update, context: CallbackContext):
+async def stage_loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loan_input = update.message.text.strip()
     chain = context.user_data["chain"].lower()
     chain_info = chains.get_active_chains()[chain]
@@ -399,7 +408,7 @@ async def stage_loan(update: Update, context: CallbackContext):
     return STAGE_DURATION
 
 
-async def stage_duration(update: Update, context: CallbackContext):
+async def stage_duration(update: Update, context: ContextTypes.DEFAULT_TYPE):
     duration_input = update.message.text.strip()
 
     if not (
@@ -424,7 +433,7 @@ async def stage_duration(update: Update, context: CallbackContext):
     return STAGE_OWNER
 
 
-async def stage_contribute(update: Update, context: CallbackContext):
+async def stage_contribute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     native_amount = update.message.text.strip()
 
     try:
@@ -460,7 +469,7 @@ async def stage_contribute(update: Update, context: CallbackContext):
     return STAGE_OWNER
 
 
-async def stage_owner(update: Update, context: CallbackContext):
+async def stage_owner(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["owner"] = update.message.text
 
     if (
@@ -560,7 +569,7 @@ async def stage_owner(update: Update, context: CallbackContext):
     return STAGE_CONFIRM
 
 
-async def stage_confirm(update: Update, context: CallbackContext):
+async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_data = context.user_data
     confirm = query.data.split("_")[1]
@@ -683,228 +692,68 @@ async def stage_confirm(update: Update, context: CallbackContext):
         return ConversationHandler.END
 
 
-async def cancel(update: Update, context: CallbackContext):
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Launch canceled.")
     return ConversationHandler.END
 
 
-async def function(update: Update, context: CallbackContext):
-    query = update.callback_query
-    await query.answer()
-    launch_type = query.data
-
-    user_id = update.effective_user.id
-    status_text = db.search_entry(user_id)
-
-    if not status_text:
-        await query.edit_message_text("No deployment status found")
-        return
-
-    chain = status_text["chain"]
-    chain_info = chains.get_active_chains()[chain]
-    dex_info = chains.DEXES[status_text["dex"]]
-
-    await query.edit_message_text(
-        f"Deploying {status_text['ticker']} on {status_text['dex'].upper()} ({chain_info.name.upper()})...."
-    )
-
-    loan_button = None
-    loan_text = ""
-
-    if launch_type == "launch_with_loan":
-        loan_contract = settings.LIVE_LOAN(chain, "address")
-
-        loan = onchain.deploy_token_with_loan(
-            status_text["chain"],
-            status_text["name"],
-            status_text["ticker"],
-            int(status_text["supply"]),
-            int(status_text["percent"]),
-            status_text["description"],
-            status_text["twitter"],
-            status_text["telegram"],
-            status_text["website"],
-            status_text["buy_tax"],
-            status_text["sell_tax"],
-            chain_info.w3.to_wei(status_text["loan"], "ether"),
-            int(status_text["duration"]) * 60 * 60 * 24,
-            status_text["owner"],
-            status_text["address"],
-            status_text["secret_key"],
-            int(status_text["fee"]),
-        )
-
-        if isinstance(loan, str) and loan.startswith("Error"):
-            await query.edit_message_text(
-                f"Error initiating TX\n\nuse /withdraw if you want to cancel the deployment and return your funds\n\n{loan}"
-            )
-            return
-
-        token_address, pair_address, loan_id = loan
-
-        try:
-            contract = chain_info.w3.eth.contract(
-                address=chain_info.w3.to_checksum_address(loan_contract),
-                abi=etherscan.get_abi(loan_contract, chain),
-            )
-            schedule1 = contract.functions.getPremiumPaymentSchedule(
-                int(loan_id)
-            ).call()
-            schedule2 = contract.functions.getPrincipalPaymentSchedule(
-                int(loan_id)
-            ).call()
-            schedule = tools.format_schedule(
-                schedule1, schedule2, chain_info.native.upper()
-            )
-        except Exception:
-            schedule = "Unavailable"
-
-        try:
-            token_by_id = None
-            index = 0
-
-            while True:
-                try:
-                    token_id = contract.functions.tokenByIndex(index).call()
-                    if token_id == int(loan_id):
-                        token_by_id = index
-                        break
-                    index += 1
-
-                except Exception:
-                    break
-
-        except Exception:
-            token_by_id = None
-
-        loan_button = InlineKeyboardButton(
-            text="Manage Loan",
-            url=f"{dex_info.url}lending/{chain_info.short_name}/{settings.LIVE_LOAN(chain, 'name')}/{token_by_id}",
-        )
-
-        loan_text = (
-            f"Loan ID: {loan_id}\n\nPayment Schedule:\n\n{schedule}\n\n"
-        )
-
-    elif launch_type == "launch_without_loan":
-        launched = onchain.deploy_token_without_loan(
-            status_text["chain"],
-            status_text["name"],
-            status_text["ticker"],
-            int(status_text["supply"]),
-            int(status_text["percent"]),
-            status_text["description"],
-            status_text["twitter"],
-            status_text["telegram"],
-            status_text["website"],
-            status_text["buy_tax"],
-            status_text["sell_tax"],
-            status_text["owner"],
-            status_text["address"],
-            status_text["secret_key"],
-            int(status_text["fee"]),
-        )
-
-        if isinstance(launched, str) and launched.startswith("Error"):
-            await query.edit_message_text(
-                f"Error initiating TX\n\nUse /withdraw if you want to cancel the deployment and return your funds\n\n{launched}"
-            )
-            return
-
-        token_address, pair_address = launched
-
-    elif launch_type == "launch_uniswap":
-        launched = onchain.deploy_token(
-            status_text["chain"],
-            status_text["name"],
-            status_text["ticker"],
-            int(status_text["supply"]),
-            int(status_text["percent"]),
-            status_text["buy_tax"],
-            status_text["sell_tax"],
-            status_text["owner"],
-            status_text["address"],
-            status_text["secret_key"],
-            int(status_text["fee"]),
-        )
-
-        if isinstance(launched, str) and launched.startswith("Error"):
-            await query.edit_message_text(
-                f"Error initiating TX\n\nUse /withdraw if you want to cancel the deployment and return your funds\n\n{launched}"
-            )
-            return
-
-        token_address, pair_address = launched
-
-    refund = onchain.transfer_balance(
-        status_text["chain"],
-        status_text["address"],
-        status_text["owner"],
-        status_text["secret_key"],
-    )
-
-    if isinstance(refund, str) and refund.startswith("Error"):
-        refund_text = "No funds returned\n\nThis is likely because you sent close to the perfect amount for gas\n\nUse /withdraw to double check"
-    else:
-        refund_text = f"Funds returned\n\n{chain_info.scan_tx}{refund}"
-
-    message_text = (
-        f"Congratulations {status_text['ticker']} has been launched on {status_text['dex'].upper()} ({chain_info.name.upper()})\n\n"
-        f"CA: `{token_address}`\n\n"
-        f"Your wallet:\n"
-        f"`{status_text['owner']}`\n\n"
-        f"{loan_text}"
-        f"Has the ability to:\n"
-        f"- Change the taxes\n"
-        f"- Change the tax wallet\n"
-        f"- Change the fee thresholds\n"
-        f"- Renounce the contract\n\n"
-        f"Use the 'Manage Token' button below"
-    )
-
-    buttons = [
-        [
-            InlineKeyboardButton(
-                text="Buy Link",
-                url=urls.XCHANGE_BUY(chain_info.id, token_address),
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                text="Chart Link",
-                url=urls.DEX_TOOLS(chain_info.dext, token_address),
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                text="Manage Token", url=f"{urls.XCHANGE}create?tab=manage"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                text="Manage Liquidity", url=dex_info.url + dex_info.liq_link
-            )
-        ],
-    ]
-
-    if loan_button:
-        buttons.append([loan_button])
-
-    message = await query.edit_message_text(
-        message_text,
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(buttons),
-    )
-
-    try:
-        await context.bot.pin_chat_message(
-            chat_id=update.effective_chat.id, message_id=message.id
-        )
-    except Exception:
-        pass
-
-    await context.bot.send_message(
-        chat_id=query.message.chat_id, text=refund_text
-    )
-
-    db.set_complete(status_text["user_id"])
+HANDLERS = [
+    {
+        "entry_points": [CommandHandler("launch", start_launch)],
+        "states": {
+            STAGE_DEX: [CallbackQueryHandler(stage_dex, pattern="^dex_")],
+            STAGE_CHAIN: [
+                CallbackQueryHandler(stage_chain, pattern="^chain_")
+            ],
+            STAGE_AMOUNT: [
+                CallbackQueryHandler(stage_amount, pattern="^amount_")
+            ],
+            STAGE_CONFIRM: [
+                CallbackQueryHandler(stage_confirm, pattern="^confirm_")
+            ],
+            STAGE_TICKER: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_ticker)
+            ],
+            STAGE_NAME: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_name)
+            ],
+            STAGE_DESCRIPTION: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, stage_description
+                )
+            ],
+            STAGE_TWITTER: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_twitter)
+            ],
+            STAGE_TELEGRAM: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_telegram)
+            ],
+            STAGE_WEBSITE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_website)
+            ],
+            STAGE_BUY_TAX: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_buy_tax)
+            ],
+            STAGE_SELL_TAX: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_sell_tax)
+            ],
+            STAGE_SUPPLY: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_supply)
+            ],
+            STAGE_LOAN: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_loan)
+            ],
+            STAGE_DURATION: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_duration)
+            ],
+            STAGE_CONTRIBUTE: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, stage_contribute
+                )
+            ],
+            STAGE_OWNER: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_owner)
+            ],
+        },
+    }
+]

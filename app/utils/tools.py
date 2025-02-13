@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
+import os
+import requests
 import socket
 import unicodedata
 
+from bot.commands import general, admin
 from constants.bot import settings
 from constants.protocol import chains
 from services import get_etherscan
@@ -16,6 +19,13 @@ def datetime_to_timestamp(datetime_str):
         return timestamp
     except ValueError:
         return "Invalid datetime format. Please use YYYY-MM-DD HH:MM."
+
+
+def detect_emojis(text):
+    for char in text:
+        if unicodedata.category(char) in {"Ll", "Lu", "Nd"}:
+            return False
+    return True
 
 
 def escape_markdown(text):
@@ -120,11 +130,11 @@ def get_duration_days(duration):
     return days, hours, minutes
 
 
-def detect_emojis(text):
-    for char in text:
-        if unicodedata.category(char) in {"Ll", "Lu", "Nd"}:
-            return False
-    return True
+def is_local():
+    ip = socket.gethostbyname(socket.gethostname())
+    return (
+        ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
+    )
 
 
 def split_message(message: str, max_length: int = 4096) -> list:
@@ -160,8 +170,51 @@ def timestamp_to_datetime(timestamp):
         return "Invalid timestamp."
 
 
-def is_local():
-    ip = socket.gethostbyname(socket.gethostname())
-    return (
-        ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
+def update_bot_commands():
+    url = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_BOT_TOKEN')}/setMyCommands"
+
+    general_commands = [
+        {
+            "command": cmd[0] if isinstance(cmd, list) else cmd,
+            "description": desc,
+        }
+        for cmd, _, desc in general.HANDLERS
+    ]
+
+    admin_commands = [
+        {"command": cmd, "description": desc}
+        for cmd, _, desc in admin.HANDLERS
+    ]
+
+    all_commands = general_commands + admin_commands
+
+    user_response = requests.post(
+        url, json={"commands": general_commands, "scope": {"type": "default"}}
     )
+
+    if user_response.status_code == 200:
+        general_result = "✅ General commands updated"
+    else:
+        general_result = (
+            f"⚠️ Failed to update general commands: {user_response.text}"
+        )
+
+    admin_response = requests.post(
+        url,
+        json={
+            "commands": all_commands,
+            "scope": {
+                "type": "chat",
+                "chat_id": int(os.getenv("TELEGRAM_ADMIN_ID")),
+            },
+        },
+    )
+
+    if admin_response.status_code == 200:
+        admin_result = "✅ Admin commands updated"
+    else:
+        admin_result = (
+            f"⚠️ Failed to update admin commands: {admin_response.text}"
+        )
+
+    return general_result, admin_result

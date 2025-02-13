@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import CallbackContext
+from telegram.ext import ContextTypes
 
+from bot import conversations
 from constants.bot import settings
 from constants.protocol import chains
 from utils import onchain, tools
@@ -10,11 +11,7 @@ db = get_dbmanager()
 etherscan = get_etherscan()
 
 
-async def test(update: Update, context: CallbackContext):
-    return
-
-
-async def id(update: Update, context: CallbackContext):
+async def id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         await update.message.reply_text(
@@ -23,7 +20,11 @@ async def id(update: Update, context: CallbackContext):
         )
 
 
-async def reset(update: Update, context: CallbackContext):
+async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await conversations.start_launch
+
+
+async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -51,27 +52,7 @@ async def reset(update: Update, context: CallbackContext):
     )
 
 
-async def reset_callback(update: Update, context: CallbackContext):
-    query = update.callback_query
-    await query.answer()
-
-    user_id = update.effective_user.id
-
-    if query.data == "reset_yes":
-        delete_text = db.delete_entry(user_id)
-        if delete_text:
-            await query.edit_message_text(
-                "Project reset. Use /launch to start a new project"
-            )
-        else:
-            await query.edit_message_text(
-                "No projects waiting, please use /launch to start"
-            )
-    elif query.data == "reset_no":
-        await query.edit_message_text("Reset canceled.")
-
-
-async def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_name = user.username or f"{user.first_name} {user.last_name}"
     chat_type = update.message.chat.type
@@ -97,7 +78,7 @@ async def start(update: Update, context: CallbackContext):
         )
 
 
-async def status(update: Update, context: CallbackContext):
+async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -247,7 +228,7 @@ async def status(update: Update, context: CallbackContext):
             )
 
 
-async def stuck(update: Update, context: CallbackContext):
+async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -260,7 +241,7 @@ async def stuck(update: Update, context: CallbackContext):
         await update.message.reply_text(data)
 
 
-async def withdraw(update: Update, context: CallbackContext):
+async def withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
@@ -290,3 +271,17 @@ async def withdraw(update: Update, context: CallbackContext):
             await update.message.reply_text(
                 "No projects waiting, please use /launch to start"
             )
+
+
+HANDLERS = [
+    (func.__name__.split("_")[0], func, description)
+    for func, description in [
+        (id, "Your TG ID"),
+        (launch, "launch your project"),
+        (reset, "Reset your project"),
+        (start, "About Xchange Create"),
+        (status, "Your project status"),
+        (stuck, "Clear a stuck txn"),
+        (withdraw, "Withdraw funds"),
+    ]
+]
