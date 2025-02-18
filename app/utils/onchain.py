@@ -44,8 +44,8 @@ async def deploy_token_without_loan(
     )
 
     deadline = tools.timestamp_deadline()
-    gas_price = await chain_info.w3async.eth.gas_price
-    nonce = await chain_info.w3async.eth.get_transaction_count(address)
+    gas_price = await chain_info.w3.eth.gas_price
+    nonce = await chain_info.w3.eth.get_transaction_count(address)
 
     params = {
         "name": name,
@@ -66,18 +66,20 @@ async def deploy_token_without_loan(
     }
 
     try:
-        gas_estimate = deployer_contract.functions.deployTokenWithoutLoan(
-            params
-        ).estimate_gas(
-            {
-                "from": address,
-                "nonce": nonce,
-                "gasPrice": gas_price,
-                "value": int(loan_fee),
-            }
+        gas_estimate = (
+            await deployer_contract.functions.deployTokenWithoutLoan(
+                params
+            ).estimate_gas(
+                {
+                    "from": address,
+                    "nonce": nonce,
+                    "gasPrice": gas_price,
+                    "value": int(loan_fee),
+                }
+            )
         )
 
-        transaction = deployer_contract.functions.deployTokenWithoutLoan(
+        transaction = await deployer_contract.functions.deployTokenWithoutLoan(
             params
         ).build_transaction(
             {
@@ -92,11 +94,11 @@ async def deploy_token_without_loan(
         signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, key
         )
-        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+        tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_tx.raw_ransaction
         )
 
-        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
@@ -159,8 +161,8 @@ async def deploy_token_with_loan(
     )
 
     deadline = tools.timestamp_deadline()
-    gas_price = await chain_info.w3async.eth.gas_price
-    nonce = await chain_info.w3async.eth.get_transaction_count(address)
+    gas_price = await chain_info.w3.eth.gas_price
+    nonce = await chain_info.w3.eth.get_transaction_count(address)
 
     params = {
         "name": name,
@@ -184,7 +186,7 @@ async def deploy_token_with_loan(
     }
 
     try:
-        gas_estimate = deployer_contract.functions.deployTokenWithLoan(
+        gas_estimate = await deployer_contract.functions.deployTokenWithLoan(
             params
         ).estimate_gas(
             {
@@ -195,7 +197,7 @@ async def deploy_token_with_loan(
             }
         )
 
-        transaction = deployer_contract.functions.deployTokenWithLoan(
+        transaction = await deployer_contract.functions.deployTokenWithLoan(
             params
         ).build_transaction(
             {
@@ -210,11 +212,11 @@ async def deploy_token_with_loan(
         signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, key
         )
-        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+        tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_tx.raw_transaction
         )
 
-        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
@@ -271,8 +273,8 @@ async def deploy_token(
     )
 
     deadline = tools.timestamp_deadline()
-    gas_price = await chain_info.w3async.eth.gas_price
-    nonce = await chain_info.w3async.eth.get_transaction_count(address)
+    gas_price = await chain_info.w3.eth.gas_price
+    nonce = await chain_info.w3.eth.get_transaction_count(address)
 
     params = {
         "name": name,
@@ -288,7 +290,7 @@ async def deploy_token(
     }
 
     try:
-        gas_estimate = deployer_contract.functions.deployToken(
+        gas_estimate = await deployer_contract.functions.deployToken(
             params
         ).estimate_gas(
             {
@@ -299,7 +301,7 @@ async def deploy_token(
             }
         )
 
-        transaction = deployer_contract.functions.deployToken(
+        transaction = await deployer_contract.functions.deployToken(
             params
         ).build_transaction(
             {
@@ -314,11 +316,11 @@ async def deploy_token(
         signed_txn = chain_info.w3.eth.account.sign_transaction(
             transaction, key
         )
-        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+        tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_txn.raw_transaction
         )
 
-        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt == 1:
@@ -352,7 +354,7 @@ async def cancel_tx(chain, address, key, gas_multiplier=1.5):
         if pending_nonce == latest_nonce:
             return "No pending transactions found. No action needed."
 
-        gas_price = await chain_info.w3async.eth.gas_price
+        gas_price = await chain_info.w3.eth.gas_price
         adjusted_gas_price = int(gas_price * gas_multiplier)
 
         transaction = {
@@ -368,11 +370,11 @@ async def cancel_tx(chain, address, key, gas_multiplier=1.5):
         signed_txn = chain_info.w3.eth.account.sign_transaction(
             transaction, key
         )
-        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+        tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_txn.raw_transaction
         )
 
-        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
@@ -396,8 +398,8 @@ async def estimate_gas_without_loan(
             abi=deployer_abi,
         )
         deadline = tools.timestamp_deadline()
-        gas_price = await chain_info.w3async.eth.gas_price
-        nonce = await chain_info.w3async.eth.get_transaction_count(ca.DEAD)
+        gas_price = await chain_info.w3.eth.gas_price
+        nonce = await chain_info.w3.eth.get_transaction_count(ca.DEAD)
 
         params = {
             "name": name,
@@ -417,15 +419,17 @@ async def estimate_gas_without_loan(
             "taxWallet": owner,
         }
 
-        gas_estimate = deployer_contract.functions.deployTokenWithoutLoan(
-            params
-        ).estimate_gas(
-            {
-                "from": ca.DEAD,
-                "nonce": nonce,
-                "gasPrice": gas_price,
-                "value": int(loan_fee),
-            }
+        gas_estimate = (
+            await deployer_contract.functions.deployTokenWithoutLoan(
+                params
+            ).estimate_gas(
+                {
+                    "from": ca.DEAD,
+                    "nonce": nonce,
+                    "gasPrice": gas_price,
+                    "value": int(loan_fee),
+                }
+            )
         )
 
         gas_cost = gas_estimate * gas_price
@@ -456,8 +460,8 @@ async def estimate_gas_with_loan(
             abi=deployer_abi,
         )
         deadline = tools.timestamp_deadline()
-        gas_price = await chain_info.w3async.eth.gas_price
-        nonce = await chain_info.w3async.eth.get_transaction_count(ca.DEAD)
+        gas_price = await chain_info.w3.eth.gas_price
+        nonce = await chain_info.w3.eth.get_transaction_count(ca.DEAD)
         loan_contract = settings.LIVE_LOAN(chain, "address")
 
         params = {
@@ -481,7 +485,7 @@ async def estimate_gas_with_loan(
             "taxWallet": owner,
         }
 
-        gas_estimate = deployer_contract.functions.deployTokenWithLoan(
+        gas_estimate = await deployer_contract.functions.deployTokenWithLoan(
             params
         ).estimate_gas(
             {
@@ -519,8 +523,8 @@ async def estimate_gas_uniswap(
             abi=deployer_abi,
         )
         deadline = tools.timestamp_deadline()
-        gas_price = await chain_info.w3async.eth.gas_price
-        nonce = await chain_info.w3async.eth.get_transaction_count(ca.DEAD)
+        gas_price = await chain_info.w3.eth.gas_price
+        nonce = await chain_info.w3.eth.get_transaction_count(ca.DEAD)
 
         params = {
             "name": name,
@@ -535,7 +539,7 @@ async def estimate_gas_uniswap(
             "deadline": deadline,
         }
 
-        gas_estimate = deployer_contract.functions.deployToken(
+        gas_estimate = await deployer_contract.functions.deployToken(
             params
         ).estimate_gas(
             {
@@ -552,7 +556,7 @@ async def estimate_gas_uniswap(
         return f"Error estimating gas: {str(e)}"
 
 
-def get_pool_funds(chain):
+async def get_pool_funds(chain):
     if chain not in chains.get_active_chains():
         raise ValueError(f"Invalid chain: {chain}")
 
@@ -566,7 +570,7 @@ def get_pool_funds(chain):
     try:
         function_name = "availableCapital"
         function_call = getattr(contract.functions, function_name)
-        result = function_call().call()
+        result = await function_call().call()
 
         return chain_info.w3.from_wei(result, "ether")
 
@@ -584,19 +588,15 @@ async def transfer_balance(chain, address, owner, key):
         checksum_address = chain_info.w3.to_checksum_address(address)
         checksum_owner = chain_info.w3.to_checksum_address(owner)
         balance_wei = chain_info.w3.eth.get_balance(checksum_address)
-        gas_price = await chain_info.w3async.eth.gas_price
-        nonce = await chain_info.w3async.eth.get_transaction_count(
-            checksum_address
-        )
+        gas_price = await chain_info.w3.eth.gas_price
+        nonce = await chain_info.w3.eth.get_transaction_count(checksum_address)
         sample_transaction = {
             "from": checksum_address,
             "to": checksum_owner,
             "value": 1,
             "gasPrice": gas_price,
         }
-        gas_estimate = await chain_info.w3async.eth.estimate_gas(
-            sample_transaction
-        )
+        gas_estimate = await chain_info.w3.eth.estimate_gas(sample_transaction)
         gas_cost = gas_price * gas_estimate
 
         if balance_wei <= gas_cost:
@@ -619,11 +619,11 @@ async def transfer_balance(chain, address, owner, key):
         signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, key
         )
-        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+        tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_tx.raw_ransaction
         )
 
-        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt == 1:

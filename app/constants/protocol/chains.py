@@ -1,4 +1,4 @@
-from web3 import AsyncWeb3, Web3
+from web3 import AsyncWeb3
 
 from constants.bot import urls
 from utils import tools
@@ -31,8 +31,7 @@ class ChainInfo:
         self.scan_address = scan_address
         self.scan_tx = scan_tx
         self.dext = dext
-        self.w3 = Web3(Web3.HTTPProvider(rpc_url))
-        self.w3async = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
+        self.w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
 
 
 MAINNETS = {

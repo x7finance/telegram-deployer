@@ -89,7 +89,7 @@ def format_schedule(schedule1, schedule2, native_token):
     return "\n".join(schedule_list)
 
 
-def generate_loan_terms(chain, loan_amount):
+async def generate_loan_terms(chain, loan_amount):
     chain_info = chains.get_active_chains()[chain]
 
     loan_in_wei = chain_info.w3.to_wei(loan_amount, "ether")
@@ -101,7 +101,7 @@ def generate_loan_terms(chain, loan_amount):
         abi=etherscan.get_abi(loan_contract_address, chain),
     )
 
-    quote = contract.functions.getQuote(loan_in_wei).call()
+    quote = await contract.functions.getQuote(loan_in_wei).call()
     origination_fee = quote[1]
 
     loan_deposit = chain_info.w3.to_wei(settings.LIQUIDATION_DEPOSIT, "ether")

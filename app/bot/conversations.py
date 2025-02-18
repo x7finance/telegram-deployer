@@ -343,7 +343,7 @@ async def stage_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         percent_str = f"{percent}% of tokens ({team_amount:,.0f}) will be reserved as team supply"
 
     if context.user_data["dex"] == "xchange":
-        pool = onchain.get_pool_funds(context.user_data["chain"].lower())
+        pool = await onchain.get_pool_funds(context.user_data["chain"].lower())
         await context.bot.send_message(
             chat_id=query.message.chat_id,
             text=f"{percent_str}\n\n"
@@ -367,7 +367,7 @@ async def stage_loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loan_input = update.message.text.strip()
     chain = context.user_data["chain"].lower()
     chain_info = chains.get_active_chains()[chain]
-    pool = onchain.get_pool_funds(chain)
+    pool = await onchain.get_pool_funds(chain)
 
     try:
         loan_amount = Decimal(loan_input)
@@ -525,7 +525,7 @@ async def stage_owner(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         if "loan" in user_data:
-            fee, _ = tools.generate_loan_terms(chain, liquidity)
+            fee, _ = await tools.generate_loan_terms(chain, liquidity)
             context.user_data["fee"] = fee
 
             loan_text = (

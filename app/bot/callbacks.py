@@ -69,10 +69,10 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 address=chain_info.w3.to_checksum_address(loan_contract),
                 abi=etherscan.get_abi(loan_contract, chain),
             )
-            schedule1 = contract.functions.getPremiumPaymentSchedule(
+            schedule1 = await contract.functions.getPremiumPaymentSchedule(
                 int(loan_id)
             ).call()
-            schedule2 = contract.functions.getPrincipalPaymentSchedule(
+            schedule2 = await contract.functions.getPrincipalPaymentSchedule(
                 int(loan_id)
             ).call()
             schedule = tools.format_schedule(
@@ -87,7 +87,9 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             while True:
                 try:
-                    token_id = contract.functions.tokenByIndex(index).call()
+                    token_id = await contract.functions.tokenByIndex(
+                        index
+                    ).call()
                     if token_id == int(loan_id):
                         token_by_id = index
                         break

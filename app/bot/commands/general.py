@@ -57,7 +57,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_name = user.username or f"{user.first_name} {user.last_name}"
     chat_type = update.message.chat.type
     count = db.count_launches()
-    _, loan_fees = tools.generate_loan_terms("base", 1)
+    _, loan_fees = await tools.generate_loan_terms("base", 1)
     if chat_type == "private":
         await update.message.reply_text(
             f"Welcome to {tools.escape_markdown(settings.BOT_NAME)}, {tools.escape_markdown(user_name)}!\n"
