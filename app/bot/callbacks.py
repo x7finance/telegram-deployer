@@ -36,7 +36,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if launch_type == "launch_with_loan":
         loan_contract = settings.LIVE_LOAN(chain, "address")
 
-        loan = onchain.deploy_token_with_loan(
+        loan = await onchain.deploy_token_with_loan(
             status_text["chain"],
             status_text["name"],
             status_text["ticker"],
@@ -109,7 +109,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     elif launch_type == "launch_without_loan":
-        launched = onchain.deploy_token_without_loan(
+        launched = await onchain.deploy_token_without_loan(
             status_text["chain"],
             status_text["name"],
             status_text["ticker"],
@@ -136,7 +136,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
         token_address, pair_address = launched
 
     elif launch_type == "launch_uniswap":
-        launched = onchain.deploy_token(
+        launched = await onchain.deploy_token(
             status_text["chain"],
             status_text["name"],
             status_text["ticker"],
@@ -158,7 +158,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         token_address, pair_address = launched
 
-    refund = onchain.transfer_balance(
+    refund = await onchain.transfer_balance(
         status_text["chain"],
         status_text["address"],
         status_text["owner"],

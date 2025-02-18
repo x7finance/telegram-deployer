@@ -598,7 +598,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if context.user_data["dex"] == "xchange":
             if "contribution" in user_data:
                 fee = user_data.get("contribution") * 10**18
-                gas_estimate = onchain.estimate_gas_without_loan(
+                gas_estimate = await onchain.estimate_gas_without_loan(
                     user_data.get("chain"),
                     user_data.get("name"),
                     user_data.get("ticker"),
@@ -617,7 +617,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             else:
                 fee = user_data.get("fee")
-                gas_estimate = onchain.estimate_gas_with_loan(
+                gas_estimate = await onchain.estimate_gas_with_loan(
                     user_data.get("chain"),
                     user_data.get("name"),
                     user_data.get("ticker"),

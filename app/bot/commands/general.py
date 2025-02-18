@@ -98,7 +98,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 if not status_text["loan"]:
                     callback_data = "launch_without_loan"
-                    gas_estimate = onchain.estimate_gas_without_loan(
+                    gas_estimate = await onchain.estimate_gas_without_loan(
                         status_text["chain"],
                         status_text["name"],
                         status_text["ticker"],
@@ -111,7 +111,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     )
                 else:
                     callback_data = "launch_with_loan"
-                    gas_estimate = onchain.estimate_gas_with_loan(
+                    gas_estimate = await onchain.estimate_gas_with_loan(
                         status_text["chain"],
                         status_text["name"],
                         status_text["ticker"],
@@ -233,7 +233,7 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chat_type == "private":
         user_id = update.effective_user.id
         status_text = db.search_entry(user_id)
-        data = onchain.cancel_tx(
+        data = await onchain.cancel_tx(
             status_text["chain"],
             status_text["address"],
             status_text["secret_key"],
@@ -247,7 +247,7 @@ async def withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
         status_text = db.search_entry(user_id)
         if status_text:
-            result = onchain.transfer_balance(
+            result = await onchain.transfer_balance(
                 status_text["chain"],
                 status_text["address"],
                 status_text["owner"],
