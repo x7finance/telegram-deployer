@@ -95,7 +95,7 @@ async def deploy_token_without_loan(
             transaction, key
         )
         tx_hash = await chain_info.w3.eth.send_raw_transaction(
-            signed_tx.raw_ransaction
+            signed_tx.raw_transaction
         )
 
         receipt = await chain_info.w3.eth.wait_for_transaction_receipt(
@@ -587,7 +587,7 @@ async def transfer_balance(chain, address, owner, key):
     try:
         checksum_address = chain_info.w3.to_checksum_address(address)
         checksum_owner = chain_info.w3.to_checksum_address(owner)
-        balance_wei = chain_info.w3.eth.get_balance(checksum_address)
+        balance_wei = await chain_info.w3.eth.get_balance(checksum_address)
         gas_price = await chain_info.w3.eth.gas_price
         nonce = await chain_info.w3.eth.get_transaction_count(checksum_address)
         sample_transaction = {
@@ -620,7 +620,7 @@ async def transfer_balance(chain, address, owner, key):
             transaction, key
         )
         tx_hash = await chain_info.w3.eth.send_raw_transaction(
-            signed_tx.raw_ransaction
+            signed_tx.raw_transaction
         )
 
         receipt = await chain_info.w3.eth.wait_for_transaction_receipt(

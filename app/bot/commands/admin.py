@@ -52,7 +52,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 entry = db.search_entry(id)
                 if entry:
                     chain_info = chains.get_active_chains()[entry["chain"]]
-                    balance_wei = chain_info.w3.eth.get_balance(
+                    balance_wei = await chain_info.w3.eth.get_balance(
                         entry["address"]
                     )
                     balance = chain_info.w3.from_wei(balance_wei, "ether")
@@ -92,7 +92,9 @@ async def view(update: Update, context: ContextTypes.DEFAULT_TYPE):
             formatted_entries = []
             for entry in entries:
                 chain_info = chains.get_active_chains()[entry["chain"]]
-                balance_wei = chain_info.w3.eth.get_balance(entry["address"])
+                balance_wei = await chain_info.w3.eth.get_balance(
+                    entry["address"]
+                )
                 balance = chain_info.w3.from_wei(balance_wei, "ether")
 
                 entry_date = entry["timedate"]
