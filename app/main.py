@@ -43,6 +43,7 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 Exception(f"{message.text} caused error: {context.error}")
             )
         else:
+            print({context.error})
             sentry_sdk.capture_exception(
                 Exception(
                     f"Error occurred without a valid message: {context.error}"
