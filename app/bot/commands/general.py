@@ -86,7 +86,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if status_text:
             chain_info = chains.get_active_chains()[status_text["chain"]]
-            balance_wei = chain_info.w3.eth.get_balance(status_text["address"])
+            balance_wei = await chain_info.w3.eth.get_balance(
+                status_text["address"]
+            )
             balance = chain_info.w3.from_wei(balance_wei, "ether")
             balance_str = format(balance, ".18f")
             if status_text["dex"] == "xchange":
