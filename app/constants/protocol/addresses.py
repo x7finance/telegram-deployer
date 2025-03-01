@@ -1,4 +1,4 @@
-def DEPLOYER(chain):
+def deployer(chain):
     map = {
         "base": "0xf4C0124b9a862a281379374e3CCc564acC68a5af",
         "base-sepolia": "0x9a6570e285c4625339c621E9022dD3ef17376B33",
@@ -8,7 +8,7 @@ def DEPLOYER(chain):
     return map.get(chain)
 
 
-def DEPLOYER_UNISWAP(chain):
+def deployer_uniswap(chain):
     map = {
         "base": "0xA33C9a350BE602957104486f95352B9589E85E15",
         "base-sepolia": "0x9a6570e285c4625339c621E9022dD3ef17376B33",
@@ -18,11 +18,11 @@ def DEPLOYER_UNISWAP(chain):
     return map.get(chain)
 
 
-def FACTORY(chain):
+def factory(chain):
     return "0x8B76C05676D205563ffC1cbd11c0A6e3d83929c5"
 
 
-def FACTORY_UNISWAP(chain):
+def factory_uniswap(chain):
     map = {
         "base": "0x8909Dc15e40173Ff4699343b6eB8132c65e18eC6",
         "base-sepolia": "0x9a6570e285c4625339c621E9022dD3ef17376B33",
@@ -32,7 +32,7 @@ def FACTORY_UNISWAP(chain):
     return map.get(chain)
 
 
-def ILL004(chain):
+def ill004(chain):
     map = {
         "base": "0x3c0E49D9b72FdDAeF36e2962368b073Bc5A76481",
         "base-sepolia": "0xB4190B1b6FD00A9699b5FEa913e7D981318fef5a",
@@ -42,7 +42,7 @@ def ILL004(chain):
     return map.get(chain)
 
 
-def ILL005(chain):
+def ill005(chain):
     map = {
         "base": "0x90482AD3aa56675ba313dAC14C3a7717bAD5B24D",
         "base-sepolia": "0x97dD34dF320CC490A071b794756423e2bE7D4B3b",
@@ -52,7 +52,7 @@ def ILL005(chain):
     return map.get(chain)
 
 
-def LPOOL(chain):
+def lending_pool(chain):
     map = {
         "base": "0x4eE199B7DFED6B96402623BdEcf2B1ae2f3750Dd",
         "base-sepolia": "0x0E2F369Fdc070521ae23A8BcB4Bad0310044a1e8",

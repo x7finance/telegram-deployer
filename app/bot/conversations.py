@@ -13,8 +13,9 @@ from eth_utils import is_checksum_address
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
+from constants.protocol import addresses
 from constants.bot import settings
-from constants.protocol import ca, chains
+from constants.protocol import chains
 from utils import onchain, tools
 from services import get_dbmanager, get_etherscan
 
@@ -474,8 +475,8 @@ async def stage_owner(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if (
         not is_checksum_address(context.user_data["owner"])
-        or context.user_data["owner"] == ca.DEAD
-        or context.user_data["owner"] == ca.ZERO
+        or context.user_data["owner"] == addresses.DEAD
+        or context.user_data["owner"] == addresses.ZERO
     ):
         await update.message.reply_text(
             "Error: Invalid address - Please enter a valid checksum address"

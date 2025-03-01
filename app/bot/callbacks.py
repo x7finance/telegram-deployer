@@ -34,7 +34,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loan_text = ""
 
     if launch_type == "launch_with_loan":
-        loan_contract = settings.LIVE_LOAN(chain, "address")
+        loan_contract = settings.live_loan(chain, "address")
 
         loan = await onchain.deploy_token_with_loan(
             status_text["chain"],
@@ -103,7 +103,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         loan_button = InlineKeyboardButton(
             text="Manage Loan",
-            url=f"{dex_info.url}lending/{chain_info.short_name}/{settings.LIVE_LOAN(chain, 'name')}/{token_by_id}",
+            url=f"{dex_info.url}lending/{chain_info.short_name}/{settings.live_loan(chain, 'name')}/{token_by_id}",
         )
 
         loan_text = (
@@ -170,7 +170,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if isinstance(refund, str) and refund.startswith("Error"):
         refund_text = (
             f"No funds returned\n\n{refund}\n\n"
-            "If this is unexpected use your saved private key from setup to withdraw funds\n\n"
+            "If this is unexpected use your saved private key from setup to withdraw funds"
         )
     else:
         refund_text = f"Funds returned\n\n{chain_info.scan_tx}{refund}"

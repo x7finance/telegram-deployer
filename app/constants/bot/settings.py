@@ -1,12 +1,12 @@
-from constants.protocol import ca
+from constants.protocol import addresses
 
 
 ADMINS = [1667971437]
 BOT_NAME = "Xchange Create"
 
 
-def LIVE_LOAN(chain, return_type="both"):
-    address = ca.ILL005(chain)
+def live_loan(chain, return_type="both"):
+    address = addresses.ill005(chain)
     name = "005"
 
     if return_type == "address":

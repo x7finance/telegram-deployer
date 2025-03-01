@@ -94,7 +94,7 @@ async def generate_loan_terms(chain, loan_amount):
 
     loan_in_wei = chain_info.w3.to_wei(loan_amount, "ether")
 
-    loan_contract_address = settings.LIVE_LOAN(chain, "address")
+    loan_contract_address = settings.live_loan(chain, "address")
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(loan_contract_address),
