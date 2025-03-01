@@ -257,7 +257,7 @@ async def withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             if result.startswith("Error"):
                 await update.message.reply_text(
-                    f"Error\n\n{result}\n\n"
+                    f"{result}\n\n"
                     "If this is unexpected use your saved private key from setup to withdraw funds",
                 )
             else:

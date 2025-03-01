@@ -168,7 +168,10 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     if isinstance(refund, str) and refund.startswith("Error"):
-        refund_text = "No funds returned\n\nThis is likely because you sent close to the perfect amount for gas\n\nUse /withdraw to double check"
+        refund_text = (
+            f"No funds returned\n\n{refund}\n\n"
+            "If this is unexpected use your saved private key from setup to withdraw funds\n\n"
+        )
     else:
         refund_text = f"Funds returned\n\n{chain_info.scan_tx}{refund}"
 

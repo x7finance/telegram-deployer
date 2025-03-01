@@ -600,12 +600,12 @@ async def transfer_balance(chain, address, owner, key):
         gas_cost = gas_price * gas_estimate
 
         if balance_wei <= gas_cost:
-            return "Insufficient balance to cover gas costs."
+            return "Error: Insufficient balance to cover gas costs."
 
         amount_to_transfer = balance_wei - gas_cost
 
-        if amount_to_transfer <= 0:
-            return "Insufficient funds to send a valid transaction."
+        if chain_info.w3.from_wei(amount_to_transfer, "ether") <= 0.0001:
+            return "Error: Insufficient funds to send a valid transaction."
 
         transaction = {
             "from": checksum_address,
