@@ -185,18 +185,18 @@ async def update_bot_commands():
 
     all_commands = general_commands + admin_commands
 
+    results = []
+
     async with aiohttp.ClientSession() as session:
         async with session.post(
             url,
             json={"commands": general_commands, "scope": {"type": "default"}},
         ) as response:
-            if response.status == 200:
-                general_result = "✅ General commands updated"
-            else:
-                response_text = await response.text()
-                general_result = (
-                    f"⚠️ Failed to update general commands: {response_text}"
-                )
+            results.append(
+                "✅ General commands updated"
+                if response.status == 200
+                else f"⚠️ Failed to update general commands: {await response.text()}"
+            )
 
         async with session.post(
             url,
@@ -208,12 +208,10 @@ async def update_bot_commands():
                 },
             },
         ) as response:
-            if response.status == 200:
-                admin_result = "✅ Admin commands updated"
-            else:
-                response_text = await response.text()
-                admin_result = (
-                    f"⚠️ Failed to update admin commands: {response_text}"
-                )
+            results.append(
+                "✅ Admin commands updated"
+                if response.status == 200
+                else f"⚠️ Failed to update admin commands: {await response.text()}"
+            )
 
-    return general_result, admin_result
+    return "\n".join(results)

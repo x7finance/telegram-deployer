@@ -1,6 +1,6 @@
 from telegram import Message, Update
 from telegram.ext import (
-    ApplicationBuilder,
+    Application,
     CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
@@ -21,7 +21,7 @@ filterwarnings(
 )
 
 application = (
-    ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+    Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 )
 
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
@@ -79,23 +79,20 @@ def init_bot():
     for handler, pattern in callbacks.HANDLERS:
         application.add_handler(CallbackQueryHandler(handler, pattern=pattern))
 
+    print("✅ Bot initialized")
 
-def start():
-    print("🔄 Initializing bot...")
-    init_bot()
 
+async def post_init(application: Application):
     if not tools.is_local():
         print("✅ Bot Running on server")
 
-        general_commands, admin_commands = tools.update_bot_commands()
-        print(general_commands)
-        print(admin_commands)
+        print(await tools.update_bot_commands())
 
     else:
         print("✅ Bot Running locally")
 
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
-
 
 if __name__ == "__main__":
-    start()
+    init_bot()
+    application.post_init = post_init
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
