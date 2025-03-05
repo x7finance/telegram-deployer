@@ -1,11 +1,10 @@
 from constants.protocol import addresses
 from constants.bot import settings
-from constants.protocol import chains
+from constants.protocol import abis, chains
 from utils import tools
-from services import get_dbmanager, get_etherscan
+from services import get_dbmanager
 
 db = get_dbmanager()
-etherscan = get_etherscan()
 
 
 async def deploy_token_without_loan(
@@ -25,15 +24,13 @@ async def deploy_token_without_loan(
     key,
     loan_fee,
 ):
-    if chain not in chains.get_active_chains():
-        raise ValueError(f"Invalid chain: {chain}")
+    chain_info = await chains.get_chain_info(chain)
 
-    chain_info = chains.get_active_chains()[chain]
     deployer_address = addresses.deployer(chain)
     factory_address = addresses.factory(chain)
 
-    deployer_abi = etherscan.get_abi(deployer_address, chain)
-    factory_abi = etherscan.get_abi(factory_address, chain)
+    deployer_abi = abis.read("deployer")
+    factory_abi = abis.read("factory")
 
     deployer_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(deployer_address),
@@ -140,17 +137,14 @@ async def deploy_token_with_loan(
     key,
     loan_fee,
 ):
-    if chain not in chains.get_active_chains():
-        raise ValueError(f"Invalid chain: {chain}")
-
     loan_contract = settings.live_loan(chain, "address")
 
-    chain_info = chains.get_active_chains()[chain]
+    chain_info = await chains.get_chain_info(chain)
     deployer_address = addresses.deployer(chain)
     factory_address = addresses.factory(chain)
 
-    deployer_abi = etherscan.get_abi(deployer_address, chain)
-    factory_abi = etherscan.get_abi(factory_address, chain)
+    deployer_abi = abis.read("deployer")
+    factory_abi = abis.read("factory")
 
     deployer_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(deployer_address),
@@ -254,15 +248,12 @@ async def deploy_token(
     key,
     contribution,
 ):
-    if chain not in chains.get_active_chains():
-        raise ValueError(f"Invalid chain: {chain}")
-
-    chain_info = chains.get_active_chains()[chain]
+    chain_info = await chains.get_chain_info(chain)
     deployer_address = addresses.deployer_uniswap(chain)
     factory_address = addresses.factory_uniswap(chain)
 
-    deployer_abi = etherscan.get_abi(deployer_address, chain)
-    factory_abi = etherscan.get_abi(factory_address, chain)
+    deployer_abi = abis.read("deployer")
+    factory_abi = abis.read("factory")
 
     deployer_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(deployer_address),
@@ -345,7 +336,7 @@ async def deploy_token(
 
 async def cancel_tx(chain, address, key, gas_multiplier=1.5):
     try:
-        chain_info = chains.get_active_chains()[chain]
+        chain_info = await chains.get_chain_info(chain)
         latest_nonce = chain_info.w3.eth.get_transaction_count(
             address, "latest"
         )
@@ -391,9 +382,10 @@ async def estimate_gas_without_loan(
     chain, name, symbol, supply, percent, buy_tax, sell_tax, owner, loan_fee
 ):
     try:
-        chain_info = chains.get_active_chains()[chain]
+        chain_info = await chains.get_chain_info(chain)
         deployer_address = addresses.deployer(chain)
-        deployer_abi = etherscan.get_abi(deployer_address, chain)
+        deployer_abi = abis.read("deployer")
+
         deployer_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(deployer_address),
             abi=deployer_abi,
@@ -453,9 +445,10 @@ async def estimate_gas_with_loan(
     loan_fee,
 ):
     try:
-        chain_info = chains.get_active_chains()[chain]
+        chain_info = await chains.get_chain_info(chain)
         deployer_address = addresses.deployer(chain)
-        deployer_abi = etherscan.get_abi(deployer_address, chain)
+        deployer_abi = abis.read("deployer")
+
         deployer_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(deployer_address),
             abi=deployer_abi,
@@ -516,9 +509,10 @@ async def estimate_gas_uniswap(
     contribution,
 ):
     try:
-        chain_info = chains.get_active_chains()[chain]
+        chain_info = await chains.get_chain_info(chain)
         deployer_address = addresses.deployer_uniswap(chain)
-        deployer_abi = etherscan.get_abi(deployer_address, chain)
+        deployer_abi = abis.read("deployer")
+
         deployer_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(deployer_address),
             abi=deployer_abi,
@@ -558,11 +552,9 @@ async def estimate_gas_uniswap(
 
 
 async def get_pool_funds(chain):
-    if chain not in chains.get_active_chains():
-        raise ValueError(f"Invalid chain: {chain}")
+    chain_info = await chains.get_chain_info(chain)
+    contract_abi = abis.read("lendingpool")
 
-    chain_info = chains.get_active_chains()[chain]
-    contract_abi = etherscan.get_abi(addresses.lending_pool(chain), chain)
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(
             addresses.lending_pool(chain)
@@ -582,10 +574,7 @@ async def get_pool_funds(chain):
 
 
 async def transfer_balance(chain, address, owner, key):
-    if chain not in chains.get_active_chains():
-        raise ValueError(f"Invalid chain: {chain}")
-
-    chain_info = chains.get_active_chains()[chain]
+    chain_info = await chains.get_chain_info(chain)
 
     try:
         checksum_address = chain_info.w3.to_checksum_address(address)

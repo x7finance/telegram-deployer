@@ -2,7 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from constants.bot import settings, urls
-from constants.protocol import chains
+from constants.protocol import abis, chains
 from utils import onchain, tools
 from services import get_dbmanager, get_etherscan
 
@@ -16,14 +16,14 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     launch_type = query.data
 
     user_id = update.effective_user.id
-    status_text = db.search_entry(user_id)
+    status_text = await db.search_entry(user_id)
 
     if not status_text:
         await query.edit_message_text("No deployment status found")
         return
 
     chain = status_text["chain"]
-    chain_info = chains.get_active_chains()[chain]
+    chain_info = await chains.get_chain_info(chain)
     dex_info = chains.DEXES[status_text["dex"]]
 
     await query.edit_message_text(
@@ -67,7 +67,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             contract = chain_info.w3.eth.contract(
                 address=chain_info.w3.to_checksum_address(loan_contract),
-                abi=etherscan.get_abi(loan_contract, chain),
+                abi=abis.read("ill005"),
             )
             schedule1 = await contract.functions.getPremiumPaymentSchedule(
                 int(loan_id)
@@ -234,7 +234,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id=query.message.chat_id, text=refund_text
     )
 
-    db.set_complete(status_text["user_id"])
+    await db.set_complete(status_text["user_id"])
 
 
 async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -244,7 +244,7 @@ async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
 
     if query.data == "reset_yes":
-        delete_text = db.delete_entry(user_id)
+        delete_text = await db.delete_entry(user_id)
         if delete_text:
             await query.edit_message_text(
                 "Project reset. Use /launch to start a new project"

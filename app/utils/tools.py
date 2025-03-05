@@ -1,15 +1,12 @@
-from datetime import datetime, timedelta
+import aiohttp
 import os
-import requests
 import socket
 import unicodedata
+from datetime import datetime, timedelta
 
 from bot.commands import general, admin
 from constants.bot import settings
-from constants.protocol import chains
-from services import get_etherscan
-
-etherscan = get_etherscan()
+from constants.protocol import abis, chains
 
 
 def datetime_to_timestamp(datetime_str):
@@ -90,7 +87,7 @@ def format_schedule(schedule1, schedule2, native_token):
 
 
 async def generate_loan_terms(chain, loan_amount):
-    chain_info = chains.get_active_chains()[chain]
+    chain_info = await chains.get_chain_info(chain)
 
     loan_in_wei = chain_info.w3.to_wei(loan_amount, "ether")
 
@@ -98,7 +95,7 @@ async def generate_loan_terms(chain, loan_amount):
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(loan_contract_address),
-        abi=etherscan.get_abi(loan_contract_address, chain),
+        abi=abis.read("ill005"),
     )
 
     quote = await contract.functions.getQuote(loan_in_wei).call()
@@ -170,7 +167,7 @@ def timestamp_to_datetime(timestamp):
         return "Invalid timestamp."
 
 
-def update_bot_commands():
+async def update_bot_commands():
     url = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_BOT_TOKEN')}/setMyCommands"
 
     general_commands = [
@@ -188,33 +185,35 @@ def update_bot_commands():
 
     all_commands = general_commands + admin_commands
 
-    user_response = requests.post(
-        url, json={"commands": general_commands, "scope": {"type": "default"}}
-    )
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            url,
+            json={"commands": general_commands, "scope": {"type": "default"}},
+        ) as response:
+            if response.status == 200:
+                general_result = "✅ General commands updated"
+            else:
+                response_text = await response.text()
+                general_result = (
+                    f"⚠️ Failed to update general commands: {response_text}"
+                )
 
-    if user_response.status_code == 200:
-        general_result = "✅ General commands updated"
-    else:
-        general_result = (
-            f"⚠️ Failed to update general commands: {user_response.text}"
-        )
-
-    admin_response = requests.post(
-        url,
-        json={
-            "commands": all_commands,
-            "scope": {
-                "type": "chat",
-                "chat_id": int(os.getenv("TELEGRAM_ADMIN_ID")),
+        async with session.post(
+            url,
+            json={
+                "commands": all_commands,
+                "scope": {
+                    "type": "chat",
+                    "chat_id": int(os.getenv("TELEGRAM_ADMIN_ID")),
+                },
             },
-        },
-    )
-
-    if admin_response.status_code == 200:
-        admin_result = "✅ Admin commands updated"
-    else:
-        admin_result = (
-            f"⚠️ Failed to update admin commands: {admin_response.text}"
-        )
+        ) as response:
+            if response.status == 200:
+                admin_result = "✅ Admin commands updated"
+            else:
+                response_text = await response.text()
+                admin_result = (
+                    f"⚠️ Failed to update admin commands: {response_text}"
+                )
 
     return general_result, admin_result

@@ -28,7 +28,7 @@ async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        status_text = db.search_entry(user_id)
+        status_text = await db.search_entry(user_id)
 
         if not status_text:
             await update.message.reply_text(
@@ -56,7 +56,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_name = user.username or f"{user.first_name} {user.last_name}"
     chat_type = update.message.chat.type
-    count = db.count_launches()
+    count = await db.count_launches()
     _, loan_fees = await tools.generate_loan_terms("base", 1)
     if chat_type == "private":
         await update.message.reply_text(
@@ -83,7 +83,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user_id = update.effective_user.id
-    status_text = db.search_entry(user_id)
+    status_text = await db.search_entry(user_id)
 
     if not status_text:
         await update.message.reply_text(
@@ -91,7 +91,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    chain_info = chains.get_active_chains()[status_text["chain"]]
+    chain_info = await chains.get_chain_info(status_text["chain"])
     balance_wei = await chain_info.w3.eth.get_balance(status_text["address"])
     balance = chain_info.w3.from_wei(balance_wei, "ether")
     balance_str = format(balance, ".18f")
@@ -211,7 +211,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         loan_info = ""
 
     price_usd = (
-        price_native * etherscan.get_native_price(status_text["chain"]) * 2
+        price_native
+        * await etherscan.get_native_price(status_text["chain"])
+        * 2
     )
     market_cap_usd = price_usd * int(status_text["supply"]) * 2
 
@@ -239,7 +241,7 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        status_text = db.search_entry(user_id)
+        status_text = await db.search_entry(user_id)
         data = await onchain.cancel_tx(
             status_text["chain"],
             status_text["address"],
@@ -252,7 +254,7 @@ async def withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        status_text = db.search_entry(user_id)
+        status_text = await db.search_entry(user_id)
         if status_text:
             result = await onchain.transfer_balance(
                 status_text["chain"],
@@ -266,9 +268,9 @@ async def withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     "If this is unexpected use your saved private key from setup to withdraw funds",
                 )
             else:
-                chain_link = chains.get_active_chains()[
+                chain_link = await chains.get_chain_info(
                     status_text["chain"]
-                ].scan_tx
+                ).scan_tx
                 await update.message.reply_text(
                     f"Balance withdrawn\n\n{chain_link}{result}\n\n"
                     "You can now safely use /reset to reset your project"

@@ -28,7 +28,7 @@ async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
         if user_id in settings.ADMINS:
             id = " ".join(context.args)
-            delete_result = db.delete_entry(id)
+            delete_result = await db.delete_entry(id)
 
             if delete_result:
                 await update.message.reply_text(
@@ -49,9 +49,9 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if id == "":
                 await update.message.reply_text("Provide user ID")
             else:
-                entry = db.search_entry(id)
+                entry = await db.search_entry(id)
                 if entry:
-                    chain_info = chains.get_active_chains()[entry["chain"]]
+                    chain_info = await chains.get_chain_info(entry["chain"])
                     balance_wei = await chain_info.w3.eth.get_balance(
                         entry["address"]
                     )
@@ -82,7 +82,7 @@ async def view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chat_type == "private":
         user_id = update.effective_user.id
         if user_id in settings.ADMINS:
-            entries = db.get_all_entries()
+            entries = await db.get_all_entries()
 
             if not entries:
                 await update.message.reply_text("No entries found.")
@@ -91,7 +91,7 @@ async def view(update: Update, context: ContextTypes.DEFAULT_TYPE):
             one_month_ago = datetime.now() - timedelta(days=30)
             formatted_entries = []
             for entry in entries:
-                chain_info = chains.get_active_chains()[entry["chain"]]
+                chain_info = await chains.get_chain_info(entry["chain"])
                 balance_wei = await chain_info.w3.eth.get_balance(
                     entry["address"]
                 )

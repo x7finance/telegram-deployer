@@ -47,7 +47,7 @@ async def start_launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_type = update.message.chat.type
     if chat_type == "private":
         user_id = update.effective_user.id
-        status_text = db.search_entry(user_id)
+        status_text = await db.search_entry(user_id)
 
         if status_text:
             await update.message.reply_text(
@@ -80,13 +80,14 @@ async def stage_dex(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     dex = query.data.split("_")[1].lower()
     context.user_data["dex"] = dex
+    get_chains = await chains.get_active_chains()
     buttons = [
         [
             InlineKeyboardButton(
                 chain.upper(), callback_data=f"chain_{chain.lower()}"
             )
         ]
-        for chain in chains.get_active_chains().keys()
+        for chain in get_chains.keys()
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     if context.user_data["dex"] != "xchange":
@@ -335,7 +336,7 @@ async def stage_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     percent = query.data.split("_")[1]
     context.user_data["percent"] = percent
 
-    chain_info = chains.get_active_chains()[context.user_data["chain"]]
+    chain_info = await chains.get_chain_info(context.user_data["chain"])
 
     if percent == "0":
         percent_str = "No tokens will be held by the team"
@@ -367,7 +368,7 @@ async def stage_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def stage_loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loan_input = update.message.text.strip()
     chain = context.user_data["chain"].lower()
-    chain_info = chains.get_active_chains()[chain]
+    chain_info = await chains.get_chain_info(chain)
     pool = await onchain.get_pool_funds(chain)
 
     try:
@@ -459,7 +460,7 @@ async def stage_contribute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return STAGE_CONTRIBUTE
 
     context.user_data["contribution"] = contribution
-    chain_info = chains.get_active_chains()[context.user_data["chain"]]
+    chain_info = await chains.get_chain_info(context.user_data["chain"])
 
     await update.message.reply_text(
         f"{contribution} {chain_info.native.upper()} will be allocated for initial liquidity\n\n"
@@ -484,7 +485,7 @@ async def stage_owner(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return STAGE_OWNER
 
     user_data = context.user_data
-    chain_info = chains.get_active_chains()[user_data.get("chain")]
+    chain_info = await chains.get_chain_info(user_data.get("chain"))
 
     dex = user_data.get("dex")
     ticker = user_data.get("ticker")
@@ -514,7 +515,9 @@ async def stage_owner(update: Update, context: ContextTypes.DEFAULT_TYPE):
     liquidity_tokens = int(supply) - team_tokens
 
     price_native = float(liquidity) / liquidity_tokens
-    price_usd = price_native * etherscan.get_native_price(chain.lower()) * 2
+    price_usd = (
+        price_native * await etherscan.get_native_price(chain.lower()) * 2
+    )
     market_cap_usd = price_usd * int(supply) * 2
 
     if context.user_data["dex"] == "xchange":
@@ -583,7 +586,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
         now = datetime.now()
 
         chain = user_data.get("chain")
-        chain_info = chains.get_active_chains()[chain]
+        chain_info = await chains.get_chain_info(chain)
 
         def message(total_cost):
             return (
@@ -654,7 +657,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text(f"{gas_estimate}")
             return
 
-        db.add_entry(
+        await db.add_entry(
             timedate=now,
             user_name=user_name,
             user_id=user_id,
@@ -686,7 +689,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
     elif confirm == "no":
-        db.delete_entry(user_id)
+        await db.delete_entry(user_id)
         await query.message.reply_text(
             "Project canceled. You can start over with /launch"
         )

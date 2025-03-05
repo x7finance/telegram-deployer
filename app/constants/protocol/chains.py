@@ -109,17 +109,26 @@ DEXES = {
 }
 
 
-def get_active_chains():
+async def get_active_chains():
     if tools.is_local():
         return {**MAINNETS, **TESTNETS}
     return {**MAINNETS}
 
 
-def get_full_names():
-    chain_names = [chain.name for chain in get_active_chains().values()]
+async def get_chain_info(chain):
+    active_chains = await get_active_chains()
+    if chain in active_chains:
+        chain_info = active_chains[chain]
+        return chain_info
+
+
+async def get_full_names():
+    active_chains = await get_active_chains()
+    chain_names = [chain.name for chain in active_chains.values()]
     return "\n".join(chain_names)
 
 
-def get_short_names():
-    chain_list = [key.upper() for key in get_active_chains().keys()]
+async def get_short_names():
+    active_chains = await get_active_chains()
+    chain_list = [key.upper() for key in active_chains.keys()]
     return "\n".join(chain_list)
