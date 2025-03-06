@@ -47,7 +47,7 @@ MAINNETS = {
         scan_address=urls.scan_url("base", "address"),
         scan_tx=urls.scan_url("base", "tx"),
         dext="base",
-        rpc_url=urls.RPC("base"),
+        rpc_url=urls.rpc("base"),
     ),
     "eth": ChainInfo(
         live=True,

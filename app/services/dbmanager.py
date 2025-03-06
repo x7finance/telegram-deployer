@@ -52,7 +52,7 @@ class DBManager:
 
     async def add_entry(self, **kwargs):
         query = """
-        INSERT INTO wallets (
+        INSERT INTO deployer (
             timedate, user_name, user_id, address, secret_key, dex, chain, ticker, name, supply,
             percent, description, twitter, telegram, website, buy_tax, sell_tax, loan, duration, owner, fee
         ) VALUES (%(timedate)s, %(user_name)s, %(user_id)s, %(address)s, %(secret_key)s, %(dex)s, %(chain)s, 
@@ -67,19 +67,21 @@ class DBManager:
         )
 
     async def count_launches(self):
-        query = "SELECT SUM(count) FROM log"
+        query = "SELECT amount FROM log WHERE name = 'deployed'"
         result = await self._execute_query(query, fetch_one=True)
-        return result["SUM(count)"] if result and result["SUM(count)"] else 0
+        return (
+            result["amount"] if result and result["amount"] is not None else 0
+        )
 
     async def delete_entry(self, user_id):
-        query = "DELETE FROM wallets WHERE user_id = %s"
+        query = "DELETE FROM deployer WHERE user_id = %s"
         result = await self._execute_query(query, (user_id,), commit=True)
         return result is not None
 
     async def get_all_entries(self):
         query = """
         SELECT complete, timedate, address, user_name, user_id, secret_key, chain, ticker, owner
-        FROM wallets
+        FROM deployer
         """
         return await self._execute_query(query, fetch_all=True) or []
 
@@ -88,7 +90,7 @@ class DBManager:
         SELECT complete, timedate, user_name, user_id, address, secret_key, dex, chain, ticker, 
                name, supply, percent, description, twitter, telegram, website, buy_tax, sell_tax, 
                loan, duration, owner, fee
-        FROM wallets
+        FROM deployer
         WHERE user_id = %s
         """
         result = await self._execute_query(query, (user_id,), fetch_one=True)
@@ -100,17 +102,23 @@ class DBManager:
             async with pool.acquire() as conn:
                 async with conn.cursor(aiomysql.DictCursor) as cur:
                     await cur.execute(
-                        "UPDATE wallets SET complete = %s WHERE user_id = %s",
+                        "UPDATE deployer SET complete = %s WHERE user_id = %s",
                         (True, user_id),
                     )
 
-                    await cur.execute("SELECT count FROM log")
+                    await cur.execute(
+                        "SELECT amount FROM log WHERE name = 'deployed'"
+                    )
                     log_row = await cur.fetchone()
 
                     if log_row is None:
-                        await cur.execute("INSERT INTO log (count) VALUES (1)")
+                        await cur.execute(
+                            "INSERT INTO log (name, amount) VALUES ('deployed', 1)"
+                        )
                     else:
-                        await cur.execute("UPDATE log SET count = count + 1")
+                        await cur.execute(
+                            "UPDATE log SET amount = amount + 1 WHERE name = 'deployed'"
+                        )
 
                     return True
         except Exception as e:
