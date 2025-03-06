@@ -5,51 +5,36 @@ UNISWAP = "https://app.uniswap.org/"
 XCHANGE = "https://x7finance.org/"
 
 
-def SCAN_API(chain):
+def scan_url(chain, category):
     map = {
-        "base": "https://api.basescan.org/api",
-        "base-sepolia": "https://api-sepolia.basescan.org/api",
-        "eth": "https://api.etherscan.io/api",
-        "eth-sepolia": "https://api-sepolia.etherscan.io/api",
+        "eth": "https://etherscan.io/",
+        "bsc": "https://bscscan.com/",
+        "poly": "https://polygonscan.com/",
+        "arb": "https://arbiscan.io/",
+        "op": "https://optimistic.etherscan.io/",
+        "base": "https://basescan.org/",
+        "eth-sepolia": "https://sepolia.etherscan.io/",
+        "base-sepolia": "https://sepolia.basescan.org/",
     }
-    return map.get(chain)
 
-
-def SCAN_TOKEN(chain):
-    map = {
-        "base": "https://basescan.org/token/",
-        "base-sepolia": "https://sepolia.basescan.org/token/",
-        "eth": "https://etherscan.io/token/",
-        "eth-sepolia": "https://sepolia.etherscan.io/token/",
+    categories = {
+        "address": "address/",
+        "gas": "gastracker/",
+        "token": "token/",
+        "tx": "tx/",
     }
-    return map.get(chain)
+
+    base_url = map.get(chain)
+    category_path = categories.get(category)
+
+    return base_url + category_path
 
 
-def SCAN_ADDRESS(chain):
-    map = {
-        "base": "https://basescan.org/address/",
-        "eth": "https://etherscan.io/address/",
-        "base-sepolia": "https://sepolia.basescan.org/address/",
-        "eth-sepolia": "https://sepolia.etherscan.io/address/",
-    }
-    return map.get(chain)
-
-
-def SCAN_TX(chain):
-    map = {
-        "base": "https://basescan.org/tx/",
-        "eth": "https://etherscan.io/tx/",
-        "base-sepolia": "https://sepolia.basescan.org/tx/",
-        "eth-sepolia": "https://sepolia.etherscan.io/tx/",
-    }
-    return map.get(chain)
-
-
-def DEX_TOOLS(chain, address):
+def dex_tools_link(chain, address):
     return f"https://www.dextools.io/app/{chain}/pair-explorer/{address}"
 
 
-def RPC(chain):
+def rpc(chain):
     map = {
         "eth": f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}",
         "eth-sepolia": f"https://lb.drpc.org/ogrpc?network=sepolia&dkey={os.getenv('DRPC_API_KEY')}",
@@ -59,9 +44,9 @@ def RPC(chain):
     return map.get(chain)
 
 
-def XCHANGE_BUY(chain_id, token1):
+def xchange_buy(chain_id, token1):
     return f"https://x7finance.org/swap?chainId={chain_id}&token1={token1}"
 
 
-def UNISWAP_BUY(chain_id, token1):
+def uniswap_buy(chain_id, token1):
     return f"https://app.uniswap.org/swap?outputCurrency={token1}"

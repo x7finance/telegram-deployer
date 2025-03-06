@@ -356,7 +356,7 @@ async def cancel_tx(chain, address, key, gas_multiplier=1.5):
             "gas": 21000,
             "gasPrice": adjusted_gas_price,
             "nonce": pending_nonce,
-            "chainId": int(chain_info.id),
+            "chainId": chain_info.id,
         }
 
         signed_txn = chain_info.w3.eth.account.sign_transaction(
@@ -606,7 +606,7 @@ async def transfer_balance(chain, address, owner, key):
             "gas": gas_estimate,
             "gasPrice": gas_price,
             "nonce": nonce,
-            "chainId": int(chain_info.id),
+            "chainId": chain_info.id,
         }
         signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, key

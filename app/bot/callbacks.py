@@ -193,13 +193,13 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [
             InlineKeyboardButton(
                 text="Buy Link",
-                url=urls.XCHANGE_BUY(chain_info.id, token_address),
+                url=urls.xchange_buy(chain_info.id, token_address),
             )
         ],
         [
             InlineKeyboardButton(
                 text="Chart Link",
-                url=urls.DEX_TOOLS(chain_info.dext, token_address),
+                url=urls.dex_tools_link(chain_info.dext, token_address),
             )
         ],
         [
