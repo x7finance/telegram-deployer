@@ -164,7 +164,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             button = ""
             message = (
-                f"On {chain_info.name} send {round(chain_info.w3.from_wei(total_cost, 'ether'), 4)} "
+                f"On {chain_info.name} send {round(chain_info.w3.from_wei(total_cost, 'ether'), 6)} "
                 f"{chain_info.native.upper()} (This includes gas fees) to:\n"
                 f"`{status_text['address']}`\n\n"
                 "Any fees not used will be returned to the wallet you designated as owner at deployment.\n\n"

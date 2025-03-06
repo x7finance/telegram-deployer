@@ -590,7 +590,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         def message(total_cost):
             return (
-                f"On {chain_info.name.upper()}. Send {round(chain_info.w3.from_wei(total_cost, 'ether'), 4)} {chain_info.native.upper()} (This includes gas fees) to:\n\n"
+                f"On {chain_info.name.upper()}. Send {round(chain_info.w3.from_wei(total_cost, 'ether'), 6)} {chain_info.native.upper()} (This includes gas fees) to:\n\n"
                 f"`{account.address}`\n\n"
                 "Any fees not used will be returned to the wallet you designated as owner at deployment\n\n"
                 "*Ensure you are sending funds on the correct chain\n\n"
