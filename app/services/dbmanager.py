@@ -54,10 +54,10 @@ class DBManager:
         query = """
         INSERT INTO deployer (
             timedate, user_name, user_id, address, secret_key, dex, chain, ticker, name, supply,
-            percent, description, twitter, telegram, website, buy_tax, sell_tax, loan, duration, owner, fee
+            percent, description, twitter, telegram, website, buy_tax, sell_tax, loan, duration, owner, fee, due
         ) VALUES (%(timedate)s, %(user_name)s, %(user_id)s, %(address)s, %(secret_key)s, %(dex)s, %(chain)s, 
                   %(ticker)s, %(name)s, %(supply)s, %(percent)s, %(description)s, %(twitter)s, %(telegram)s, 
-                  %(website)s, %(buy_tax)s, %(sell_tax)s, %(loan)s, %(duration)s, %(owner)s, %(fee)s)
+                  %(website)s, %(buy_tax)s, %(sell_tax)s, %(loan)s, %(duration)s, %(owner)s, %(fee)s, %(due)s)
         """
         result = await self._execute_query(query, kwargs, commit=True)
         return (
@@ -85,11 +85,21 @@ class DBManager:
         """
         return await self._execute_query(query, fetch_all=True) or []
 
+    async def get_reminders(self):
+        query = """
+        SELECT user_id, due, name, chain, loan, loan_id
+        FROM deployer 
+        WHERE complete = TRUE
+        AND loan_id IS NOT NULL
+        AND due > NOW() 
+        """
+        return await self._execute_query(query, fetch_all=True) or []
+
     async def search_entry(self, user_id):
         query = """
         SELECT complete, timedate, user_name, user_id, address, secret_key, dex, chain, ticker, 
                name, supply, percent, description, twitter, telegram, website, buy_tax, sell_tax, 
-               loan, duration, owner, fee
+               loan, duration, owner, fee, due, loan_id
         FROM deployer
         WHERE user_id = %s
         """
@@ -97,30 +107,31 @@ class DBManager:
         return result if result else False
 
     async def set_complete(self, user_id):
-        try:
-            pool = await self._get_pool()
-            async with pool.acquire() as conn:
-                async with conn.cursor(aiomysql.DictCursor) as cur:
+        pool = await self._get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(
+                    "UPDATE deployer SET complete = %s WHERE user_id = %s",
+                    (True, user_id),
+                )
+
+                await cur.execute(
+                    "SELECT amount FROM log WHERE name = 'deployed'"
+                )
+                log_row = await cur.fetchone()
+
+                if log_row is None:
                     await cur.execute(
-                        "UPDATE deployer SET complete = %s WHERE user_id = %s",
-                        (True, user_id),
+                        "INSERT INTO log (name, amount) VALUES ('deployed', 1)"
+                    )
+                else:
+                    await cur.execute(
+                        "UPDATE log SET amount = amount + 1 WHERE name = 'deployed'"
                     )
 
-                    await cur.execute(
-                        "SELECT amount FROM log WHERE name = 'deployed'"
-                    )
-                    log_row = await cur.fetchone()
+                return True
 
-                    if log_row is None:
-                        await cur.execute(
-                            "INSERT INTO log (name, amount) VALUES ('deployed', 1)"
-                        )
-                    else:
-                        await cur.execute(
-                            "UPDATE log SET amount = amount + 1 WHERE name = 'deployed'"
-                        )
-
-                    return True
-        except Exception as e:
-            print(f"Error: {e}")
-            return False
+    async def set_loan_id(self, user_id, loan_id):
+        query = "UPDATE deployer SET loan_id = %s WHERE user_id = %s"
+        await self._execute_query(query, (loan_id, user_id), commit=True)
+        return True

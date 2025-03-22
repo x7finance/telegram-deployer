@@ -15,6 +15,9 @@ from warnings import filterwarnings
 from bot import callbacks, conversations
 from bot.commands import admin, general
 from utils import tools
+from services import get_dbmanager
+
+db = get_dbmanager()
 
 filterwarnings(
     action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
@@ -87,8 +90,10 @@ async def post_init(application: Application):
         print("✅ Bot Running on server")
 
         print(await tools.update_bot_commands())
+        print(await tools.set_reminders(application))
 
     else:
+        print(await tools.set_reminders(application))
         print("✅ Bot Running locally")
 
 

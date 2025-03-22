@@ -4,9 +4,13 @@ import socket
 import unicodedata
 from datetime import datetime, timedelta
 
+from bot import callbacks
 from bot.commands import general, admin
 from constants.bot import settings
 from constants.protocol import abis, chains
+from services import get_dbmanager
+
+db = get_dbmanager()
 
 
 def datetime_to_timestamp(datetime_str):
@@ -132,6 +136,30 @@ def is_local():
     return (
         ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
     )
+
+
+async def set_reminders(app):
+    reminders = await db.get_reminders()
+    total = len(reminders)
+
+    for reminder in reminders:
+        due_date = datetime.strptime(
+            str(reminder["due"]), "%Y-%m-%d %H:%M:%S.%f"
+        )
+        job_name = f"reminder_{reminder['user_id']}"
+
+        if due_date < datetime.now():
+            print(f"⚠️ Skipping past due reminder: {due_date}")
+            continue
+
+        app.job_queue.run_once(
+            callbacks.send_reminder,
+            when=due_date,
+            data=reminder,
+            name=job_name,
+        )
+
+    return f"✅ Scheduled {total} reminder(s)"
 
 
 def split_message(message: str, max_length: int = 4096) -> list:

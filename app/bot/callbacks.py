@@ -54,6 +54,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status_text["address"],
             status_text["secret_key"],
             int(status_text["fee"]),
+            status_text["due"],
         )
 
         if isinstance(loan, str) and loan.startswith("Error"):
@@ -109,6 +110,8 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
         loan_text = (
             f"Loan ID: {loan_id}\n\nPayment Schedule:\n\n{schedule}\n\n"
         )
+
+        await db.set_loan_id(status_text["user_id"], loan_id)
 
     elif launch_type == "launch_without_loan":
         launched = await onchain.deploy_token_without_loan(
@@ -178,6 +181,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = (
         f"Congratulations {status_text['ticker']} has been launched on {status_text['dex'].upper()} ({chain_info.name.upper()})\n\n"
         f"CA: `{token_address}`\n\n"
+        f"Payment Due: {status_text['due']}\n\n"
         f"Your wallet:\n"
         f"`{status_text['owner']}`\n\n"
         f"{loan_text}"
@@ -256,6 +260,63 @@ async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     elif query.data == "reset_no":
         await query.edit_message_text("Reset canceled.")
+
+
+async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+    try:
+        loan = context.job.data
+        chain = loan["chain"]
+        loan_id = loan["loan_id"]
+        chain_info = await chains.get_chain_info(chain)
+        message = (
+            f"🚨 PAYMENT DUE\n\n"
+            f"Your loan payment of {loan['loan']} {chain_info.native.upper()} for {loan['name']} ({loan['chain']}) is due now! \n\n"
+            "If you havent already made this payment your loan is now eligble for liquidation"
+        )
+
+        try:
+            loan_contract = settings.live_loan(chain, "address")
+            contract = chain_info.w3.eth.contract(
+                address=chain_info.w3.to_checksum_address(loan_contract),
+                abi=abis.read("ill005"),
+            )
+
+            token_by_id = None
+            index = 0
+
+            while True:
+                try:
+                    token_id = await contract.functions.tokenByIndex(
+                        index
+                    ).call()
+                    if token_id == int(loan_id):
+                        token_by_id = index
+                        break
+                    index += 1
+
+                except Exception:
+                    break
+
+        except Exception:
+            token_by_id = None
+
+        url = (
+            f"https://x7finance.org/lending/{chain_info.short_name}/"
+            f"{settings.live_loan(chain, 'name')}"
+        )
+        if token_by_id is not None:
+            url += f"/{token_by_id}"
+
+        buttons = [[InlineKeyboardButton(text="Manage Loan", url=url)]]
+
+        await context.bot.send_message(
+            chat_id=loan["user_id"],
+            text=message,
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(buttons),
+        )
+    except Exception as e:
+        print(f"Error sending reminder: {e}")
 
 
 HANDLERS = [

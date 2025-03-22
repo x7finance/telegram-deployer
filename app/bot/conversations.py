@@ -10,7 +10,7 @@ from telegram.ext import (
 
 from eth_account import Account
 from eth_utils import is_checksum_address
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from constants.protocol import addresses
@@ -587,6 +587,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         chain = user_data.get("chain")
         chain_info = await chains.get_chain_info(chain)
+        due = None
 
         def message(total_cost):
             return (
@@ -620,6 +621,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     return
 
             else:
+                due = now + timedelta(days=int(user_data.get("duration")))
                 fee = user_data.get("fee")
                 gas_estimate = await onchain.estimate_gas_with_loan(
                     user_data.get("chain"),
@@ -679,6 +681,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             duration=user_data.get("duration"),
             owner=user_data.get("owner"),
             fee=int(fee),
+            due=due,
         )
 
         total_cost = int(fee) + gas_estimate

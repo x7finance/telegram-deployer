@@ -206,6 +206,11 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Loan Amount: {status_text['loan']} {chain_info.native.upper()}\n"
             f"Loan Duration: {status_text['duration']} Days\n"
         )
+        if status_text["complete"] == 1:
+            loan_info += (
+                f"Loan Due: {status_text['due']}\n"
+                f"Loan ID: {status_text['loan_id']}\n"
+            )
     else:
         price_native = (int(status_text["fee"]) / 10**18) / liquidity_tokens
         loan_info = ""
