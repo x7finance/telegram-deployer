@@ -55,55 +55,23 @@ async def start_launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="Markdown",
             )
         else:
+            get_chains = await chains.get_active_chains()
             buttons = [
                 [
                     InlineKeyboardButton(
-                        dex.upper(), callback_data=f"dex_{dex.lower()}"
+                        chain.upper(), callback_data=f"chain_{chain.lower()}"
                     )
                 ]
-                for dex in chains.DEXES
+                for chain in get_chains.keys()
             ]
             keyboard = InlineKeyboardMarkup(buttons)
             await update.message.reply_text(
                 "Let's get your project launched by answering a few questions...\n\n"
-                "First, select the DEX you want to launch on:\n\n"
-                "- Launch on Xchange and launch with an optional Liquidity Loan\n\n"
-                "- Launch on Uniswap at the cost of 1% token supply\n"
+                "First, select the chain you want to launch on:\n\n"
                 "use /cancel at any time to end the conversation\n",
                 reply_markup=keyboard,
             )
-            return STAGE_DEX
-
-
-async def stage_dex(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    dex = query.data.split("_")[1].lower()
-    context.user_data["dex"] = dex
-    get_chains = await chains.get_active_chains()
-    buttons = [
-        [
-            InlineKeyboardButton(
-                chain.upper(), callback_data=f"chain_{chain.lower()}"
-            )
-        ]
-        for chain in get_chains.keys()
-    ]
-    keyboard = InlineKeyboardMarkup(buttons)
-    if context.user_data["dex"] != "xchange":
-        dex_text = (
-            "The only fee you need to pay to launch is 1% of token supply"
-        )
-    else:
-        dex_text = "You can launch on Xchange, with or without a Initial Liquidity Loan"
-    await context.bot.send_message(
-        chat_id=query.message.chat_id,
-        text=f"Launching on {dex.capitalize()}\n\n"
-        f"{dex_text}\n\n"
-        f"Now, select your chain:",
-        reply_markup=keyboard,
-    )
-    return STAGE_CHAIN
+            return STAGE_CHAIN
 
 
 async def stage_chain(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -111,9 +79,52 @@ async def stage_chain(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     chain = query.data.split("_")[1].lower()
     context.user_data["chain"] = chain
+
+    chain_info = (await chains.get_active_chains())[chain]
+
+    if not chain_info.uniswap:
+        context.user_data["dex"] = "xchange"
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=f"{chain.upper()} Chain Selected.\n\n"
+            "What's the project's token ticker?",
+        )
+        return STAGE_TICKER
+
+    buttons = [
+        [InlineKeyboardButton("XCHANGE", callback_data="dex_xchange")],
+        [InlineKeyboardButton("UNISWAP", callback_data="dex_uniswap")],
+    ]
+    keyboard = InlineKeyboardMarkup(buttons)
+
     await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{context.user_data['chain'].upper()} Chain Selected.\n\n"
+        text=f"{chain.upper()} Chain Selected.\n\n"
+        "Now select the DEX you want to launch on:\n\n"
+        "- Launch on Xchange and launch with an optional Liquidity Loan\n\n"
+        "- Launch on Uniswap at the cost of 1% token supply",
+        reply_markup=keyboard,
+    )
+    return STAGE_DEX
+
+
+async def stage_dex(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    dex = query.data.split("_")[1].lower()
+    context.user_data["dex"] = dex
+
+    if context.user_data["dex"] != "xchange":
+        dex_text = (
+            "The only fee you need to pay to launch is 1% of token supply"
+        )
+    else:
+        dex_text = "You can launch on Xchange, with or without a Initial Liquidity Loan"
+
+    await context.bot.send_message(
+        chat_id=query.message.chat_id,
+        text=f"Launching on {dex.capitalize()}\n\n"
+        f"{dex_text}\n\n"
         "What's the project's token ticker?",
     )
     return STAGE_TICKER
@@ -708,10 +719,10 @@ HANDLERS = [
     {
         "entry_points": [CommandHandler("launch", start_launch)],
         "states": {
-            STAGE_DEX: [CallbackQueryHandler(stage_dex, pattern="^dex_")],
             STAGE_CHAIN: [
                 CallbackQueryHandler(stage_chain, pattern="^chain_")
             ],
+            STAGE_DEX: [CallbackQueryHandler(stage_dex, pattern="^dex_")],
             STAGE_AMOUNT: [
                 CallbackQueryHandler(stage_amount, pattern="^amount_")
             ],

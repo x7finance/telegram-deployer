@@ -93,7 +93,6 @@ async def post_init(application: Application):
         print(await tools.set_reminders(application))
 
     else:
-        print(await tools.set_reminders(application))
         print("✅ Bot Running locally")
 
 

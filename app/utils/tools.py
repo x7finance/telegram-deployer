@@ -149,7 +149,6 @@ async def set_reminders(app):
         job_name = f"reminder_{reminder['user_id']}"
 
         if due_date < datetime.now():
-            print(f"⚠️ Skipping past due reminder: {due_date}")
             continue
 
         app.job_queue.run_once(

@@ -19,6 +19,7 @@ class ChainInfo:
         scan_tx: str,
         dext: str,
         rpc_url: str,
+        uniswap: bool,
     ):
         self.live = live
         self.name = name
@@ -32,6 +33,7 @@ class ChainInfo:
         self.scan_tx = scan_tx
         self.dext = dext
         self.w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
+        self.uniswap = uniswap
 
 
 MAINNETS = {
@@ -48,6 +50,7 @@ MAINNETS = {
         scan_tx=urls.scan_url("base", "tx"),
         dext="base",
         rpc_url=urls.rpc("base"),
+        uniswap=True,
     ),
     "eth": ChainInfo(
         live=True,
@@ -62,6 +65,7 @@ MAINNETS = {
         scan_tx=urls.scan_url("eth", "tx"),
         dext="ether",
         rpc_url=urls.rpc("eth"),
+        uniswap=False,
     ),
 }
 
@@ -79,6 +83,7 @@ TESTNETS = {
         scan_tx=urls.scan_url("base-sepolia", "tx"),
         dext=None,
         rpc_url=urls.rpc("base-sepolia"),
+        uniswap=False,
     ),
     "eth-sepolia": ChainInfo(
         live=True,
@@ -93,6 +98,7 @@ TESTNETS = {
         scan_tx=urls.scan_url("eth-sepolia", "tx"),
         dext=None,
         rpc_url=urls.rpc("eth-sepolia"),
+        uniswap=False,
     ),
 }
 
