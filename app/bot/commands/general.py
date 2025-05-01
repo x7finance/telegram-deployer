@@ -247,6 +247,12 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chat_type == "private":
         user_id = update.effective_user.id
         status_text = await db.search_entry(user_id)
+        if not status_text:
+            await update.message.reply_text(
+                "No pending transactions found. No action needed."
+            )
+            return
+
         data = await onchain.cancel_tx(
             status_text["chain"],
             status_text["address"],
