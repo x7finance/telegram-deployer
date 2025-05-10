@@ -53,7 +53,7 @@ MAINNETS = {
         uniswap=True,
     ),
     "eth": ChainInfo(
-        live=True,
+        live=False,
         name="ETH",
         short_name="eth",
         scan_name="Etherscan",
@@ -86,7 +86,7 @@ TESTNETS = {
         uniswap=False,
     ),
     "eth-sepolia": ChainInfo(
-        live=True,
+        live=False,
         name="Eth Sepolia",
         short_name="eth-testnet",
         scan_name="Eth Sepolia Scan",
@@ -117,8 +117,15 @@ DEXES = {
 
 async def get_active_chains():
     if tools.is_local():
-        return {**MAINNETS, **TESTNETS}
-    return {**MAINNETS}
+        all_chains = {**MAINNETS, **TESTNETS}
+    else:
+        all_chains = {**MAINNETS}
+
+    return {
+        chain_name: chain_info
+        for chain_name, chain_info in all_chains.items()
+        if chain_info.live
+    }
 
 
 async def get_chain_info(chain):
