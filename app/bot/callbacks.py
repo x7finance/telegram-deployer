@@ -222,7 +222,6 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     message = await query.edit_message_text(
         message_text,
-        message_effect_id="5046509860389126442",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
