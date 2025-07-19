@@ -33,25 +33,45 @@ sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update is None:
         return
+
+    if update.callback_query is not None:
+        try:
+            await update.callback_query.answer()
+            await update.callback_query.edit_message_text(
+                "An error occurred, please try again."
+            )
+        except Exception:
+            await context.bot.send_message(
+                chat_id=update.callback_query.message.chat_id,
+                text="An error occurred, please try again.",
+            )
+        print({context.error})
+        sentry_sdk.capture_exception(
+            Exception(f"CallbackQuery caused error: {context.error}")
+        )
+        return
+
     if update.edited_message is not None:
         return
+
+    message: Message = update.message
+    if message is not None and message.text is not None:
+        await message.reply_text("An error occurred, please try again.")
+        print({context.error})
+        sentry_sdk.capture_exception(
+            Exception(f"{message.text} caused error: {context.error}")
+        )
     else:
-        message: Message = update.message
-        if message is not None and message.text is not None:
-            await update.message.reply_text(
-                "Error while loading data, please try again"
+        await context.bot.send_message(
+            chat_id=message.chat_id if message else None,
+            text="An error occurred, please try again.",
+        )
+        print({context.error})
+        sentry_sdk.capture_exception(
+            Exception(
+                f"Error occurred without a valid message: {context.error}"
             )
-            print({context.error})
-            sentry_sdk.capture_exception(
-                Exception(f"{message.text} caused error: {context.error}")
-            )
-        else:
-            print({context.error})
-            sentry_sdk.capture_exception(
-                Exception(
-                    f"Error occurred without a valid message: {context.error}"
-                )
-            )
+        )
 
 
 def init_bot():

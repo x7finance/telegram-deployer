@@ -54,7 +54,6 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status_text["address"],
             status_text["secret_key"],
             int(status_text["fee"]),
-            status_text["due"],
         )
 
         if isinstance(loan, str) and loan.startswith("Error"):
