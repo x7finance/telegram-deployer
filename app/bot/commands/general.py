@@ -135,7 +135,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             token_text = ""
             callback_data = "launch_uniswap"
-            gas_estimate = onchain.estimate_gas_uniswap(
+            gas_estimate = await onchain.estimate_gas_uniswap(
                 status_text["chain"],
                 status_text["name"],
                 status_text["ticker"],
