@@ -1,4 +1,6 @@
 name: CI & Lint
+permissions:
+  contents: read
 
 on: [push, pull_request]
 
