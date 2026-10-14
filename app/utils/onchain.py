@@ -1,8 +1,7 @@
-from constants.protocol import addresses
 from constants.bot import settings
-from constants.protocol import abis, chains
-from utils import tools
+from constants.protocol import abis, addresses, chains
 from services import get_dbmanager
+from utils import tools
 
 db = get_dbmanager()
 
@@ -64,17 +63,15 @@ async def deploy_token_without_loan(
     }
 
     try:
-        gas_estimate = (
-            await deployer_contract.functions.deployTokenWithoutLoan(
-                params
-            ).estimate_gas(
-                {
-                    "from": address,
-                    "nonce": nonce,
-                    "gasPrice": gas_price,
-                    "value": int(loan_fee),
-                }
-            )
+        gas_estimate = await deployer_contract.functions.deployTokenWithoutLoan(
+            params
+        ).estimate_gas(
+            {
+                "from": address,
+                "nonce": nonce,
+                "gasPrice": gas_price,
+                "value": int(loan_fee),
+            }
         )
 
         transaction = await deployer_contract.functions.deployTokenWithoutLoan(
@@ -89,9 +86,7 @@ async def deploy_token_without_loan(
             }
         )
 
-        signed_tx = chain_info.w3.eth.account.sign_transaction(
-            transaction, key
-        )
+        signed_tx = chain_info.w3.eth.account.sign_transaction(transaction, key)
         tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_tx.raw_transaction
         )
@@ -100,17 +95,11 @@ async def deploy_token_without_loan(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
-            create_log = (
-                deployer_contract.events.TokenDeployed().process_receipt(
-                    receipt
-                )
-            )
-            pair_log = factory_contract.events.PairCreated().process_receipt(
+            create_log = deployer_contract.events.TokenDeployed().process_receipt(
                 receipt
             )
-            return create_log[0]["args"]["tokenAddress"], pair_log[0]["args"][
-                "pair"
-            ]
+            pair_log = factory_contract.events.PairCreated().process_receipt(receipt)
+            return create_log[0]["args"]["tokenAddress"], pair_log[0]["args"]["pair"]
         else:
             return "Error deploying token"
 
@@ -204,9 +193,7 @@ async def deploy_token_with_loan(
             }
         )
 
-        signed_tx = chain_info.w3.eth.account.sign_transaction(
-            transaction, key
-        )
+        signed_tx = chain_info.w3.eth.account.sign_transaction(transaction, key)
         tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_tx.raw_transaction
         )
@@ -215,14 +202,10 @@ async def deploy_token_with_loan(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
-            create_log = (
-                deployer_contract.events.TokenDeployed().process_receipt(
-                    receipt
-                )
-            )
-            pair_log = factory_contract.events.PairCreated().process_receipt(
+            create_log = deployer_contract.events.TokenDeployed().process_receipt(
                 receipt
             )
+            pair_log = factory_contract.events.PairCreated().process_receipt(receipt)
             return (
                 create_log[0]["args"]["tokenAddress"],
                 pair_log[0]["args"]["pair"],
@@ -305,9 +288,7 @@ async def deploy_token(
             }
         )
 
-        signed_txn = chain_info.w3.eth.account.sign_transaction(
-            transaction, key
-        )
+        signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, key)
         tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_txn.raw_transaction
         )
@@ -316,17 +297,11 @@ async def deploy_token(
             tx_hash, timeout=30
         )
         if receipt == 1:
-            create_log = (
-                deployer_contract.events.TokenDeployed().process_receipt(
-                    receipt
-                )
-            )
-            pair_log = factory_contract.events.PairCreated().process_receipt(
+            create_log = deployer_contract.events.TokenDeployed().process_receipt(
                 receipt
             )
-            return create_log[0]["args"]["tokenAddress"], pair_log[0]["args"][
-                "pair"
-            ]
+            pair_log = factory_contract.events.PairCreated().process_receipt(receipt)
+            return create_log[0]["args"]["tokenAddress"], pair_log[0]["args"]["pair"]
         else:
             return "Error deploying token"
 
@@ -337,12 +312,8 @@ async def deploy_token(
 async def cancel_tx(chain, address, key, gas_multiplier=1.5):
     try:
         chain_info = await chains.get_chain_info(chain)
-        latest_nonce = chain_info.w3.eth.get_transaction_count(
-            address, "latest"
-        )
-        pending_nonce = chain_info.w3.eth.get_transaction_count(
-            address, "pending"
-        )
+        latest_nonce = chain_info.w3.eth.get_transaction_count(address, "latest")
+        pending_nonce = chain_info.w3.eth.get_transaction_count(address, "pending")
         if pending_nonce == latest_nonce:
             return "No pending transactions found. No action needed."
 
@@ -359,9 +330,7 @@ async def cancel_tx(chain, address, key, gas_multiplier=1.5):
             "chainId": chain_info.id,
         }
 
-        signed_txn = chain_info.w3.eth.account.sign_transaction(
-            transaction, key
-        )
+        signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, key)
         tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_txn.raw_transaction
         )
@@ -412,17 +381,15 @@ async def estimate_gas_without_loan(
             "taxWallet": owner,
         }
 
-        gas_estimate = (
-            await deployer_contract.functions.deployTokenWithoutLoan(
-                params
-            ).estimate_gas(
-                {
-                    "from": addresses.DEAD,
-                    "nonce": nonce,
-                    "gasPrice": gas_price,
-                    "value": int(loan_fee),
-                }
-            )
+        gas_estimate = await deployer_contract.functions.deployTokenWithoutLoan(
+            params
+        ).estimate_gas(
+            {
+                "from": addresses.DEAD,
+                "nonce": nonce,
+                "gasPrice": gas_price,
+                "value": int(loan_fee),
+            }
         )
 
         gas_cost = gas_estimate * gas_price
@@ -556,9 +523,7 @@ async def get_pool_funds(chain):
     contract_abi = abis.read("lendingpool")
 
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(
-            addresses.lending_pool(chain)
-        ),
+        address=chain_info.w3.to_checksum_address(addresses.lending_pool(chain)),
         abi=contract_abi,
     )
 
@@ -608,9 +573,7 @@ async def transfer_balance(chain, address, owner, key):
             "nonce": nonce,
             "chainId": chain_info.id,
         }
-        signed_tx = chain_info.w3.eth.account.sign_transaction(
-            transaction, key
-        )
+        signed_tx = chain_info.w3.eth.account.sign_transaction(transaction, key)
         tx_hash = await chain_info.w3.eth.send_raw_transaction(
             signed_tx.raw_transaction
         )

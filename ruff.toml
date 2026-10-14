@@ -1,0 +1,11 @@
+line-length = 88
+target-version = "py313"
+exclude = [".venv", "venv", "__pycache__"]
+
+[lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

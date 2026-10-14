@@ -1,11 +1,11 @@
-import aiohttp
 import os
 import socket
 import unicodedata
 from datetime import datetime, timedelta
 
+import aiohttp
 from bot import callbacks
-from bot.commands import general, admin
+from bot.commands import admin, general
 from constants.bot import settings
 from constants.protocol import abis, chains
 from services import get_dbmanager
@@ -55,12 +55,8 @@ def format_schedule(schedule1, schedule2, native_token):
     schedule_list = []
 
     for date in all_dates:
-        value1 = next(
-            (v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0
-        )
-        value2 = next(
-            (v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0
-        )
+        value1 = next((v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0)
+        value2 = next((v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0)
 
         total_value = value1 + value2
 
@@ -79,9 +75,7 @@ def format_schedule(schedule1, schedule2, native_token):
 
     if next_payment_datetime:
         time_until_next_payment = next_payment_datetime - current_datetime
-        time_remaining_str = calculate_time_remaining_str(
-            time_until_next_payment
-        )
+        time_remaining_str = calculate_time_remaining_str(time_until_next_payment)
 
         schedule_list.append(
             f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}"
@@ -133,9 +127,7 @@ def get_duration_days(duration):
 
 def is_local():
     ip = socket.gethostbyname(socket.gethostname())
-    return (
-        ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
-    )
+    return ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
 
 
 async def set_reminders(app):
@@ -143,9 +135,7 @@ async def set_reminders(app):
     total = len(reminders)
 
     for reminder in reminders:
-        due_date = datetime.strptime(
-            str(reminder["due"]), "%Y-%m-%d %H:%M:%S.%f"
-        )
+        due_date = datetime.strptime(str(reminder["due"]), "%Y-%m-%d %H:%M:%S.%f")
         job_name = f"reminder_{reminder['user_id']}"
 
         if due_date < datetime.now():
@@ -206,8 +196,7 @@ async def update_bot_commands():
     ]
 
     admin_commands = [
-        {"command": cmd, "description": desc}
-        for cmd, _, desc in admin.HANDLERS
+        {"command": cmd, "description": desc} for cmd, _, desc in admin.HANDLERS
     ]
 
     all_commands = general_commands + admin_commands

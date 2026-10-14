@@ -1,7 +1,6 @@
-from web3 import AsyncWeb3
-
 from constants.bot import urls
 from utils import tools
+from web3 import AsyncWeb3
 
 
 class ChainInfo:

@@ -1,6 +1,5 @@
 import os
 
-
 UNISWAP = "https://app.uniswap.org/"
 XCHANGE = "https://x7finance.org/"
 

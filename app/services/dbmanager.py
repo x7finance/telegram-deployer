@@ -1,4 +1,5 @@
 import os
+
 import aiomysql
 
 
@@ -55,23 +56,19 @@ class DBManager:
         INSERT INTO deployer (
             timedate, user_name, user_id, address, secret_key, dex, chain, ticker, name, supply,
             percent, description, twitter, telegram, website, buy_tax, sell_tax, loan, duration, owner, fee, due
-        ) VALUES (%(timedate)s, %(user_name)s, %(user_id)s, %(address)s, %(secret_key)s, %(dex)s, %(chain)s, 
-                  %(ticker)s, %(name)s, %(supply)s, %(percent)s, %(description)s, %(twitter)s, %(telegram)s, 
+        ) VALUES (%(timedate)s, %(user_name)s, %(user_id)s, %(address)s, %(secret_key)s, %(dex)s, %(chain)s,
+                  %(ticker)s, %(name)s, %(supply)s, %(percent)s, %(description)s, %(twitter)s, %(telegram)s,
                   %(website)s, %(buy_tax)s, %(sell_tax)s, %(loan)s, %(duration)s, %(owner)s, %(fee)s, %(due)s)
         """
         result = await self._execute_query(query, kwargs, commit=True)
         return (
-            "Entry added successfully"
-            if result is not None
-            else "Error adding entry"
+            "Entry added successfully" if result is not None else "Error adding entry"
         )
 
     async def count_launches(self):
         query = "SELECT amount FROM log WHERE name = 'deployed'"
         result = await self._execute_query(query, fetch_one=True)
-        return (
-            result["amount"] if result and result["amount"] is not None else 0
-        )
+        return result["amount"] if result and result["amount"] is not None else 0
 
     async def delete_entry(self, user_id):
         query = "DELETE FROM deployer WHERE user_id = %s"
@@ -88,17 +85,17 @@ class DBManager:
     async def get_reminders(self):
         query = """
         SELECT user_id, due, name, chain, loan, loan_id
-        FROM deployer 
+        FROM deployer
         WHERE complete = TRUE
         AND loan_id IS NOT NULL
-        AND due > NOW() 
+        AND due > NOW()
         """
         return await self._execute_query(query, fetch_all=True) or []
 
     async def search_entry(self, user_id):
         query = """
-        SELECT complete, timedate, user_name, user_id, address, secret_key, dex, chain, ticker, 
-               name, supply, percent, description, twitter, telegram, website, buy_tax, sell_tax, 
+        SELECT complete, timedate, user_name, user_id, address, secret_key, dex, chain, ticker,
+               name, supply, percent, description, twitter, telegram, website, buy_tax, sell_tax,
                loan, duration, owner, fee, due, loan_id
         FROM deployer
         WHERE user_id = %s
@@ -115,9 +112,7 @@ class DBManager:
                     (True, user_id),
                 )
 
-                await cur.execute(
-                    "SELECT amount FROM log WHERE name = 'deployed'"
-                )
+                await cur.execute("SELECT amount FROM log WHERE name = 'deployed'")
                 log_row = await cur.fetchone()
 
                 if log_row is None:

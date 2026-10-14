@@ -1,23 +1,21 @@
+from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
+
+from constants.bot import settings
+from constants.protocol import addresses, chains
+from eth_account import Account
+from eth_utils import is_checksum_address
+from services import get_dbmanager, get_etherscan
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
     ConversationHandler,
-    filters,
     MessageHandler,
+    filters,
 )
-
-from eth_account import Account
-from eth_utils import is_checksum_address
-from datetime import datetime, timedelta
-from decimal import Decimal, InvalidOperation
-
-from constants.protocol import addresses
-from constants.bot import settings
-from constants.protocol import chains
 from utils import onchain, tools
-from services import get_dbmanager, get_etherscan
 
 db = get_dbmanager()
 etherscan = get_etherscan()
@@ -115,9 +113,7 @@ async def stage_dex(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["dex"] = dex
 
     if context.user_data["dex"] != "xchange":
-        dex_text = (
-            "The only fee you need to pay to launch is 1% of token supply"
-        )
+        dex_text = "The only fee you need to pay to launch is 1% of token supply"
     else:
         dex_text = "You can launch on Xchange, with or without a Initial Liquidity Loan"
 
@@ -131,9 +127,7 @@ async def stage_dex(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def stage_ticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(update.message.text) > 6 or tools.detect_emojis(
-        update.message.text
-    ):
+    if len(update.message.text) > 6 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
             "Error: The ticker must be 6 standard characters or fewer. Please enter a valid ticker"
         )
@@ -147,9 +141,7 @@ async def stage_ticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def stage_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(update.message.text) > 30 or tools.detect_emojis(
-        update.message.text
-    ):
+    if len(update.message.text) > 30 or tools.detect_emojis(update.message.text):
         await update.message.reply_text(
             "Error: The name must be 30 standard characters or fewer. Please enter a valid name"
         )
@@ -172,9 +164,7 @@ async def stage_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return STAGE_BUY_TAX
 
 
-async def stage_description(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-):
+async def stage_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(update.message.text) > 200:
         await update.message.reply_text(
             "Error: The description must be 200 characters or fewer. Please try again"
@@ -330,7 +320,9 @@ async def stage_supply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = InlineKeyboardMarkup(buttons)
     if context.user_data["dex"] != "xchange":
         supply_fee = supply_float * 0.01
-        dex_text = f"{supply_fee:,.0f} (1%) of tokens will be taken as a fee for launching\n\n"
+        dex_text = (
+            f"{supply_fee:,.0f} (1%) of tokens will be taken as a fee for launching\n\n"
+        )
     else:
         dex_text = ""
     await update.message.reply_text(
@@ -353,7 +345,9 @@ async def stage_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         percent_str = "No tokens will be held by the team"
     else:
         team_amount = float(context.user_data["supply"]) * float(percent) / 100
-        percent_str = f"{percent}% of tokens ({team_amount:,.0f}) will be reserved as team supply"
+        percent_str = (
+            f"{percent}% of tokens ({team_amount:,.0f}) will be reserved as team supply"
+        )
 
     if context.user_data["dex"] == "xchange":
         pool = await onchain.get_pool_funds(context.user_data["chain"].lower())
@@ -453,9 +447,7 @@ async def stage_contribute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         contribution = Decimal(native_amount)
 
         if contribution <= 0:
-            await update.message.reply_text(
-                "Error: The amount must be greater than 0"
-            )
+            await update.message.reply_text("Error: The amount must be greater than 0")
             return STAGE_CONTRIBUTE
 
         if contribution.as_tuple().exponent < -18:
@@ -465,9 +457,7 @@ async def stage_contribute(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return STAGE_CONTRIBUTE
 
     except InvalidOperation:
-        await update.message.reply_text(
-            "Error: Please enter a valid numeric amount"
-        )
+        await update.message.reply_text("Error: Please enter a valid numeric amount")
         return STAGE_CONTRIBUTE
 
     context.user_data["contribution"] = contribution
@@ -526,9 +516,7 @@ async def stage_owner(update: Update, context: ContextTypes.DEFAULT_TYPE):
     liquidity_tokens = int(supply) - team_tokens
 
     price_native = float(liquidity) / liquidity_tokens
-    price_usd = (
-        price_native * await etherscan.get_native_price(chain.lower()) * 2
-    )
+    price_usd = price_native * await etherscan.get_native_price(chain.lower()) * 2
     market_cap_usd = price_usd * int(supply) * 2
 
     if context.user_data["dex"] == "xchange":
@@ -549,9 +537,7 @@ async def stage_owner(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Cost: {chain_info.w3.from_wei(fee, 'ether')} {chain_info.native.upper()}\n\n"
             )
         else:
-            loan_text = (
-                f"Liquidity Amount: {liquidity} {chain_info.native.upper()}\n"
-            )
+            loan_text = f"Liquidity Amount: {liquidity} {chain_info.native.upper()}\n"
             context.user_data["fee"] = liquidity * 10**18
 
     else:
@@ -625,9 +611,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     user_data.get("owner"),
                     int(fee),
                 )
-                if isinstance(gas_estimate, str) and gas_estimate.startswith(
-                    "Error"
-                ):
+                if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
                     await query.message.reply_text(f"{gas_estimate}")
                     return
 
@@ -647,9 +631,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     user_data.get("owner"),
                     int(fee),
                 )
-                if isinstance(gas_estimate, str) and gas_estimate.startswith(
-                    "Error"
-                ):
+                if isinstance(gas_estimate, str) and gas_estimate.startswith("Error"):
                     await query.message.reply_text(f"{gas_estimate}")
                     return
 
@@ -697,9 +679,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         total_cost = int(fee) + gas_estimate
 
-        await query.message.reply_text(
-            message(total_cost), parse_mode="Markdown"
-        )
+        await query.message.reply_text(message(total_cost), parse_mode="Markdown")
         return ConversationHandler.END
 
     elif confirm == "no":
@@ -719,26 +699,16 @@ HANDLERS = [
     {
         "entry_points": [CommandHandler("launch", start_launch)],
         "states": {
-            STAGE_CHAIN: [
-                CallbackQueryHandler(stage_chain, pattern="^chain_")
-            ],
+            STAGE_CHAIN: [CallbackQueryHandler(stage_chain, pattern="^chain_")],
             STAGE_DEX: [CallbackQueryHandler(stage_dex, pattern="^dex_")],
-            STAGE_AMOUNT: [
-                CallbackQueryHandler(stage_amount, pattern="^amount_")
-            ],
-            STAGE_CONFIRM: [
-                CallbackQueryHandler(stage_confirm, pattern="^confirm_")
-            ],
+            STAGE_AMOUNT: [CallbackQueryHandler(stage_amount, pattern="^amount_")],
+            STAGE_CONFIRM: [CallbackQueryHandler(stage_confirm, pattern="^confirm_")],
             STAGE_TICKER: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, stage_ticker)
             ],
-            STAGE_NAME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_name)
-            ],
+            STAGE_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, stage_name)],
             STAGE_DESCRIPTION: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND, stage_description
-                )
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_description)
             ],
             STAGE_TWITTER: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, stage_twitter)
@@ -758,20 +728,14 @@ HANDLERS = [
             STAGE_SUPPLY: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, stage_supply)
             ],
-            STAGE_LOAN: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_loan)
-            ],
+            STAGE_LOAN: [MessageHandler(filters.TEXT & ~filters.COMMAND, stage_loan)],
             STAGE_DURATION: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, stage_duration)
             ],
             STAGE_CONTRIBUTE: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND, stage_contribute
-                )
+                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_contribute)
             ],
-            STAGE_OWNER: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, stage_owner)
-            ],
+            STAGE_OWNER: [MessageHandler(filters.TEXT & ~filters.COMMAND, stage_owner)],
         },
     }
 ]

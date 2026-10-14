@@ -1,12 +1,11 @@
-from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler
-
 from datetime import datetime, timedelta
 
 from constants.bot import settings
 from constants.protocol import chains
-from utils import tools
 from services import get_dbmanager
+from telegram import Update
+from telegram.ext import ContextTypes, ConversationHandler
+from utils import tools
 
 db = get_dbmanager()
 
@@ -52,9 +51,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 entry = await db.search_entry(id)
                 if entry:
                     chain_info = await chains.get_chain_info(entry["chain"])
-                    balance_wei = await chain_info.w3.eth.get_balance(
-                        entry["address"]
-                    )
+                    balance_wei = await chain_info.w3.eth.get_balance(entry["address"])
                     balance = chain_info.w3.from_wei(balance_wei, "ether")
                     if entry["complete"] == 1:
                         status = "Deployed"
@@ -92,9 +89,7 @@ async def view(update: Update, context: ContextTypes.DEFAULT_TYPE):
             formatted_entries = []
             for entry in entries:
                 chain_info = await chains.get_chain_info(entry["chain"])
-                balance_wei = await chain_info.w3.eth.get_balance(
-                    entry["address"]
-                )
+                balance_wei = await chain_info.w3.eth.get_balance(entry["address"])
                 balance = chain_info.w3.from_wei(balance_wei, "ether")
 
                 entry_date = entry["timedate"]
@@ -128,9 +123,7 @@ async def view(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 message = "".join(formatted_entries)
                 message_chunks = tools.split_message(message, max_length=4096)
                 for chunk in message_chunks:
-                    await update.message.reply_text(
-                        chunk, parse_mode="Markdown"
-                    )
+                    await update.message.reply_text(chunk, parse_mode="Markdown")
             else:
                 await update.message.reply_text(
                     "No valid entries remaining after cleaning."

@@ -1,3 +1,10 @@
+import os
+from warnings import filterwarnings
+
+import sentry_sdk
+from bot import callbacks, conversations
+from bot.commands import admin, general
+from services import get_dbmanager
 from telegram import Message, Update
 from telegram.ext import (
     Application,
@@ -6,16 +13,8 @@ from telegram.ext import (
     ContextTypes,
     ConversationHandler,
 )
-
-import os
-import sentry_sdk
 from telegram.warnings import PTBUserWarning
-from warnings import filterwarnings
-
-from bot import callbacks, conversations
-from bot.commands import admin, general
 from utils import tools
-from services import get_dbmanager
 
 db = get_dbmanager()
 
@@ -23,9 +22,7 @@ filterwarnings(
     action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
 )
 
-application = (
-    Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
-)
+application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
 
@@ -68,9 +65,7 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         print({context.error})
         sentry_sdk.capture_exception(
-            Exception(
-                f"Error occurred without a valid message: {context.error}"
-            )
+            Exception(f"Error occurred without a valid message: {context.error}")
         )
 
 

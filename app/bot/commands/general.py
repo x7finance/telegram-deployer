@@ -1,11 +1,10 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
-
 from bot import conversations
 from constants.bot import settings
 from constants.protocol import chains
-from utils import onchain, tools
 from services import get_dbmanager, get_etherscan
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
+from utils import onchain, tools
 
 db = get_dbmanager()
 etherscan = get_etherscan()
@@ -150,13 +149,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total_cost = int(status_text["fee"]) + gas_estimate
         if balance_wei >= total_cost:
             button = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="LAUNCH", callback_data=callback_data
-                        )
-                    ]
-                ]
+                [[InlineKeyboardButton(text="LAUNCH", callback_data=callback_data)]]
             )
             message = "Ready to launch, hit the button below!"
             header = f"*{status_text['dex'].upper()} ({status_text['chain'].upper()}) LAUNCH STATUS - READY*"
@@ -185,18 +178,16 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else ""
         )
         button = ""
-        message = "use /withdraw to return any un-used funds\nuse /reset to clear this launch"
+        message = (
+            "use /withdraw to return any un-used funds\nuse /reset to clear this launch"
+        )
         header = f"*{status_text['dex'].upper()} ({status_text['chain'].upper()}) LAUNCH STATUS - CONFIRMED*"
         was_will_be = "was"
         callback_data = (
-            "launch_with_loan"
-            if status_text["loan"]
-            else "launch_without_loan"
+            "launch_with_loan" if status_text["loan"] else "launch_without_loan"
         )
 
-    team_tokens = int(status_text["supply"]) * (
-        int(status_text["percent"]) / 100
-    )
+    team_tokens = int(status_text["supply"]) * (int(status_text["percent"]) / 100)
     liquidity_tokens = int(status_text["supply"]) - team_tokens
 
     if callback_data == "launch_with_loan":
@@ -208,17 +199,14 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         if status_text["complete"] == 1:
             loan_info += (
-                f"Loan Due: {status_text['due']}\n"
-                f"Loan ID: {status_text['loan_id']}\n"
+                f"Loan Due: {status_text['due']}\nLoan ID: {status_text['loan_id']}\n"
             )
     else:
         price_native = (int(status_text["fee"]) / 10**18) / liquidity_tokens
         loan_info = ""
 
     price_usd = (
-        price_native
-        * await etherscan.get_native_price(status_text["chain"])
-        * 2
+        price_native * await etherscan.get_native_price(status_text["chain"]) * 2
     )
     market_cap_usd = price_usd * int(status_text["supply"]) * 2
 
@@ -279,9 +267,7 @@ async def withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     "If this is unexpected use your saved private key from setup to withdraw funds",
                 )
             else:
-                chain_link = await chains.get_chain_info(
-                    status_text["chain"]
-                ).scan_tx
+                chain_link = await chains.get_chain_info(status_text["chain"]).scan_tx
                 await update.message.reply_text(
                     f"Balance withdrawn\n\n{chain_link}{result}\n\n"
                     "You can now safely use /reset to reset your project"

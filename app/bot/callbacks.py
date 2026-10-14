@@ -1,10 +1,9 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
-
 from constants.bot import settings, urls
 from constants.protocol import abis, chains
-from utils import onchain, tools
 from services import get_dbmanager, get_etherscan
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
+from utils import onchain, tools
 
 db = get_dbmanager()
 etherscan = get_etherscan()
@@ -87,9 +86,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             while True:
                 try:
-                    token_id = await contract.functions.tokenByIndex(
-                        index
-                    ).call()
+                    token_id = await contract.functions.tokenByIndex(index).call()
                     if token_id == int(loan_id):
                         token_by_id = index
                         break
@@ -106,9 +103,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
             url=f"{dex_info.url}lending/{chain_info.short_name}/{settings.live_loan(chain, 'name')}/{token_by_id}",
         )
 
-        loan_text = (
-            f"Loan ID: {loan_id}\n\nPayment Schedule:\n\n{schedule}\n\n"
-        )
+        loan_text = f"Loan ID: {loan_id}\n\nPayment Schedule:\n\n{schedule}\n\n"
 
         await db.set_loan_id(status_text["user_id"], loan_id)
 
@@ -233,9 +228,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         pass
 
-    await context.bot.send_message(
-        chat_id=query.message.chat_id, text=refund_text
-    )
+    await context.bot.send_message(chat_id=query.message.chat_id, text=refund_text)
 
     await db.set_complete(status_text["user_id"])
 
@@ -284,9 +277,7 @@ async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
 
             while True:
                 try:
-                    token_id = await contract.functions.tokenByIndex(
-                        index
-                    ).call()
+                    token_id = await contract.functions.tokenByIndex(index).call()
                     if token_id == int(loan_id):
                         token_by_id = index
                         break
