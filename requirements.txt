@@ -28,7 +28,7 @@ propcache==0.3.2
 pydantic_core==2.33.2
 PyMySQL==1.2.3
 python-telegram-bot==22.8
-pyunormalize==16.0.0
+pyunormalize==18.0.0
 regex==2026.9.29
 rlp==5.0.0
 sentry-sdk==2.38.0
