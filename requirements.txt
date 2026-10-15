@@ -40,4 +40,4 @@ typing_extensions==4.15.0
 tzdata==2025.1
 tzlocal==5.3.1
 web3==7.15.0
-yarl==1.20.1
+yarl==1.25.1
