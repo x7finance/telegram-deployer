@@ -8,7 +8,7 @@ anyio==4.14.2
 attrs==25.3.0
 bitarray==3.7.1
 certifi==2025.8.3
-charset-normalizer==3.4.3
+charset-normalizer==3.5.2
 ckzg==2.1.4
 cytoolz==1.0.1
 eth-account==0.13.7
