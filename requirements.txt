@@ -8,7 +8,7 @@ attrs==25.3.0
 bitarray==3.12.1
 certifi==2025.8.3
 charset-normalizer==3.5.2
-ckzg==2.1.4
+ckzg==2.1.8
 cytoolz==1.2.0
 eth-account==0.14.0
 eth-hash==0.8.0
