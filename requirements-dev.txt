@@ -8,4 +8,4 @@ platformdirs==4.4.0
 pre-commit==4.3.0
 ruff==0.13.1
 types-requests==2.32.4.20250913
-virtualenv==20.36.1
+virtualenv==21.7.13
