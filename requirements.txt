@@ -10,7 +10,7 @@ bitarray==3.7.1
 certifi==2025.8.3
 charset-normalizer==3.4.3
 ckzg==2.1.4
-cytoolz==1.0.1
+cytoolz==1.2.0
 eth-account==0.13.7
 eth-hash==0.7.1
 eth-keyfile==0.8.1
