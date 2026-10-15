@@ -1,0 +1,11 @@
+-r requirements.txt
+cfgv==3.4.0
+distlib==0.4.0
+filelock==3.20.3
+identify==2.6.14
+nodeenv==1.9.1
+platformdirs==4.4.0
+pre-commit==4.3.0
+ruff==0.13.1
+types-requests==2.32.4.20250913
+virtualenv==20.36.1
