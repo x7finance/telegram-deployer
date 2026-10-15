@@ -12,7 +12,7 @@ charset-normalizer==3.4.3
 ckzg==2.1.4
 cytoolz==1.0.1
 eth-account==0.13.7
-eth-hash==0.7.1
+eth-hash==0.8.0
 eth-keyfile==0.8.1
 eth-keys==0.7.0
 eth-rlp==2.2.0
