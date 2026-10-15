@@ -1,5 +1,5 @@
 # Runtime Dependencies
-aiohappyeyeballs==2.6.1
+aiohappyeyeballs==2.7.1
 aiohttp==3.14.3
 aiomysql==0.3.0
 aiosignal==1.4.0
