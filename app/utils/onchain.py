@@ -339,7 +339,7 @@ async def cancel_tx(chain, address, key, gas_multiplier=1.5):
             tx_hash, timeout=30
         )
         if receipt.status == 1:
-            return f"Stuck transaction successfully replaced\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
+            return f"Stuck transaction successfully replaced\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
             return "Error: Transaction failed to replace stuck transaction"
 
@@ -582,7 +582,7 @@ async def transfer_balance(chain, address, owner, key):
             tx_hash, timeout=30
         )
         if receipt == 1:
-            return f"0x{tx_hash.hex()}"
+            return f"{tx_hash.hex()}"
         else:
             return "Error transferring balance"
 

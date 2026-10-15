@@ -593,7 +593,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Any fees not used will be returned to the wallet you designated as owner at deployment\n\n"
                 "*Ensure you are sending funds on the correct chain\n\n"
                 "Make a note of the wallet address above and private key below*\n\n"
-                f"`{account.key.hex()}`\n\n"
+                f"`{account.key.hex().removeprefix('0x')}`\n\n"
                 "To check the status of your launch use /status"
             )
 
@@ -657,7 +657,7 @@ async def stage_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_name=user_name,
             user_id=user_id,
             address=account.address,
-            secret_key=account.key.hex(),
+            secret_key=account.key.hex().removeprefix("0x"),
             dex=user_data.get("dex"),
             chain=user_data.get("chain"),
             ticker=user_data.get("ticker"),
