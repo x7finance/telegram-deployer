@@ -23,7 +23,7 @@ h11==0.16.0
 hexbytes==2.0.0
 httpcore==1.0.9
 idna==3.20
-multidict==6.6.4
+multidict==7.1.0
 propcache==0.3.2
 pydantic_core==2.33.2
 PyMySQL==1.2.3
