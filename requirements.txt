@@ -6,7 +6,7 @@ aiosignal==1.4.0
 annotated-types==0.8.0
 anyio==4.14.2
 attrs==25.3.0
-bitarray==3.7.1
+bitarray==3.12.1
 certifi==2025.8.3
 charset-normalizer==3.5.2
 ckzg==2.1.4
