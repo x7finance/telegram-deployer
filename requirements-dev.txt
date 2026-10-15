@@ -6,6 +6,6 @@ identify==2.6.14
 nodeenv==1.9.1
 platformdirs==4.4.0
 pre-commit==4.3.0
-ruff==0.13.1
+ruff==0.17.0
 types-requests==2.32.4.20250913
 virtualenv==21.7.13
