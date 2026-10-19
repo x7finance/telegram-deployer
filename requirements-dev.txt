@@ -4,7 +4,7 @@ distlib==0.4.3
 filelock==4.1.2
 identify==2.6.20
 nodeenv==1.11.0
-platformdirs==4.13.0
+platformdirs==4.13.3
 pre-commit==4.7.0
 ruff==0.17.0
 types-requests==2.33.0.20261006
