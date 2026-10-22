@@ -4,8 +4,8 @@ distlib==0.4.4
 filelock==4.2.4
 identify==2.6.20
 nodeenv==1.11.0
-platformdirs==4.13.3
+platformdirs==4.13.5
 pre-commit==4.7.0
 ruff==0.17.1
 types-requests==2.33.0.20261006
-virtualenv==21.14.9
+virtualenv==21.14.11
