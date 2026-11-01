@@ -1,8 +1,14 @@
+default_install_hook_types: ["pre-commit"]
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.5
+  - repo: local
     hooks:
       - id: ruff
-        additional_dependencies: ["ruff"]
+        name: ruff
+        entry: ruff check --fix
+        language: system
+        types: [python]
       - id: ruff-format
-        additional_dependencies: ["ruff"]
+        name: ruff-format
+        entry: ruff format
+        language: system
+        types: [python]
