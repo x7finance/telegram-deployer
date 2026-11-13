@@ -1,5 +1,5 @@
 -r requirements.txt
 pre-commit==4.7.0
-ruff==0.17.3
+ruff==0.17.4
 types-requests==2.33.0.20261030
-virtualenv==21.15.5
+virtualenv==21.15.6
